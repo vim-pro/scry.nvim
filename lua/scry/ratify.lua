@@ -31,7 +31,9 @@ function M.author(config)
   end
   local git = vim.fn.systemlist({ "git", "config", "user.name" })[1]
   if git and git ~= "" then
-    return git:gsub("%s+", "-")
+    -- Parenthesized: gsub returns (string, count), and an extra return value
+    -- here would be spread into the next argument at the call site.
+    return (git:gsub("%s+", "-"))
   end
   return vim.env.USER or "someone"
 end
@@ -43,7 +45,12 @@ end
 ---@param date string? YYYY-MM-DD; defaults to today.
 ---@return string
 function M.stamp(map, claim, author, date)
-  date = date or os.date("%Y-%m-%d")
+  -- Guard the shape rather than trusting callers: a stamp whose date fails
+  -- STAMP_PAT reparses as part of the target, silently un-ratifying the
+  -- claim it just stamped.
+  if type(date) ~= "string" or not date:match("^%d%d%d%d%-%d%d%-%d%d$") then
+    date = os.date("%Y-%m-%d")
+  end
   local line = ("    %s  -- @%s %s %s"):format(claim.target, author, date, M.hash(claim.target))
   map.lines[claim.lnum] = line
   claim.stamp = { user = author, date = date, hash = M.hash(claim.target) }

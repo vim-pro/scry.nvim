@@ -90,4 +90,15 @@ H.eq(ratify.ratified(m3.claims[2]), false, "edited claim is unratified again")
 -- used a made-up hash) — staleness catches fabricated stamps too
 H.eq(ratify.ratified(m3.claims[1]), false, "wrong-hash stamp reads as unratified")
 
+-- 7) author() must return exactly one value: it's called inline as
+-- stamp(map, claim, author(config)), so a second return value would land in
+-- the date parameter and produce a stamp that fails its own format.
+local a, extra = ratify.author({ author = "" })
+H.eq(extra, nil, "author() returns a single value")
+H.ok(type(a) == "string" and a ~= "", "author() resolved a name")
+-- and stamp() defends the date shape regardless of what it is handed
+local m4 = map.parse({ "# c", "  contains", "    f.lua:sym" })
+ratify.stamp(m4, m4.claims[1], "someone", 0)
+H.eq(ratify.ratified(map.parse(map.serialize(m4)).claims[1]), true, "a bogus date is replaced, stamp stays valid")
+
 H.done("map_spec PASS")
