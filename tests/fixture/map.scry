@@ -1,0 +1,13 @@
+# auth
+  files lua/auth.lua
+
+  Sessions are opaque tokens stored server-side.
+
+  contains
+    lua/auth.lua:create_session
+    lua/auth.lua:validate_token
+    lua/auth.lua:refresh_token
+  calls
+    store.lua::put
+    crypto.lua::verify
+    store.lua::purge
