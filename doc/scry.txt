@@ -38,12 +38,11 @@ read it, and it must fail — then the code, with the check and the
 concern's prohibitions withheld from the model that writes it. The code is
 where you review, not where you start.
 
-Ownership is INFERRED from that work, never performed as an act. There is
-no sign-this command anywhere in scry: typing a claim yourself, cascading
-one and watching it come true, running its check red and then green — the
-trail those actions leave is what clears the `∅ untouched` marker. Editing
-a claim voids its trail mechanically, because every event is keyed to a
-hash of the claim's text. See |scry-ownership|.
+The work leaves a trail: typing a claim yourself, cascading one and
+watching it come true, running its check red and then green. The trail is
+what clears the `∅ untouched` marker, and editing a claim resets it,
+because every event is keyed to a hash of the claim's text. See
+|scry-ownership|.
 
 Three tools, three jobs: the glass is where you work (scry.nvim), the
 conjurer types (conjurer.nvim), and the list is where changes get reviewed
@@ -173,35 +172,33 @@ verdict does and does not assert.
 ==============================================================================
 5. OWNERSHIP                                                  *scry-ownership*
 
-There is nothing to sign. Ownership is inferred from the ordinary actions
-of doing the work, each recorded as a trail event on the claim it touched:
+The ordinary actions of doing the work each record a trail event on the
+claim they touch:
 
     authored     you typed or edited the claim's text in the glass
     cascaded     you sent it to the conjurer (|:ScryCascade|)
     red / green  its spec failed, then passed, under your |:ScryRun|
     settled      a claim you cascaded came true on your save
 
-A claim is OWNED — and drops its `∅ untouched` marker — when the trail
-shows a person passed through it: authored, or cascaded and it came true.
-A machine-drafted claim nobody has engaged with stays marked, which is
+A claim is YOURS — and drops its `∅ untouched` marker — when the trail
+shows you passed through it: authored, or cascaded and it came true. A
+machine-drafted claim nobody has engaged with stays marked, which is
 exactly what the marker is for: inventory is not understanding.
 
 Every event is keyed to a hash of the claim's text at the moment it was
-recorded, so the old ratification property survives without the ceremony:
-edit a claim and its trail is void, mechanically, no hooks. Trails live
-outside the repo under `stdpath("state")`, like run results — they are
+recorded, so editing a claim resets its trail — mechanically, no hooks.
+Trails live outside the repo under `stdpath("state")`, like run results:
 facts about what you did on this machine, not something to commit.
 
-Stamps from the ratification era (`-- @name date hex`) still parse; they
-are kept as data and mean nothing.
+A `-- @name date hex` suffix on a claim line parses and is kept as data.
 
 ==============================================================================
 6. THEORY-DEBT                                                     *scry-debt*
 
 Two separate numbers, never blended into one score:
 
-- **untouched** — claims no work has passed through: not authored by hand,
-  not cascaded to completion. See |scry-ownership|.
+- **untouched** — claims no work has passed through yet. See
+  |scry-ownership|.
 - **diverged** — claims that are missing or violated.
 
 A claim is also always in exactly one verdict column — backed, missing,
@@ -258,7 +255,7 @@ conjurer's aggregate driver — which owns the casting and the per-site review
 When you save a file the cascade seeded, scry re-checks: the withheld
 prohibitions run against the new code, and the claim that started the work
 re-checks too. So the loop closes visibly — `✗ absent` becomes `✓ defined`,
-and because you cascaded it and it came true, it is yours — no further act.
+and because you cascaded it and it came true, it is yours.
 
 Saving is the trigger because ripgrep reads disk. Unwritten changes are
 invisible to scry, and the header says so.

@@ -15,10 +15,9 @@ it, it must fail), then the code — with the check and the concern's
 prohibitions withheld from the model that writes it. The code is where you
 review, not where you start.
 
-**There is nothing to sign.** Ownership is inferred from the work: type a
-claim yourself, or cascade one and watch it come true, and its `∅ untouched`
-marker clears. Edit a claim and its trail voids mechanically — every event
-is keyed to a hash of the claim's text.
+The work leaves a trail: type a claim yourself, or cascade one and watch it
+come true, and its `∅ untouched` marker clears. Edit a claim and its trail
+resets — every event is keyed to a hash of the claim's text.
 
 ```
 scry · 8 claims · 5 backed · 1 missing · 1 violated · 1 unchecked · 2 untouched   checked 40s ago (files on disk)
@@ -52,12 +51,10 @@ scry's answer, computed and never stored.
 prose is preserved verbatim and never checked. The sentences carry the
 theory; the claims carry the check. That split is the whole trick.
 
-**Ownership is inferred, never performed.** The actions of doing the work —
-authoring a claim, cascading it, running its check red then green — leave a
-trail, and the trail is what clears `∅ untouched`. Editing a claim voids its
-trail mechanically. Clicking "accept" is free, which is why approval
-degenerates into LGTM; a trail can only exist if the work actually passed
-through your hands.
+**The work leaves a trail.** Authoring a claim, cascading it, running its
+check red then green — each marks the claim it touched, and the trail is
+what clears `∅ untouched`. A trail can only exist if the work actually
+passed through your hands, and editing a claim resets it.
 
 **Prohibitions are a holdout.** `never` claims are withheld from the model
 that writes your code and checked afterwards. If the generator is shown the
@@ -105,7 +102,7 @@ the casting and per-site review. **scry never conjures anything itself.**
 
 When you save the file, the withheld prohibitions run against the new code and
 the claim re-checks: `✗ absent` becomes `✓ defined` — and because
-you cascaded it and it came true, it's yours, no further act. If the generated code trips a rule it never
+you cascaded it and it came true, it's yours. If the generated code trips a rule it never
 saw, you find out with the evidence line.
 
 ## Install
