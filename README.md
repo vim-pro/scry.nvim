@@ -15,7 +15,7 @@ the point. A lint failure means the code is wrong; a **divergence means
 someone is wrong, and deciding who is the product.**
 
 ```
-scry · 7 claims · 5 backed · 1 missing · 1 violated · 2 unratified   checked 40s ago (files on disk)
+scry · 8 claims · 5 backed · 1 missing · 1 violated · 1 unchecked · 2 unratified   checked 40s ago (files on disk)
 
 # providers
   files lua/conjurer/providers/*.lua
@@ -33,6 +33,8 @@ scry · 7 claims · 5 backed · 1 missing · 1 violated · 2 unratified   checke
     vim\.ui\.                                                                 ✓ no matches (rg)
     vim\.fn\.setqflist                                                        ✗ VIOLATED
         └ lua/conjurer/providers/cli.lua:88 → vim.fn.setqflist(...)
+  exercises
+    tests/cli_spec.lua                                                        – unrun (:ScryRun)
 ```
 
 One editable buffer. The claims are your text; everything to the right is
@@ -59,6 +61,28 @@ are stored outside the repo by default.
 **Theory-debt is a number.** How much of your system has nobody put their
 name on? Conjuring generates that debt at machine speed; ratification is the
 only thing that pays it down. `scry 14c ✓11 ✗2 ∅3`.
+
+## Two axes of evidence
+
+`contains`, `calls` and `never` are **static** — a definition node, a text
+match. Cheap and side-effect-free, so they run on every check. `exercises` is
+**dynamic**: a spec was run and it passed.
+
+Structural claims say *where things are*; an exercised claim says *what
+holds*. Neither is the primary axis — adding a feature usually wants one of
+each, and fixing a bug often wants only the second.
+
+**Checking never runs anything.** `:Scry` reads what the last `:ScryRun`
+recorded; only `:ScryRun` executes. A glass that shelled out to your test
+suite whenever you opened it is a glass you'd stop opening. The price is
+staleness, so a run fingerprints the concern's files as it starts — move any
+of them and `✓ passing` degrades to `– stale`, which is not a pass.
+
+Both `contains` and `exercises` cascade, and the order is the mechanism:
+conjure the **check** first, ratify it, confirm it goes **red**, then conjure
+the code *with the spec withheld*. Two generations from one sentence share its
+misreadings, so a suite written by whoever wrote the code proves only that the
+generator was self-consistent. See `:h scry-independence`.
 
 ## The cascade
 
@@ -100,6 +124,8 @@ require("scry").setup({
   holdout_path = "",            -- "" = never-claims outside the repo
   author = "",                  -- "" = git config user.name
   resolver = "",                -- "" = treesitter + ripgrep
+  test = { cmd = {} },          -- how to run ONE spec; the path is appended.
+                                -- Empty = exercises claims stay "– unrun".
 })
 ```
 

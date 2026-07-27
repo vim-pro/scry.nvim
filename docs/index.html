@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>scry.nvim — the glass</title>
+<meta name="description" content="A ledger of what you believe about your code, continuously audited against what the code actually does. Verdicts are accounting, not correctness.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23080d10'/%3E%3Ccircle cx='16' cy='16' r='8.5' fill='none' stroke='%238fb3bd' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='3.4' fill='%238fb3bd' opacity='.55'/%3E%3Cpath d='M16 4.2v2.6M16 25.2v2.6M4.2 16h2.6M25.2 16h2.6' stroke='%23c9a94e' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+/* ------------------------------------------------------------------ tokens
+   Sibling to the grimoire, not a copy of it. conjurer is violet-black and
+   gold — candlelight. scry is obsidian and mercury: a cold reflective
+   surface you look INTO rather than a book you read from. The gold survives
+   as the seal, because ratification is the one warm human act in the loop. */
+:root {
+  --void:      #080d10;
+  --obsidian:  #0d1418;
+  --inset:     #101a1f;
+  --text:      #e2e8ea;
+  --muted:     #97a5ab;
+  --faint:     #667479;
+  --gutter:    #2b3a41;
+  --hairline:  rgba(226,232,234,0.09);
+
+  --mercury:   #8fb3bd;   /* the glass surface */
+  --seal:      #c9a94e;   /* ratification */
+
+  /* the four verdict states — the page's recurring spine */
+  --v-backed:  #7fb894;
+  --v-diverge: #d97a6e;
+  --v-unrat:   #c9a94e;
+  --v-unchk:   #7d8a90;
+
+  --serif: "Cormorant Garamond", Georgia, serif;
+  --sans:  "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono:  "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--void);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16.5px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  /* a faint vignette: light falling on a dark surface */
+  background-image:
+    radial-gradient(120% 60% at 50% -10%, rgba(143,179,189,.09), transparent 60%),
+    radial-gradient(80% 40% at 50% 100%, rgba(201,169,78,.045), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+.wrap { max-width: 46rem; margin: 0 auto; padding-inline: clamp(1.15rem, 5vw, 2rem); }
+.wide { max-width: 60rem; }
+
+a { color: var(--mercury); text-decoration: none; border-bottom: 1px solid rgba(143,179,189,.3); }
+a:hover { border-bottom-color: var(--mercury); }
+a:focus-visible { outline: 2px solid var(--mercury); outline-offset: 3px; border-radius: 2px; }
+
+p { margin: 0 0 1.15rem; }
+ul { margin: 0 0 1.15rem; padding-left: 1.1rem; }
+li { margin: .4rem 0; }
+li::marker { color: var(--gutter); }
+strong { font-weight: 600; color: #f2f6f7; }
+em { font-style: italic; }
+code, kbd, pre { font-family: var(--mono); }
+code {
+  font-size: .855em;
+  color: #cfe0e5;
+  background: var(--inset);
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  padding: .07em .35em;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------- masthead */
+.masthead { padding: clamp(3.5rem, 11vw, 7rem) 0 1rem; text-align: center; }
+.sigil { color: var(--mercury); font-size: 1.15rem; letter-spacing: .5em; opacity: .6; margin-bottom: 1.6rem; }
+.wordmark {
+  font-family: var(--mono);
+  font-size: clamp(1.05rem, 3.4vw, 1.3rem);
+  font-weight: 500; letter-spacing: .22em; text-transform: lowercase;
+  color: var(--muted);
+}
+.wordmark .n { color: var(--faint); }
+h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(2.4rem, 8.5vw, 4.2rem);
+  line-height: 1.04;
+  letter-spacing: -.015em;
+  margin: 1.1rem auto 1.5rem;
+  max-width: 22ch;
+}
+h1 .it { font-style: italic; color: var(--mercury); }
+.lede {
+  font-family: var(--serif);
+  font-size: clamp(1.16rem, 3vw, 1.42rem);
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 36ch;
+  margin: 0 auto 1.3rem;
+}
+.lede strong { color: var(--text); font-weight: 600; }
+.thesis {
+  font-family: var(--serif); font-style: italic;
+  font-size: clamp(1.05rem, 2.6vw, 1.22rem);
+  color: var(--text); max-width: 34ch; margin: 0 auto;
+}
+.thesis b { font-style: normal; font-weight: 600; color: var(--mercury); }
+
+.meta {
+  display: flex; justify-content: center; flex-wrap: wrap; gap: .55rem 1.5rem;
+  font-family: var(--mono); font-size: .72rem; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--faint);
+  margin: 2.6rem 0 0;
+}
+.meta a { border: 0; color: var(--faint); }
+.meta a:hover { color: var(--mercury); }
+
+/* -------------------------------------------------------------- ornaments */
+.rule {
+  display: flex; align-items: center; gap: 1rem;
+  color: var(--gutter); margin: 3.4rem 0 0;
+}
+.rule::before, .rule::after {
+  content: ""; flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gutter), transparent);
+}
+.rule span { font-size: .78rem; letter-spacing: .35em; color: var(--mercury); opacity: .5; }
+
+/* --------------------------------------------------------------- sections */
+section { padding: 2.6rem 0 0; scroll-margin-top: 1.5rem; }
+.chead { text-align: center; margin-bottom: 2.2rem; }
+.chead .numeral {
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .3em;
+  color: var(--faint); text-transform: uppercase;
+}
+.chead h2 {
+  font-family: var(--serif); font-weight: 600;
+  font-size: clamp(1.7rem, 5vw, 2.5rem);
+  line-height: 1.14; letter-spacing: -.012em;
+  margin: .5rem auto 0; max-width: 26ch;
+}
+.chead h2 .it { font-style: italic; color: var(--mercury); }
+.dek {
+  font-family: var(--serif); font-size: 1.12rem; line-height: 1.6;
+  color: var(--muted); max-width: 40ch; margin: .9rem auto 0;
+}
+h3 {
+  font-family: var(--serif); font-weight: 600; font-size: 1.3rem;
+  margin: 2.3rem 0 .6rem; color: var(--text);
+}
+h4 { font-family: var(--sans); font-weight: 600; font-size: .95rem; margin: 0 0 .3rem; }
+
+/* ------------------------------------------------------------- the glass */
+.glass {
+  margin: 1.9rem 0; border: 1px solid var(--gutter); border-radius: 3px;
+  background: var(--obsidian); overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(143,179,189,.05), 0 24px 70px -34px rgba(0,0,0,.95);
+}
+.glass .lip {
+  display: flex; justify-content: space-between; gap: 1rem;
+  padding: .45rem .9rem; border-bottom: 1px solid var(--hairline);
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--faint);
+}
+.glass .pane {
+  padding: .95rem .45rem 1.05rem; overflow-x: auto;
+  font-family: var(--mono); font-size: .755rem; line-height: 1.85;
+  white-space: pre;
+}
+.glass .pane > div { padding: 0 .6rem; }
+.hdr { color: var(--mercury); }
+.cn { color: var(--text); font-weight: 500; }
+.kw { color: var(--faint); }
+.tgt { color: #cdd9dd; }
+.seal { color: var(--seal); opacity: .85; }
+.pr { color: var(--faint); font-style: italic; }
+.vb { color: var(--v-backed); }
+.vd { color: var(--v-diverge); }
+.vu { color: var(--v-unrat); }
+.vn { color: var(--v-unchk); }
+.ev { color: var(--faint); }
+.cap {
+  font-family: var(--serif); font-style: italic; font-size: .98rem;
+  color: var(--faint); margin: .8rem 0 0; text-align: center;
+}
+
+/* -------------------------------------------------------------- the omens */
+.omens { margin: 1.8rem 0; border-top: 1px solid var(--hairline); }
+.omens div {
+  display: grid; grid-template-columns: 12rem 1fr; gap: 1rem;
+  padding: .58rem .2rem; border-bottom: 1px solid var(--hairline);
+  font-size: .93rem;
+}
+.omens .g { font-family: var(--mono); font-size: .78rem; white-space: nowrap; }
+.omens .d { color: var(--muted); }
+.omens .d strong { color: var(--v-diverge); font-weight: 600; }
+@media (max-width: 40rem) { .omens div { grid-template-columns: 1fr; gap: .1rem; } }
+
+/* ----------------------------------------------------------------- code */
+.scroll { margin: 1.8rem 0; border: 1px solid var(--gutter); border-radius: 3px; overflow: hidden; background: var(--obsidian); }
+.scroll .tab {
+  font-family: var(--mono); font-size: .66rem; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--faint);
+  padding: .42rem .9rem; border-bottom: 1px solid var(--hairline);
+}
+pre { margin: 0; padding: .95rem; overflow-x: auto; font-size: .78rem; line-height: 1.8; color: #cfdbdf; }
+pre .k { color: var(--mercury); }
+pre .s { color: var(--v-backed); }
+pre .c { color: var(--faint); font-style: italic; }
+pre .n { color: var(--seal); }
+
+/* ------------------------------------------------------------ the laws */
+.law {
+  margin: 1.6rem 0; padding: 1rem 1.15rem;
+  background: var(--obsidian); border: 1px solid var(--hairline);
+  border-left: 2px solid var(--mercury);
+  font-size: .95rem; color: var(--muted);
+}
+.law strong { color: var(--text); }
+.law.warn { border-left-color: var(--v-diverge); }
+.law .t {
+  display: block; font-family: var(--mono); font-size: .64rem;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--faint);
+  margin-bottom: .4rem;
+}
+
+/* --------------------------------------------------------------- the rite */
+.rite { margin: 1.9rem 0; display: grid; gap: 0; border-top: 1px solid var(--hairline); }
+.rite .step {
+  display: grid; grid-template-columns: 2.6rem 1fr; gap: 1rem;
+  padding: .78rem .2rem; border-bottom: 1px solid var(--hairline);
+  font-size: .95rem;
+}
+.rite .i { font-family: var(--serif); font-size: 1.3rem; color: var(--gutter); line-height: 1.3; text-align: right; }
+.rite .why { display: block; font-family: var(--serif); font-style: italic; color: var(--faint); font-size: .95rem; }
+.rite .step.judge .i { color: var(--seal); }
+.rite .step.judge .why { color: var(--seal); opacity: .85; }
+.rite code { white-space: normal; }
+
+/* -------------------------------------------------------------- two axes */
+.axes { display: grid; gap: 1px; margin: 1.8rem 0; background: var(--hairline); border: 1px solid var(--hairline); }
+@media (min-width: 44rem) { .axes { grid-template-columns: 1fr 1fr; } }
+.axis { background: var(--obsidian); padding: 1.05rem 1.15rem; }
+.axis .t { font-family: var(--mono); font-size: .64rem; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
+.axis h4 { font-family: var(--mono); font-size: .84rem; font-weight: 400; color: var(--mercury); margin: .45rem 0 .5rem; }
+.axis p { font-size: .92rem; color: var(--muted); margin: 0; }
+.axis.dyn h4 { color: var(--seal); }
+
+/* ---------------------------------------------------------------- tables */
+.tbl { margin: 1.8rem 0; overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; min-width: 28rem; }
+th, td { text-align: left; padding: .52rem .8rem .52rem 0; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+thead th {
+  font-family: var(--mono); font-size: .64rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--faint); font-weight: 400;
+}
+tbody tr:last-child td { border-bottom: 0; }
+td code { white-space: normal; }
+.hg { font-family: var(--mono); font-size: .79rem; color: var(--mercury); }
+
+/* --------------------------------------------------------------- ledger */
+.ledger { margin: 1.8rem 0; counter-reset: l; }
+.ledger .row {
+  padding: .8rem 0 .8rem 2.2rem; border-bottom: 1px solid var(--hairline);
+  font-size: .94rem; color: var(--muted); position: relative;
+}
+.ledger .row::before {
+  counter-increment: l; content: counter(l, decimal-leading-zero);
+  position: absolute; left: 0; top: .82rem;
+  font-family: var(--mono); font-size: .68rem; color: var(--gutter);
+}
+.ledger .row strong { color: var(--text); }
+.ledger .row code { white-space: normal; }
+
+/* --------------------------------------------------------------- footer */
+footer { padding: 3rem 0 4rem; text-align: center; }
+footer .sigil { margin-bottom: 1.3rem; }
+footer p { font-family: var(--serif); font-size: 1.02rem; color: var(--faint); max-width: 38ch; margin: 0 auto 1rem; }
+.flinks { display: flex; justify-content: center; flex-wrap: wrap; gap: 1.4rem; font-family: var(--mono); font-size: .72rem; letter-spacing: .11em; text-transform: uppercase; }
+.flinks a { border: 0; color: var(--faint); }
+.flinks a:hover { color: var(--mercury); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="sigil" aria-hidden="true">◈ ◉ ◈</div>
+    <div class="wordmark">scry<span class="n">.nvim</span></div>
+    <h1>A ledger of what you <span class="it">believe</span> about your code.</h1>
+    <p class="lede">Git records what happened. scry records what you
+    <strong>think is true</strong> — and tells you the moment the code stops
+    agreeing.</p>
+    <p class="thesis">A lint failure means the code is wrong.<br>A divergence means
+    <b>someone</b> is wrong,<br>and deciding who is the product.</p>
+
+    <div class="meta">
+      <a href="#glass">the glass</a>
+      <a href="#seal">the seal</a>
+      <a href="#holdout">the withheld rule</a>
+      <a href="#honesty">what it will not say</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ================================================================= I -->
+  <section id="glass">
+    <div class="rule" aria-hidden="true"><span>◈</span></div>
+    <div class="chead">
+      <div class="numeral">I</div>
+      <h2>The glass</h2>
+      <p class="dek">One editable buffer holding your whole model, with the verdicts
+      rendered beside it. Your beliefs are the text; everything to the right of them
+      is scry's answer — computed, never stored.</p>
+    </div>
+
+    <div class="glass">
+      <div class="lip">
+        <span>scry://glass</span>
+        <span>conjurer.nvim</span>
+      </div>
+      <div class="pane">
+<div><span class="hdr">scry · 12 claims · 8 backed · 2 missing · 1 violated · 1 unchecked · 3 unratified   checked 12s ago (files on disk)</span></div><div> </div><div><span class="cn"># providers</span></div><div><span class="kw">  files</span> lua/conjurer/providers/*.lua</div><div> </div><div><span class="pr">  The provider layer turns a Request into text and calls back once on the</span></div><div><span class="pr">  main loop. Transport only: no UI, no lists, no buffer edits.</span></div><div> </div><div><span class="kw">  contains</span></div><div>    <span class="tgt">providers/cli.lua:request</span>  <span class="seal">-- @w0zro 2026-07-26 3f9a01</span>   <span class="vb">✓ defined</span></div><div>    <span class="tgt">providers/known.lua:resolve</span>                             <span class="vb">✓ defined</span> · <span class="vu">∅ unratified</span></div><div>    <span class="tgt">providers/ollama.lua:request</span>                            <span class="vd">✗ absent</span> · <span class="vu">∅ unratified</span></div><div><span class="kw">  calls</span></div><div>    <span class="tgt">known.lua::resolve</span>  <span class="seal">-- @w0zro 2026-07-26 b71e00</span>          <span class="vb">✓ referenced (text)</span></div><div><span class="kw">  never</span></div><div>    <span class="tgt">vim\.ui\.</span>  <span class="seal">-- @w0zro 2026-07-26 c1d4e2</span>                   <span class="vb">✓ no matches (rg)</span></div><div>    <span class="tgt">vim\.fn\.setqflist</span>                                     <span class="vd">✗ VIOLATED</span></div><div><span class="ev">        └ lua/conjurer/providers/cli.lua:88 → vim.fn.setqflist(items)</span></div><div><span class="kw">  exercises</span></div><div>    <span class="tgt">tests/cli_spec.lua</span>  <span class="seal">-- @w0zro 2026-07-26 9a02ff</span>          <span class="vb">✓ passing (ran 4m ago)</span></div><div>    <span class="tgt">tests/ollama_spec.lua</span>                                  <span class="vn">– unrun (:ScryRun)</span></div>
+      </div>
+    </div>
+    <p class="cap">An illustration, not a screenshot. The header, the verdicts and the
+    evidence line are virtual text — none of it is in the buffer.</p>
+
+    <p>Editing the model is the primary gesture, and <code>:write</code> saves it,
+    routing <code>never</code>-claims out to the holdout and announcing where they
+    went. <em>"Files on disk"</em> is not decoration: scry reads saved files, so an
+    unwritten buffer is invisible to it. A verdict is always presented with when it was
+    computed and against what.</p>
+
+    <p>The four verdict counts always sum to the claim count. The
+    <code>unchecked</code> column appears only when it isn't zero, so that <em>"0
+    missing · 0 violated"</em> can never be read as a clean bill of health for claims
+    no engine ever answered.</p>
+  </section>
+
+  <!-- ================================================================ II -->
+  <section id="map">
+    <div class="rule" aria-hidden="true"><span>◈</span></div>
+    <div class="chead">
+      <div class="numeral">II</div>
+      <h2>The map is prose <span class="it">plus</span> claims</h2>
+      <p class="dek">Plain text, versioned with the code it describes, and lossless —
+      parse then serialize returns the identical bytes. That is what makes editing the
+      model safe.</p>
+    </div>
+
+    <div class="scroll">
+      <div class="tab">.scry/map.scry</div>
+<pre><span class="k"># providers</span>
+  <span class="k">files</span> lua/conjurer/providers/*.lua
+
+  <span class="c">The provider layer turns a Request into text and calls back once</span>
+  <span class="c">on the main loop. Transport only: no UI, no lists.</span>
+
+  <span class="k">contains</span>
+    lua/conjurer/providers/cli.lua:request    <span class="n">-- @w0zro 2026-07-26 3f9a01</span>
+    lua/conjurer/providers/known.lua:resolve
+  <span class="k">calls</span>
+    known.lua::resolve
+  <span class="k">never</span>
+    vim\.ui\.
+  <span class="k">exercises</span>
+    tests/cli_spec.lua:a provider calls back exactly once</pre>
+    </div>
+
+    <ul>
+      <li><strong>Everything that isn't a claim is prose</strong> — preserved verbatim,
+      never checked, never marked. There are no parse errors: a line is a claim or it
+      is prose. The sentences carry the theory; the claims carry the check, and that
+      split is the whole trick.</li>
+      <li><strong>Indentation is the grammar; vertical space is layout.</strong> A blank
+      line does not close a claim block, so you can paragraph a long list of
+      prohibitions and every one is still a claim.</li>
+      <li><code>never</code> patterns are raw ripgrep regexes — <code>vim\.ui\.</code>,
+      not <code>vim.ui.*</code>. No sugar, because silently mis-escaping a prohibition
+      is exactly the quiet overclaim scry exists to prevent.</li>
+    </ul>
+
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Kind</th><th>Target</th><th>Claims</th></tr></thead>
+        <tbody>
+          <tr><td><span class="hg">contains</span></td><td><code>path:symbol</code></td><td>a definition exists at that location</td></tr>
+          <tr><td><span class="hg">calls</span></td><td><code>[hint::]symbol</code></td><td>the target exists, and this concern references it</td></tr>
+          <tr><td><span class="hg">never</span></td><td>a ripgrep regex</td><td>zero matches in the concern's files</td></tr>
+          <tr><td><span class="hg">exercises</span></td><td><code>path[:assertion]</code></td><td>that spec passes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Two axes, not four items</h3>
+    <div class="axes">
+      <div class="axis">
+        <div class="t">static evidence</div>
+        <h4>contains · calls · never</h4>
+        <p>A definition node, a text match. Cheap, side-effect-free, recomputed on
+        every check.</p>
+      </div>
+      <div class="axis dyn">
+        <div class="t">dynamic evidence</div>
+        <h4>exercises</h4>
+        <p>Something was run and it passed. Slow, stateful, and stale the moment you
+        edit.</p>
+      </div>
+    </div>
+    <p>Structural claims say <em>where things are</em>; an exercised claim says
+    <em>what holds</em>. Neither axis is the primary one. Adding a feature usually
+    wants one of each — <code>contains</code> for the thing existing,
+    <code>exercises</code> for it working — and fixing a bug often wants only the
+    second, since nothing structural changed.</p>
+  </section>
+
+  <!-- =============================================================== III -->
+  <section id="verdicts">
+    <div class="rule" aria-hidden="true"><span>◈</span></div>
+    <div class="chead">
+      <div class="numeral">III</div>
+      <h2>The glyph never appears <span class="it">alone</span></h2>
+      <p class="dek">Every label states what was actually checked. The fidelity of the
+      evidence travels with the verdict, so the glass cannot render a stronger word
+      than the engine that produced it.</p>
+    </div>
+
+    <div class="omens">
+      <div><span class="g vb">✓ defined</span><span class="d">a definition node with that name exists (treesitter)</span></div>
+      <div><span class="g vb">✓ referenced (text)</span><span class="d">the token occurs in the concern's files (ripgrep)</span></div>
+      <div><span class="g vb">✓ no matches (rg)</span><span class="d">the prohibition found nothing</span></div>
+      <div><span class="g vb">✓ passing (ran 4m ago)</span><span class="d">that spec exited 0, and nothing it depends on has changed since — the age is part of the verdict</span></div>
+      <div><span class="g vd">✗ absent</span><span class="d">the definition, or the target, does not exist</span></div>
+      <div><span class="g vd">✗ unreferenced</span><span class="d">the target exists, but this concern never mentions it</span></div>
+      <div><span class="g vd">✗ VIOLATED</span><span class="d">a prohibition matched — carries the line that proves it</span></div>
+      <div><span class="g vd">✗ FAILING</span><span class="d">that spec exited non-zero — carries its output</span></div>
+      <div><span class="g vu">∅ unratified</span><span class="d">nobody has put their name on this claim</span></div>
+      <div><span class="g vn">– unchecked</span><span class="d">no resolver for this language. <strong>Not a pass.</strong></span></div>
+      <div><span class="g vn">– unrun</span><span class="d">nobody has run that spec yet. <strong>Not a pass.</strong></span></div>
+      <div><span class="g vn">– stale</span><span class="d">it passed, but the code has moved since. <strong>Not a pass.</strong></span></div>
+      <div><span class="g vn">– vacuous?</span><span class="d">it passes, and nothing its concern claims exists yet — so it asserts nothing. <strong>Not a pass.</strong></span></div>
+    </div>
+
+    <div class="law">
+      <span class="t">the asymmetry</span>
+      A <strong>violated</strong> prohibition is proof, and it carries the line that
+      proves it. A <strong>clean</strong> prohibition is evidence, not proof — no
+      textual match is not absence of behaviour.
+    </div>
+  </section>
+
+  <!-- ================================================================ IV -->
+  <section id="seal">
+    <div class="rule" aria-hidden="true"><span>◈</span></div>
+    <div class="chead">
+      <div class="numeral">IV</div>
+      <h2>The seal</h2>
+      <p class="dek"><code>:ScryRatify</code> — ratification, the smallest act that puts
+      a person back in the loop. Your name, the date, and the head of a hash of the
+      claim's own text.</p>
+    </div>
+
+    <div class="scroll">
+      <div class="tab">a sealed claim</div>
+<pre>lua/auth.lua:create_session  <span class="n">-- @w0zro 2026-07-26 6b8f0e</span></pre>
+    </div>
+
+    <p>Because the hex is <code>sha256</code> of the claim text, staleness is mechanical
+    and free: <strong>edit a claim and it is unratified again</strong>, since the hash
+    no longer matches. No hooks, no hidden state, and the seal shows up in
+    <code>git diff</code> like any other line.</p>
+
+    <p>Why bother? Because you cannot write down a belief without having one. Clicking
+    "accept" is free, which is why approval degenerates into LGTM. Asserting <em>"this
+    concern contains X and never touches Y"</em> is not performable by someone who
+    hasn't looked, and a careless assertion diverges later with your name on it.</p>
+
+    <div class="law warn">
+      <span class="t">not the same as repairing the theory</span>
+      A program's theory lives in the people who built it and cannot be fully written
+      down. scry does not try to capture it and <strong>cannot restore it once it is
+      gone</strong>. What it does is narrow the drift, and make the moment you stopped
+      understanding something visible instead of silent — a distinction that matters
+      more, not less, the less code you write by hand. A seal is a record of intent,
+      not authenticated attribution: <code>@name</code> is whatever
+      <code>git config user.name</code> says.
+    </div>
+  </section>
+
+  <!-- ================================================================= V -->
+  <section id="debt">
+    <div class="rule" aria-hidden="true"><span>◈</span></div>
+    <div class="chead">
+      <div class="numeral">V</div>
+      <h2>The reckoning</h2>
+      <p class="dek">Theory-debt: two numbers, never blended into a score. They mean
+      different things, and a single fraction would hide both.</p>
+    </div>
+
+    <div class="axes">
+      <div class="axis">
+        <div class="t">has a person been here</div>
+        <h4><span style="color:var(--v-unrat)">∅</span> unratified</h4>
+        <p>Claims nobody has sealed, or whose text has changed since the seal.</p>
+      </div>
+      <div class="axis">
+        <div class="t">does reality agree</div>
+        <h4><span style="color:var(--v-diverge)">✗</span> diverged</h4>
+        <p>Claims that are missing or violated. A claim can count on both axes, and
+        each counts it once.</p>
+      </div>
+    </div>
+
+    <p>The <strong>claim count leads every rendering</strong>, deliberately:
+    <code>0 diverged / 3 claims</code> means your map is <em>thin</em>, not that your
+    repo is healthy. Conjuring generates this debt at machine speed; sealing is the
+    only thing that pays it down.</p>
+
+    <div class="scroll">
+      <div class="tab">lua</div>
+<pre><span class="k">require</span>(<span class="s">"scry.debt"</span>).statusline()  <span class="c">--&gt; "scry 14c ✓11 ✗2 ∅3"</span></pre>
+    </div>
+    <p class="cap">Gains a <code>–N</code> when anything is unchecked, for the same
+    reason the header does.</p>
+  </section>
+
+  <!-- ================================================================ VI -->
+  <section id="holdout">
+    <div class="rule" aria-hidden="true"><span>◈</span></div>
+    <div class="chead">
+      <div class="numeral">VI</div>
+      <h2>The rule it <span class="it">never saw</span></h2>
+      <p class="dek">A <code>never</code> claim is a holdout: withheld from the
+      generator, checked afterwards. That restores independence mechanically rather
+      than by good intentions.</p>
+    </div>
+
+    <p>If the model writing your code is also shown the prohibition, its output
+    satisfying that prohibition tells you nothing — it was <em>asked</em> to satisfy it.
+    A prohibition it never saw, checked after the fact, is real evidence. This is why
+    prohibitions and positive claims are stored apart: <code>never</code>-claims live
+    <strong>outside the repository</strong> by default, under
+    <code>stdpath("state")</code>, keyed to the project path. The glass still shows them
+    inline — only storage differs.</p>
+
+    <div class="rite">
+      <div class="step">
+        <span class="i">i</span>
+        <span><strong>Withheld from requests — guaranteed, and covered by tests.</strong>
+        Everything scry hands a conjurer is built from the concern name, the claim's own
+        target, and the intent you typed. Concern prose is excluded on purpose: prose can
+        restate a prohibition in words no scrubber could catch, so the channel is closed
+        rather than filtered.
+        <span class="why">A tripwire re-checks every outgoing string and refuses to seed
+        if a prohibition's text appears in one.</span></span>
+      </div>
+      <div class="step">
+        <span class="i">ii</span>
+        <span><strong>Hidden from the filesystem — only from a generator that reads your
+        repo.</strong> Not from one instructed to hunt your disk. Independence here is
+        against leakage, not against an adversary.</span>
+      </div>
+    </div>
+
+    <div class="law warn">
+      <span class="t">the cost, stated plainly</span>
+      Out-of-repo prohibitions are per-machine and unversioned. Setting
+      <code>holdout_path</code> to an in-repo file shares them with your team and gives
+      up the second guarantee — <code>:checkhealth scry</code> warns when you do.
+    </div>
+  </section>
+
+  <!-- =============================================================== VII -->
+  <section id="cascade">
+    <div class="rule" aria-hidden="true"><span>◈</span></div>
+    <div class="chead">
+      <div class="numeral">VII</div>
+      <h2>An absent claim is a piece of <span class="it">work</span></h2>
+      <p class="dek"><code>:ScryCascade</code> seeds the quickfix list with the target
+      site and your intent, then hands off to conjurer, which owns the casting and the
+      review. scry never conjures anything itself.</p>
+    </div>
+
+    <p>When you save a file the cascade seeded, scry re-checks: the withheld
+    prohibitions run against the new code, and the claim that started the work
+    re-checks too. So the loop closes visibly — <code>✗ absent</code> becomes
+    <code>✓ defined · ∅ unratified</code>, and the seal is the act that finishes it.
+    Saving is the trigger because ripgrep reads disk.</p>
+
+    <h3>The order is the mechanism</h3>
+    <p>Both <code>contains</code> and <code>exercises</code> cascade, and which comes
+    first is not a convention:</p>
+
+    <div class="rite">
+      <div class="step"><span class="i">i</span><span><code>:ScryCascade</code> the absent <code>exercises</code> claim <span class="why">conjures the check</span></span></div>
+      <div class="step judge"><span class="i">ii</span><span>Read it, and seal it <span class="why">the judgment act — the one step no mechanism can perform for you</span></span></div>
+      <div class="step"><span class="i">iii</span><span><code>:ScryRun</code> <span class="why">it must come back red</span></span></div>
+      <div class="step"><span class="i">iv</span><span><code>:ScryCascade</code> the absent <code>contains</code> claim <span class="why">conjures the code, with the spec withheld</span></span></div>
+      <div class="step"><span class="i">v</span><span><code>:ScryRun</code> <span class="why">green — and the holdout re-checks</span></span></div>
+      <div class="step"><span class="i">vi</span><span><code>:ScryRatify</code> the claim <span class="why">inventory becomes owned product</span></span></div>
+    </div>
+
+    <p>If the check and the code are both generated from the same claim they are not
+    independent — they are two samples from one generator reading one sentence, so they
+    share its misreadings. Both can be confidently wrong in the same direction and the
+    suite is green. When a person wrote the code, their reading of the claim was an
+    independent sample; remove that and <code>✓ passing</code> decays into <em>the
+    generator was self-consistent</em>.</p>
+
+    <p>Two things restore it, and both are <strong>enforced rather than advised</strong>.
+    <em>The spec is withheld from the code request</em> — cascading a
+    <code>contains</code> claim adds every spec path in that concern to the tripwire,
+    exactly as it adds the prohibitions, and an intent that names the test is refused.
+    And <em>a check written before the code must fail</em> — one that passes against a
+    feature nobody has built asserts nothing, which is the commonest way a conjured test
+    is worthless and is invisible from inside the run, since the process exits 0 either
+    way.</p>
+
+    <div class="law warn">
+      <span class="t">three limits</span>
+      Withholding a spec is <strong>weaker</strong> than withholding a prohibition: a
+      never-pattern can live outside the repository, but a spec has to be in the tree to
+      run, so this is request-level withholding only. The seeded entry points at the
+      target file's <strong>first line</strong>, because scry knows which file should
+      define a symbol, not where in it — so the model decides placement and the review
+      is where you check it. And <code>calls</code> and <code>never</code> claims
+      <strong>do not cascade</strong>; neither has a single obvious site to seed, and
+      guessing one would be worse than refusing.
+    </div>
+  </section>
+
+  <!-- ============================================================== VIII -->
+  <section id="exercised">
+    <div class="rule" aria-hidden="true"><span>◈</span></div>
+    <div class="chead">
+      <div class="numeral">VIII</div>
+      <h2>Checking never <span class="it">runs</span> anything</h2>
+      <p class="dek"><code>:Scry</code> reads what the last <code>:ScryRun</code>
+      recorded. Only <code>:ScryRun</code> executes.</p>
+    </div>
+
+    <p>That separation isn't laziness about performance. Every other verdict is a static
+    read: cheap, repeatable, harmless to recompute on every render. Running a suite is
+    slow, has side effects, and can hang — and a glass that shelled out to your test
+    suite whenever you opened it is a glass you would stop opening.</p>
+
+    <h3>The price is staleness, and staleness is the danger</h3>
+    <p><code>✓ passing</code> from before your last edit looks like the strongest thing
+    scry renders and is the easiest one to be wrong. So a recorded run is reported as a
+    pass <em>only while nothing it depended on has moved</em>. Each run fingerprints the
+    concern's files and the spec as it starts; a later check compares. Any difference
+    and the verdict degrades to <code>– stale</code>, which lands in the unchecked
+    column, where an unanswered claim belongs.</p>
+
+    <div class="law">
+      <span class="t">fingerprints, not timestamps</span>
+      mtime granularity is one second, and "edit, then run" finishes inside a single
+      tick — so a clock comparison would call every fresh run stale forever. Two claims
+      on one spec are one execution, and its recorded dependencies cover every concern
+      that exercises it.
+    </div>
+
+    <div class="law warn">
+      <span class="t">a named assertion is a weak check</span>
+      <code>spec.lua:some label</code> verifies that the label appears in the spec's
+      source and that the file passes. It is <strong>not</strong> proof the labelled
+      assertion ran — scry does not see inside a run, it sees an exit code.
+    </div>
+  </section>
+
+  <!-- ================================================================ IX -->
+  <section id="reference">
+    <div class="rule" aria-hidden="true"><span>◈</span></div>
+    <div class="chead">
+      <div class="numeral">IX</div>
+      <h2>Reference</h2>
+      <p class="dek">Five commands, five settings, five highlight groups. Zero config
+      works; <code>:h scry</code> is the full manual.</p>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Command</th><th>Does</th></tr></thead>
+        <tbody>
+          <tr><td><span class="hg">:Scry</span></td><td>Open (or focus) the glass and check every claim.</td></tr>
+          <tr><td><span class="hg">:ScryCheck</span></td><td>Re-check every claim against the files on disk.</td></tr>
+          <tr><td><span class="hg">:ScryRatify</span></td><td>Seal the claim under the cursor with your name, the date, and a hash of its text.</td></tr>
+          <tr><td><span class="hg">:ScryRun</span> <span style="color:var(--faint)">[concern]</span></td><td>Run the specs behind this map's <code>exercises</code> claims and record the results, then re-check. The only command that executes your code.</td></tr>
+          <tr><td><span class="hg">:ScryCascade</span></td><td>Turn the absent claim under the cursor into quickfix work and hand it to conjurer, with the concern's prohibitions withheld.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="scroll">
+      <div class="tab">lua — defaults shown</div>
+<pre><span class="k">require</span>(<span class="s">"scry"</span>).setup({
+  <span class="c">-- The belief map, versioned with the code it describes.</span>
+  map_path = <span class="s">".scry/map.scry"</span>,
+
+  <span class="c">-- Where never-claims live. Empty = outside the repo, under</span>
+  <span class="c">-- stdpath("state"), so a repo-reading generator never sees them.</span>
+  holdout_path = <span class="s">""</span>,
+
+  <span class="c">-- Name written into seals. Empty = git config user.name.</span>
+  author = <span class="s">""</span>,
+
+  <span class="c">-- Claim-checking engine. Empty = treesitter + ripgrep (lua-first).</span>
+  resolver = <span class="s">""</span>,
+
+  <span class="c">-- How to run ONE spec: the spec's path is appended, exit 0 passes.</span>
+  <span class="c">-- Nothing here runs on :Scry. Empty = claims stay "– unrun".</span>
+  test = { cmd = {} },   <span class="c">-- e.g. { "./scripts/test" }</span>
+})</pre>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Highlight</th><th>Paints</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td><span class="hg">ScryBacked</span></td><td>backed and clean verdicts</td><td><code>DiagnosticOk</code></td></tr>
+          <tr><td><span class="hg">ScryDiverged</span></td><td>missing and violated verdicts</td><td><code>DiagnosticError</code></td></tr>
+          <tr><td><span class="hg">ScryUnratified</span></td><td>the <code>∅</code> marker</td><td><code>DiagnosticWarn</code></td></tr>
+          <tr><td><span class="hg">ScryEvidence</span></td><td>evidence lines and unchecked verdicts</td><td><code>Comment</code></td></tr>
+          <tr><td><span class="hg">ScryHeader</span></td><td>the glass header</td><td><code>Title</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Every group is a <code>default</code> link, so a colorscheme or your config wins
+    outright. <code>:checkhealth scry</code> reports the Neovim version, ripgrep and the
+    lua treesitter parser — the resolver's two legs — where your map is and how many
+    claims it holds, where the holdout lives (warning if it sits inside the repo), and
+    whether conjurer.nvim and quickfix.pro are present. Requires ripgrep, a lua
+    treesitter parser, and Neovim 0.10+.</p>
+  </section>
+
+  <!-- ================================================================= X -->
+  <section id="honesty">
+    <div class="rule" aria-hidden="true"><span>◈</span></div>
+    <div class="chead">
+      <div class="numeral">X</div>
+      <h2>What scry will <span class="it">not</span> say</h2>
+      <p class="dek">Every line here is a limit scry intends to keep stating plainly.
+      It is a chapter, not a footnote — a tool about honest accounting that overstated
+      its own reach would refute itself.</p>
+    </div>
+
+    <div class="ledger">
+      <div class="row"><strong>"Backed" means accounted for, not correct.</strong> The
+      ladder is claimed → backed → exercised. Nothing scry renders is evidence that
+      your code is <em>right</em>.</div>
+
+      <div class="row"><strong><code>contains ✓ defined</code></strong> asserts a
+      definition with that name exists in that file. It says nothing about its body, and
+      the prose above it is unchecked.</div>
+
+      <div class="row"><strong><code>calls ✓ referenced (text)</code></strong> asserts
+      the token occurs in the concern's files and the target exists somewhere. It is
+      <em>not</em> a resolved call: not reachability, not the same symbol, not proof the
+      call happens. The rung is referenced &lt; resolved &lt; exercised.</div>
+
+      <div class="row"><strong><code>never ✓ no matches (rg)</code></strong> asserts no
+      textual match. It is not absence of behaviour —
+      <code>local ui = vim.ui; ui.input(...)</code> defeats it.</div>
+
+      <div class="row"><strong><code>exercises ✓ passing</code></strong> asserts a spec
+      process exited 0, at a stated age, with its dependencies unchanged since. It is
+      not proof a feature works — only that whatever that spec checks, held.</div>
+
+      <div class="row"><strong>Verdicts describe saved files at a moment.</strong>
+      Unwritten buffers and edits made after the check are invisible. The timestamp
+      travels with the render.</div>
+
+      <div class="row"><strong>Holdout independence is against leakage, not
+      adversaries</strong> — and withholding a spec is weaker still, because the spec has
+      to live in the tree to run.</div>
+
+      <div class="row"><strong>Theory-debt is coverage-blind.</strong> Until scry reports
+      code that no claim covers, a clean map may simply be an empty one — which is why
+      the claim count is rendered first.</div>
+
+      <div class="row"><strong>Seals are records, not identity.</strong>
+      <code>@name</code> comes from your git config.</div>
+
+      <div class="row"><strong><code>– unchecked</code> is not a pass.</strong> A
+      language with no resolver renders as unchecked, deliberately, so silence never
+      looks like agreement.</div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="rule" aria-hidden="true"><span>◈ ◉ ◈</span></div>
+    <p>One of three. Conjuring is how code arrives, the list is where it is reviewed,
+    and the glass is the ledger and the audit.</p>
+    <div class="flinks">
+      <a href="https://conjurer.vim.pro">conjurer.nvim</a>
+      <a href="#honesty">what it will not say</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
