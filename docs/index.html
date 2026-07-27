@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>scry.nvim — look into the glass</title>
-<meta name="description" content="A belief ledger for Neovim. Write what you think is true about your code; scry checks every claim against what the code actually does and shows you the drift.">
-<meta property="og:title" content="scry.nvim — look into the glass">
-<meta property="og:description" content="Write what you think is true about your code. scry checks it against the code and shows you the drift.">
+<title>scry.nvim — work it out, then conjure it</title>
+<meta name="description" content="A Neovim buffer where you work out what your product is and what you're about to change it to. scry checks the description against the real code, and conjures the change when the description is right.">
+<meta property="og:title" content="scry.nvim — work it out, then conjure it">
+<meta property="og:description" content="Work out what your product is and what you're changing it to. Conjure the change when the description is right.">
 <meta property="og:url" content="https://scry.vim.pro">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://scry.vim.pro/og.png">
@@ -32,9 +32,6 @@
   --v-diverge: #d97a6e;
   --v-unrat: #c9a94e;
   --v-unchk: #7d8a90;
-  --syn-kw: #8fb3bd;
-  --syn-fn: #9ecfc0;
-  --syn-str: #b9c98a;
   --hairline: rgba(226,232,234,0.1);
   --serif: "Cormorant Garamond", Georgia, serif;
   --sans: "Instrument Sans", system-ui, sans-serif;
@@ -43,11 +40,8 @@
 * { box-sizing: border-box; margin: 0; }
 html { scroll-behavior: smooth; }
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.6;
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 15px; line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
@@ -55,7 +49,7 @@ a:hover { color: var(--text); }
 code { font-family: var(--mono); }
 
 .shell { width: 100%; }
-nav, .hero, .basin, .laws, .kinds, .circle-sect, .ref, .ledger-sect, .cta {
+nav, .hero, .basin, .work, .laws, .kinds, .circle-sect, .ref, .limits-sect, .cta {
   padding-inline: max(48px, calc((100% - 1120px) / 2 + 48px));
 }
 .basin { padding-inline: max(24px, calc((100% - 1120px) / 2 + 88px)); }
@@ -65,6 +59,7 @@ nav, .hero, .basin, .laws, .kinds, .circle-sect, .ref, .ledger-sect, .cta {
 @keyframes scglow { 0%, 100% { opacity: .45; } 50% { opacity: .85; } }
 @keyframes scland { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: none; } }
 @keyframes scspin { to { transform: rotate(360deg); } }
+@keyframes scnew { from { background: rgba(201,169,78,.12); } to { background: transparent; } }
 
 /* ---------- nav ---------- */
 nav {
@@ -77,7 +72,6 @@ nav {
 .nav-links { display: flex; align-items: center; gap: 26px; font-size: 13.5px; color: var(--muted); }
 .nav-links a:hover { color: var(--text); }
 .nav-links .h { font-family: var(--mono); font-size: 12px; color: var(--faint); }
-.gh-icon { width: 13px; height: 13px; vertical-align: -1.5px; margin-right: 5px; flex-shrink: 0; }
 .look-pill {
   font-family: var(--mono); font-size: 12px; color: var(--mercury);
   border: 1px solid rgba(143,179,189,0.35); border-radius: 999px;
@@ -105,19 +99,19 @@ h1 {
   text-wrap: balance;
 }
 h1 em { font-style: italic; color: var(--mercury); }
-.sub { margin: 26px auto 0; max-width: 540px; font-size: 17.5px; color: var(--muted); text-wrap: pretty; }
+.sub { margin: 26px auto 0; max-width: 560px; font-size: 17.5px; color: var(--muted); text-wrap: pretty; }
 .sub code { color: var(--text); }
 
 .reading {
   display: flex; justify-content: center; align-items: stretch;
-  margin: 46px auto 0; max-width: 760px;
+  margin: 46px auto 0; max-width: 800px;
   border: 1px solid rgba(226,232,234,0.12); border-radius: 12px;
   background: rgba(226,232,234,0.02); text-align: center;
 }
 .reading .cell { flex: 1; padding: 22px 20px; border-right: 1px solid var(--hairline); }
 .reading .cell:last-child { border-right: 0; }
 .reading .rn { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--mercury); margin-bottom: 8px; }
-.reading .val { font-family: var(--mono); font-size: 19px; color: var(--text); }
+.reading .val { font-family: var(--mono); font-size: 18px; color: var(--text); }
 .reading .cap { margin-top: 6px; font-size: 12.5px; color: var(--faint); }
 .reading .cell:nth-child(3) .rn { color: var(--seal); }
 
@@ -134,14 +128,13 @@ h1 em { font-style: italic; color: var(--mercury); }
 .install-chip .copy:hover { text-shadow: 0 0 12px rgba(201,169,78,0.6); }
 .reagents { font-family: var(--mono); font-size: 11.5px; color: var(--faint); }
 
-/* ---------- the basin (animated glass) ---------- */
+/* ---------- the basin ---------- */
 .basin { padding-block: 16px 28px; }
 .basin-caption { text-align: center; margin-bottom: 18px; }
 .basin-caption .t { font-family: var(--serif); font-style: italic; font-size: 24px; color: var(--mercury); }
 .basin-caption .s { display: block; margin-top: 4px; font-size: 13.5px; color: var(--faint); }
 .terminal {
-  background: var(--panel);
-  border: 1px solid rgba(143,179,189,0.2);
+  background: var(--panel); border: 1px solid rgba(143,179,189,0.2);
   border-radius: 14px; overflow: hidden;
   box-shadow: 0 0 80px rgba(80,140,160,0.15), 0 30px 80px rgba(0,0,0,0.65);
 }
@@ -153,14 +146,12 @@ h1 em { font-style: italic; color: var(--mercury); }
 .term-bar .mid { color: var(--muted); }
 .term-body {
   font-family: var(--mono); font-size: 13.5px; line-height: 1.85;
-  padding: 16px 0; text-align: left; overflow-x: auto; min-height: 430px;
+  padding: 16px 0; text-align: left; overflow-x: auto; min-height: 400px;
 }
 .gline { display: flex; padding: 0 24px; white-space: pre; }
-/* A fixed column for the claim text, so verdicts line up the way they do in
-   the real buffer (virtual text at end-of-line, but the map's own columns are
-   what the eye follows). Padding with spaces would drift per row. */
 .gline .txt { flex: none; min-width: 58ch; }
 .gline .vd-slot { flex: none; animation: scland .34s ease-out both; }
+.gline.fresh { animation: scnew 1.4s ease-out both; }
 .hdr { color: var(--mercury); }
 .cn { color: var(--text); font-weight: 600; }
 .kw { color: var(--faint); }
@@ -173,25 +164,34 @@ h1 em { font-style: italic; color: var(--mercury); }
 .spin { color: var(--mercury); display: inline-block; animation: scspin 1.1s linear infinite; }
 .cursor-b {
   display: inline-block; width: 8px; height: 17px; background: var(--text);
-  vertical-align: -3px; margin-left: 2px; animation: scblink 1.1s step-end infinite;
+  vertical-align: -3px; margin-left: 1px; animation: scblink 1.1s step-end infinite;
 }
 .term-status { display: flex; font-family: var(--mono); font-size: 12px; }
 .term-status .mode { background: var(--mercury); color: var(--inset); font-weight: 600; padding: 5px 14px; }
+.term-status .mode.ins { background: var(--seal); }
 .term-status .file { background: #17242a; color: var(--muted); padding: 5px 14px; }
 .term-status .note { background: var(--inset); color: var(--faint); padding: 5px 14px; flex: 1; }
 .term-status .pos { background: var(--inset); color: var(--faint); padding: 5px 14px; }
 
+/* ---------- the work (3 beats) ---------- */
+.work { padding-block: 56px 10px; }
+.beats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.beat { border: 1px solid var(--hairline); border-radius: 12px; padding: 24px; background: linear-gradient(180deg, rgba(143,179,189,0.05), rgba(143,179,189,0)); }
+.beat .n { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--mercury); margin-bottom: 10px; }
+.beat.gold .n { color: var(--seal); }
+.beat .t { font-weight: 600; font-size: 17px; margin-bottom: 8px; }
+.beat .b { font-size: 14px; color: var(--muted); }
+.beat .b code { color: var(--text); }
+.beat .b strong { color: var(--text); }
+
 /* ---------- laws ---------- */
-.laws { padding-block: 62px 24px; }
-.section-head { text-align: center; margin-bottom: 38px; }
+.laws { padding-block: 54px 24px; }
+.section-head { text-align: center; margin-bottom: 36px; }
 h2 { font-family: var(--serif); font-weight: 600; font-size: 44px; letter-spacing: -.01em; }
 h2 em { font-style: italic; color: var(--mercury); }
 .section-head .s { margin-top: 8px; font-size: 14px; color: var(--faint); }
 .law-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-.law {
-  border: 1px solid var(--hairline); border-radius: 12px; padding: 26px;
-  background: linear-gradient(180deg, rgba(143,179,189,0.05), rgba(143,179,189,0));
-}
+.law { border: 1px solid var(--hairline); border-radius: 12px; padding: 26px; background: linear-gradient(180deg, rgba(143,179,189,0.05), rgba(143,179,189,0)); }
 .law .kick { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--mercury); margin-bottom: 10px; }
 .law.gold .kick { color: var(--seal); }
 .law .t { font-weight: 600; font-size: 17px; margin-bottom: 8px; }
@@ -199,46 +199,38 @@ h2 em { font-style: italic; color: var(--mercury); }
 .law .b code { color: var(--text); }
 .law .b strong { color: var(--text); }
 
-/* ---------- kinds (verdict vocabulary) ---------- */
-.kinds { padding-block: 46px 20px; }
+/* ---------- omens ---------- */
+.kinds { padding-block: 44px 20px; }
 .omens { max-width: 820px; margin: 0 auto; border-top: 1px solid var(--hairline); }
-.omens .o {
-  display: grid; grid-template-columns: 13rem 1fr; gap: 14px;
-  padding: 9px 0; border-bottom: 1px solid var(--hairline); font-size: 14px;
-}
+.omens .o { display: grid; grid-template-columns: 13rem 1fr; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--hairline); font-size: 14px; }
 .omens .g { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
 .omens .d { color: var(--muted); }
 .omens .d b { color: var(--v-diverge); font-weight: 600; }
 .omens-note { max-width: 820px; margin: 18px auto 0; font-size: 13px; color: var(--faint); text-align: center; }
 
-/* ---------- the circle ---------- */
-.circle-sect { padding-block: 68px 60px; text-align: center; }
+/* ---------- circle ---------- */
+.circle-sect { padding-block: 64px 56px; text-align: center; }
 .circle-sect .s { font-size: 14px; color: var(--faint); margin: 6px 0 20px; }
 .circle-wrap { position: relative; width: 640px; height: 640px; margin: 0 auto; }
 .ring-outer { position: absolute; inset: 44px; border: 1px dashed rgba(143,179,189,0.3); border-radius: 50%; }
 .ring-inner { position: absolute; inset: 176px; border: 1px solid rgba(201,169,78,0.22); border-radius: 50%; }
 .circle-glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 .circle-glyph .lens {
-  width: 96px; height: 96px; border-radius: 50%;
-  border: 2px solid var(--mercury);
+  width: 96px; height: 96px; border-radius: 50%; border: 2px solid var(--mercury);
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 0 70px rgba(143,179,189,0.35), inset 0 0 40px rgba(143,179,189,0.12);
   animation: scglow 5s ease-in-out infinite;
 }
 .circle-glyph .lens i { width: 34px; height: 34px; border-radius: 50%; background: var(--seal); opacity: .8; }
 .chip { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; gap: 5px; align-items: center; }
-.chip code {
-  font-size: 14px; background: var(--inset);
-  border: 1px solid rgba(143,179,189,0.4); border-radius: 7px;
-  padding: 8px 13px; color: var(--text); white-space: nowrap;
-}
+.chip code { font-size: 14px; background: var(--inset); border: 1px solid rgba(143,179,189,0.4); border-radius: 7px; padding: 8px 13px; color: var(--text); white-space: nowrap; }
 .chip.seal code { border-color: rgba(201,169,78,0.5); color: var(--seal); }
 .chip.dim code { border-color: rgba(226,232,234,0.22); color: var(--muted); }
 .chip .lbl { font-size: 12px; color: var(--muted); white-space: nowrap; }
 .chip-list { display: none; }
 
 /* ---------- reference ---------- */
-.ref { padding-block: 20px 20px; }
+.ref { padding-block: 18px 18px; }
 .ref-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 26px; align-items: start; }
 .tbl { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
@@ -248,23 +240,17 @@ tbody tr:last-child td { border-bottom: 0; }
 td code { color: var(--text); }
 .hg { font-family: var(--mono); font-size: 12.5px; color: var(--mercury); white-space: nowrap; }
 .scroll { border: 1px solid var(--hairline); border-radius: 12px; overflow: hidden; background: var(--panel); }
-.scroll .tab {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
-  color: var(--faint); padding: 9px 16px; border-bottom: 1px solid var(--hairline);
-}
+.scroll .tab { font-family: var(--mono); font-size: 11px; letter-spacing: .15em; text-transform: uppercase; color: var(--faint); padding: 9px 16px; border-bottom: 1px solid var(--hairline); }
 pre { margin: 0; padding: 16px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.8; color: #cfdbdf; }
-pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { color: var(--faint); font-style: italic; }
+pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var(--faint); font-style: italic; }
 
-/* ---------- the ledger (won't say) ---------- */
-.ledger-sect { padding-block: 58px 20px; }
-.ledger { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 0 26px; }
-.ledger .row { padding: 11px 0 11px 26px; border-bottom: 1px solid var(--hairline); font-size: 13.5px; color: var(--muted); position: relative; }
-.ledger .row::before {
-  content: "✗"; position: absolute; left: 0; top: 11px;
-  font-family: var(--mono); font-size: 11px; color: var(--gutter);
-}
-.ledger .row b { color: var(--text); font-weight: 600; }
-.ledger .row code { color: var(--text); }
+/* ---------- limits ---------- */
+.limits-sect { padding-block: 54px 20px; }
+.limits { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 0 26px; }
+.limits .row { padding: 11px 0 11px 26px; border-bottom: 1px solid var(--hairline); font-size: 13.5px; color: var(--muted); position: relative; }
+.limits .row::before { content: "✗"; position: absolute; left: 0; top: 11px; font-family: var(--mono); font-size: 11px; color: var(--gutter); }
+.limits .row b { color: var(--text); font-weight: 600; }
+.limits .row code { color: var(--text); }
 
 /* ---------- CTA ---------- */
 .cta {
@@ -280,7 +266,7 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
 
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
-  nav, .hero, .basin, .laws, .kinds, .circle-sect, .ref, .ledger-sect, .cta { padding-inline: 24px; }
+  nav, .hero, .basin, .work, .laws, .kinds, .circle-sect, .ref, .limits-sect, .cta { padding-inline: 24px; }
   nav { padding-block: 16px; }
   .nav-links .optional { display: none; }
   .hero { padding-block: 60px 44px; }
@@ -288,9 +274,7 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
   .reading .cell { border-right: 0; border-bottom: 1px solid var(--hairline); }
   .reading .cell:last-child { border-bottom: 0; }
   h2 { font-size: 34px; }
-  .law-grid { grid-template-columns: 1fr; }
-  .ref-grid { grid-template-columns: 1fr; }
-  .ledger { grid-template-columns: 1fr; }
+  .beats, .law-grid, .ref-grid, .limits { grid-template-columns: 1fr; }
   .install-chip { flex-wrap: wrap; justify-content: center; }
 }
 @media (max-width: 640px) { .omens .o { grid-template-columns: 1fr; gap: 2px; } }
@@ -301,7 +285,7 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
   .chip-list .chip { position: static; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cursor-b, .mote, .circle-glyph .lens, .spin, .gline .vd-slot { animation: none; }
+  .cursor-b, .mote, .circle-glyph .lens, .spin, .gline .vd-slot, .gline.fresh { animation: none; }
 }
 </style>
 </head>
@@ -330,27 +314,27 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
   <div class="mote" style="right:9%; top:60%; width:3px; height:3px; background:#c9a94e; opacity:.6; --tw:4.5s; --d:1.5s;"></div>
   <div class="mote" style="left:7%; top:72%; width:2px; height:2px; background:#8fb3bd; opacity:.5; --tw:5s; --d:2s;"></div>
 
-  <div class="rel eyebrow">a belief ledger for neovim</div>
-  <h1 class="rel">What you <em>believe</em>, checked.</h1>
-  <p class="rel sub">Write down what your code does. scry checks every claim against the
-  real thing and marks the drift. Git records what happened; this records what you
-  think is true.</p>
+  <div class="rel eyebrow">where a change gets thought through</div>
+  <h1 class="rel">Work it out. Then <em>conjure</em> it.</h1>
+  <p class="rel sub">One buffer holds what your product is and what you're about to change
+  it to. scry checks the description against the real code as you write, so you find out
+  what you actually meant — then casts it when the description is right.</p>
 
   <div class="rel reading">
     <div class="cell">
-      <div class="rn">I. Author</div>
-      <div class="val">a claim</div>
-      <div class="cap">prose plus checkable lines</div>
+      <div class="rn">I. Describe</div>
+      <div class="val">the product</div>
+      <div class="cap">prose, plus lines that can be checked</div>
     </div>
     <div class="cell">
-      <div class="rn">II. Check</div>
-      <div class="val">:Scry</div>
-      <div class="cap">verdicts land beside it</div>
+      <div class="rn">II. State the change</div>
+      <div class="val">a new claim</div>
+      <div class="cap">it reads <span style="color:var(--v-diverge)">✗ absent</span> — that's the work</div>
     </div>
     <div class="cell">
-      <div class="rn">III. Seal</div>
-      <div class="val">:ScryRatify</div>
-      <div class="cap">your name on it</div>
+      <div class="rn">III. Conjure</div>
+      <div class="val">:ScryCascade</div>
+      <div class="cap">the claim goes green, then you sign it</div>
     </div>
   </div>
 
@@ -368,7 +352,7 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
 <section class="basin" id="basin">
   <div class="basin-caption">
     <span class="t">The glass</span>
-    <span class="s">one buffer · your beliefs on the left, scry's answer on the right</span>
+    <span class="s">describe a change · watch it be absent · conjure it · sign it</span>
   </div>
   <div class="terminal">
     <div class="term-bar">
@@ -378,10 +362,37 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
     </div>
     <div class="term-body" id="termBody"></div>
     <div class="term-status">
-      <span class="mode">SCRY</span>
+      <span class="mode" id="termMode">SCRY</span>
       <span class="file">.scry/map.scry</span>
       <span class="note" id="termNote">&nbsp;</span>
       <span class="pos" id="termPos">1:1</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== work ============================== -->
+<section class="work">
+  <div class="beats">
+    <div class="beat">
+      <div class="n">i.</div>
+      <div class="t">Understanding is the artifact</div>
+      <div class="b">You write what the thing does — in prose, at the altitude you
+      actually think at. The checkable lines underneath keep the prose honest. If you
+      can't state it, you don't know it yet, and that's the useful part.</div>
+    </div>
+    <div class="beat">
+      <div class="n">ii.</div>
+      <div class="t">A change is a claim that isn't true yet</div>
+      <div class="b">Write the line for what you want. It comes back
+      <code>✗ absent</code>. Nothing has broken — that's your worklist, stated in the
+      same vocabulary as everything already there.</div>
+    </div>
+    <div class="beat gold">
+      <div class="n">iii.</div>
+      <div class="t">Conjure when the description is right</div>
+      <div class="b"><code>:ScryCascade</code> hands it to conjurer with the concern as
+      context. The code lands, the claim flips green, and you sign it. Not before you
+      know what you're asking for.</div>
     </div>
   </div>
 </section>
@@ -395,19 +406,18 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
   <div class="law-grid">
     <div class="law">
       <div class="kick">i. the split</div>
-      <div class="t">Prose carries the theory. Claims carry the check.</div>
-      <div class="b">Write as much explanation as you like — prose is kept verbatim and
-      never checked. Claims are four indented forms: <code>contains</code>,
-      <code>calls</code>, <code>never</code>, <code>exercises</code>. There are no parse
-      errors; a line is a claim or it's prose.</div>
+      <div class="t">Prose carries the thinking. Claims carry the check.</div>
+      <div class="b">Write as much as you like — prose is kept verbatim and never
+      checked. Claims are four indented forms: <code>contains</code>, <code>calls</code>,
+      <code>never</code>, <code>exercises</code>. No parse errors; a line is a claim or
+      it's prose.</div>
     </div>
     <div class="law gold">
       <div class="kick">ii. the seal</div>
       <div class="t">Editing a claim un-seals it. Mechanically.</div>
       <div class="b"><code>:ScryRatify</code> stamps a claim with your name and six hex of
       <code>sha256</code> of its own text. Change the text and the hash stops matching, so
-      it's <strong>unratified</strong> again. No hooks, no hidden state, visible in
-      <code>git diff</code>.</div>
+      it's <strong>unratified</strong> again. Signing means you understood it.</div>
     </div>
     <div class="law">
       <div class="kick">iii. the withheld rule</div>
@@ -417,12 +427,11 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
       nothing when satisfied — it was asked to. One it never saw is evidence.</div>
     </div>
     <div class="law">
-      <div class="kick">iv. two axes</div>
-      <div class="t">Where things are, and what holds.</div>
-      <div class="b"><code>contains</code>, <code>calls</code> and <code>never</code> are
-      static reads — cheap, run on every check. <code>exercises</code> is dynamic: a spec
-      ran and passed. Adding a feature wants one of each; fixing a bug often wants only
-      the second.</div>
+      <div class="kick">iv. check before code</div>
+      <div class="t">Conjure the test first, and hide it from the code.</div>
+      <div class="b">Cascade an <code>exercises</code> claim, read the spec, confirm it
+      goes red. Then cascade the <code>contains</code> claim — with the spec path
+      withheld. Two generations from one sentence share its misreadings.</div>
     </div>
   </div>
 </section>
@@ -430,7 +439,7 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
 <!-- ============================== omens ============================= -->
 <section class="kinds" id="verdicts">
   <div class="section-head">
-    <h2>The glyph never appears <em>alone</em></h2>
+    <h2>What the glass <em>answers</em></h2>
     <div class="s">every label says what was actually checked</div>
   </div>
   <div class="omens">
@@ -438,7 +447,7 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
     <div class="o"><span class="g vb">✓ referenced (text)</span><span class="d">the token occurs in the concern's files (ripgrep)</span></div>
     <div class="o"><span class="g vb">✓ no matches (rg)</span><span class="d">the prohibition found nothing</span></div>
     <div class="o"><span class="g vb">✓ passing (ran 4m ago)</span><span class="d">that spec exited 0, with its dependencies unchanged since</span></div>
-    <div class="o"><span class="g vd">✗ absent</span><span class="d">the definition, or the target, does not exist</span></div>
+    <div class="o"><span class="g vd">✗ absent</span><span class="d">not there yet — usually your worklist, not a fault</span></div>
     <div class="o"><span class="g vd">✗ unreferenced</span><span class="d">the target exists; this concern never mentions it</span></div>
     <div class="o"><span class="g vd">✗ VIOLATED</span><span class="d">a prohibition matched — carries the line that proves it</span></div>
     <div class="o"><span class="g vd">✗ FAILING</span><span class="d">that spec exited non-zero — carries its output</span></div>
@@ -454,8 +463,8 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
 
 <!-- ============================= circle ============================= -->
 <section class="circle-sect">
-  <h2>The <em>reading</em></h2>
-  <div class="s">four things you can claim · four answers the glass can give</div>
+  <h2>The <em>vocabulary</em></h2>
+  <div class="s">four things you can state · four answers you can get back</div>
   <div class="circle-wrap" id="circleWrap">
     <div class="ring-outer"></div>
     <div class="ring-inner"></div>
@@ -477,9 +486,9 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
         <tbody>
           <tr><td><span class="hg">:Scry</span></td><td>Open the glass; check every claim.</td></tr>
           <tr><td><span class="hg">:ScryCheck</span></td><td>Re-check against the files on disk.</td></tr>
-          <tr><td><span class="hg">:ScryRatify</span></td><td>Seal the claim under the cursor.</td></tr>
+          <tr><td><span class="hg">:ScryCascade</span></td><td>Conjure the absent claim under the cursor, prohibitions withheld.</td></tr>
           <tr><td><span class="hg">:ScryRun</span></td><td>Run the specs behind <code>exercises</code> claims, then re-check. The only command that executes your code.</td></tr>
-          <tr><td><span class="hg">:ScryCascade</span></td><td>Turn an absent claim into quickfix work and hand it to conjurer, prohibitions withheld.</td></tr>
+          <tr><td><span class="hg">:ScryRatify</span></td><td>Sign the claim under the cursor.</td></tr>
         </tbody>
       </table>
     </div>
@@ -496,13 +505,14 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
   </div>
 </section>
 
-<!-- ============================== ledger ============================ -->
-<section class="ledger-sect" id="wont">
+<!-- ============================== limits ============================ -->
+<section class="limits-sect" id="wont">
   <div class="section-head">
     <h2>What it <em>won't</em> say</h2>
     <div class="s">a chapter of the manual, not a footnote</div>
   </div>
-  <div class="ledger">
+  <div class="limits">
+    <div class="row"><b>The map is written by you.</b> scry does not recover it from the code — automatic architecture recovery tops out around half right.</div>
     <div class="row"><b>Backed is not correct.</b> claimed → backed → exercised. Nothing here says your code is right.</div>
     <div class="row"><b><code>contains ✓</code></b> — a definition with that name exists. Nothing about its body.</div>
     <div class="row"><b><code>calls ✓</code></b> — the token occurs and the target exists. Not a resolved call, not reachability.</div>
@@ -510,15 +520,14 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
     <div class="row"><b><code>exercises ✓</code></b> — a process exited 0, at a stated age. Not proof a feature works.</div>
     <div class="row"><b>Verdicts describe saved files</b> at a moment. Unwritten buffers are invisible.</div>
     <div class="row"><b>Holdout independence is against leakage</b>, not adversaries. Withholding a spec is weaker still — it lives in the tree.</div>
-    <div class="row"><b>Debt is coverage-blind.</b> A clean map may be an empty one, which is why the claim count leads.</div>
-    <div class="row"><b>Seals are records, not identity.</b> <code>@name</code> is your git config.</div>
-    <div class="row"><b><code>– unchecked</code> is not a pass.</b> No resolver means unchecked, so silence never reads as agreement.</div>
+    <div class="row"><b>The cascade seeds the file's first line.</b> scry knows which file, not where in it. Placement is the model's call; the review is yours.</div>
+    <div class="row"><b><code>calls</code> and <code>never</code> don't cascade.</b> Neither has one obvious site to seed, and guessing beats refusing only rarely.</div>
   </div>
 </section>
 
 <!-- =============================== CTA ============================== -->
 <section class="cta">
-  <div class="line">Look into the <em>glass</em>.</div>
+  <div class="line">Know what you're asking for. <em>Then</em> ask.</div>
   <span class="install-chip">
     <span class="cm">vim.pack.add</span>
     <span>{ "vim-pro/scry.nvim" }</span>
@@ -529,7 +538,7 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
     <a href="https://conjurer.vim.pro">conjurer.nvim</a>
     <a href="#wont">limits</a>
   </div>
-  <div class="mit">MIT · one of three: conjuring arrives, the list reviews, the glass audits</div>
+  <div class="mit">MIT · one of three: the glass describes, conjuring arrives, the list reviews</div>
 </section>
 
 </div>
@@ -563,12 +572,12 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
     });
   });
 
-  /* ---------- the reading circle ---------- */
+  /* ---------- the vocabulary circle ---------- */
   var RING = [
     { key: "contains", lbl: "a definition exists" },
     { key: "✓ defined", lbl: "treesitter found it", cls: "seal" },
     { key: "calls", lbl: "this concern references it" },
-    { key: "✗ absent", lbl: "it isn't there", cls: "seal" },
+    { key: "✗ absent", lbl: "not yet — the work", cls: "seal" },
     { key: "never", lbl: "zero matches, ever" },
     { key: "∅ unratified", lbl: "nobody signed it", cls: "seal" },
     { key: "exercises", lbl: "a spec passes" },
@@ -591,74 +600,60 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
   });
 
   /* ---------- the glass demo ----------
-     The loop is what the plugin actually does: claims sit there, verdicts
-     resolve asynchronously and land one at a time, then a seal is written. */
+     The arc is the workflow, not an audit: a settled map, you type the change
+     you want, it comes back absent, you cascade it, it goes green, you sign. */
   var body = document.getElementById("termBody");
   var actEl = document.getElementById("termAct");
   var noteEl = document.getElementById("termNote");
   var posEl = document.getElementById("termPos");
+  var modeEl = document.getElementById("termMode");
 
-  var SEAL = '<span class="stamp">-- @w0zro 2026-07-26 3f9a01</span>';
-  // [target html, (unused), verdict html, evidence line?]
-  var CLAIMS = [
-    ["    <span class=\"tgt\">providers/cli.lua:request</span>  " + SEAL, 3,
+  var NEW_TARGET = "providers/ollama.lua:request";
+  var SETTLED = [
+    ['    <span class="tgt">providers/cli.lua:request</span>  <span class="stamp">-- @w0zro 2026-07-26 3f9a01</span>',
      '<span class="vb">✓ defined</span>'],
-    ["    <span class=\"tgt\">providers/known.lua:resolve</span>", 31,
-     '<span class="vb">✓ defined</span> · <span class="vu">∅ unratified</span>'],
-    ["    <span class=\"tgt\">providers/ollama.lua:request</span>", 30,
-     '<span class="vd">✗ absent</span> · <span class="vu">∅ unratified</span>'],
-    ["    <span class=\"tgt\">known.lua::resolve</span>", 40,
-     '<span class="vb">✓ referenced (text)</span> · <span class="vu">∅ unratified</span>'],
-    ["    <span class=\"tgt\">vim\\.ui\\.</span>", 49,
-     '<span class="vb">✓ no matches (rg)</span>'],
-    ["    <span class=\"tgt\">vim\\.fn\\.setqflist</span>", 40,
-     '<span class="vd">✗ VIOLATED</span>',
-     '<span class="ev">        └ providers/cli.lua:88 → vim.fn.setqflist(items)</span>'],
-    ["    <span class=\"tgt\">tests/cli_spec.lua</span>", 40,
-     '<span class="vn">– unrun (:ScryRun)</span>']
+    ['    <span class="tgt">providers/known.lua:resolve</span>  <span class="stamp">-- @w0zro 2026-07-26 b71e00</span>',
+     '<span class="vb">✓ defined</span>']
   ];
-  var HEADER_IDLE = "scry · 7 claims — checking…";
-  var HEADER_DONE = "scry · 7 claims · 4 backed · 2 missing · 1 unchecked · 3 unratified   just checked (files on disk)";
 
-  function gline(txt, vd) {
-    return '<div class="gline"><span class="txt">' + txt + "</span>" +
+  function gline(txt, vd, cls) {
+    return '<div class="gline' + (cls ? " " + cls : "") + '"><span class="txt">' + txt + "</span>" +
       (vd ? '<span class="vd-slot">' + vd + "</span>" : "") + "</div>";
   }
   function raw(txt) { return '<div class="gline"><span class="txt">' + txt + "</span></div>"; }
 
-  // n = how many verdicts have landed; sealed = row 2 has been ratified
-  function render(n, header, sealed) {
-    var h = raw('<span class="hdr">' + header + "</span>") + raw(" ");
+  // st: { typed, verdict, fresh, header, cursor }
+  function render(st) {
+    var h = raw('<span class="hdr">' + st.header + "</span>") + raw(" ");
     h += raw('<span class="cn"># providers</span>');
     h += raw('<span class="kw">  files</span> lua/conjurer/providers/*.lua');
     h += raw(" ");
-    h += raw('<span class="pr">  Transport only: no UI, no lists, no buffer edits.</span>');
+    h += raw('<span class="pr">  Transport only: turns a Request into text, calls back once.</span>');
+    h += raw('<span class="pr">  No UI, no lists, no buffer edits — that is the operator\'s job.</span>');
     h += raw(" ");
     h += raw('<span class="kw">  contains</span>');
-    for (var i = 0; i < 3; i++) h += row(i, n, sealed);
-    h += raw('<span class="kw">  calls</span>');
-    h += row(3, n, sealed);
+    SETTLED.forEach(function (r) { h += gline(r[0], r[1]); });
+    if (st.typed !== null) {
+      var txt = '    <span class="tgt">' + st.typed + "</span>";
+      if (st.stamp) txt += '  <span class="stamp">' + st.stamp + "</span>";
+      if (st.cursor) txt += '<span class="cursor-b"></span>';
+      h += gline(txt, st.verdict, st.fresh ? "fresh" : "");
+    }
     h += raw('<span class="kw">  never</span>');
-    h += row(4, n, sealed);
-    h += row(5, n, sealed);
+    h += gline('    <span class="tgt">vim\\.ui\\.</span>', '<span class="vb">✓ no matches (rg)</span>');
     h += raw('<span class="kw">  exercises</span>');
-    h += row(6, n, sealed);
+    h += gline('    <span class="tgt">tests/cli_spec.lua</span>', '<span class="vb">✓ passing (ran 4m ago)</span>');
     body.innerHTML = h;
   }
-  function row(i, n, sealed) {
-    var c = CLAIMS[i], txt = c[0], vd = c[2];
-    if (sealed && i === 1) {
-      txt = "    <span class=\"tgt\">providers/known.lua:resolve</span>  " +
-        '<span class="stamp">-- @w0zro 2026-07-26 b71e00</span>';
-      vd = '<span class="vb">✓ defined</span>';
-    }
-    var out = gline(txt, i < n ? vd : "");
-    if (i < n && c[3]) out += raw(c[3]);
-    return out;
-  }
+
+  var H_SETTLED = "scry · 4 claims · 4 backed · 0 unratified   checked 2m ago (files on disk)";
+  var H_ABSENT  = "scry · 5 claims · 4 backed · 1 missing · 1 unratified   just checked (files on disk)";
+  var H_DONE    = "scry · 5 claims · 5 backed · 1 unratified   just checked (files on disk)";
+  var H_SIGNED  = "scry · 5 claims · 5 backed · 0 unratified   just checked (files on disk)";
 
   if (reduced) {
-    render(7, HEADER_DONE, false);
+    render({ typed: NEW_TARGET, verdict: '<span class="vd">✗ absent</span> · <span class="vu">∅ unratified</span>',
+             header: H_ABSENT, fresh: false, cursor: false });
     return;
   }
 
@@ -667,28 +662,50 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
   function build() {
     t = 0; steps.length = 0;
     at(0, function () {
-      render(0, HEADER_IDLE + ' <span class="spin">◴</span>', false);
-      actEl.innerHTML = "&nbsp;"; noteEl.innerHTML = "&nbsp;"; posEl.textContent = "1:1";
+      render({ typed: null, header: H_SETTLED, fresh: false, cursor: false });
+      actEl.innerHTML = "&nbsp;"; noteEl.innerHTML = "&nbsp;";
+      modeEl.textContent = "SCRY"; modeEl.className = "mode"; posEl.textContent = "9:1";
     });
-    at(500, function () { actEl.textContent = ":Scry"; });
-    for (var i = 1; i <= 7; i++) {
+    // type the change you want
+    at(1400, function () { modeEl.textContent = "INSERT"; modeEl.className = "mode ins"; });
+    for (var i = 1; i <= NEW_TARGET.length; i++) {
       (function (i) {
-        at(i === 1 ? 700 : 320, function () {
-          render(i, HEADER_IDLE + ' <span class="spin">◴</span>', false);
+        at(i === 1 ? 260 : 34, function () {
+          render({ typed: NEW_TARGET.slice(0, i), header: H_SETTLED, fresh: false, cursor: true });
+          posEl.textContent = "10:" + (4 + i);
         });
       })(i);
     }
-    at(420, function () {
-      render(7, HEADER_DONE, false);
-      noteEl.textContent = "1 violated · 3 unratified";
+    at(520, function () {
+      modeEl.textContent = "SCRY"; modeEl.className = "mode";
+      noteEl.textContent = "written · re-checking";
     });
-    at(1900, function () { actEl.textContent = ":ScryRatify"; posEl.textContent = "11:5"; });
-    at(700, function () {
-      render(7, HEADER_DONE.replace("3 unratified", "2 unratified"), true);
-      noteEl.textContent = "sealed providers/known.lua:resolve";
+    at(560, function () {
+      render({ typed: NEW_TARGET, verdict: '<span class="vd">✗ absent</span> · <span class="vu">∅ unratified</span>',
+               header: H_ABSENT, fresh: true, cursor: false });
+      noteEl.textContent = "1 claim describes something that isn't there yet";
     });
-    at(3200, function () { actEl.innerHTML = "&nbsp;"; noteEl.innerHTML = "&nbsp;"; });
-    at(400, build);
+    // conjure it
+    at(2100, function () { actEl.textContent = ":ScryCascade"; });
+    at(650, function () {
+      render({ typed: NEW_TARGET, verdict: '<span class="vn">◴ conjuring…</span>',
+               header: H_ABSENT, fresh: false, cursor: false });
+      noteEl.textContent = "seeded quickfix · conjurer casting · prohibitions withheld";
+    });
+    at(2300, function () {
+      render({ typed: NEW_TARGET, verdict: '<span class="vb">✓ defined</span> · <span class="vu">∅ unratified</span>',
+               header: H_DONE, fresh: true, cursor: false });
+      noteEl.textContent = "lua/conjurer/providers/ollama.lua written · vim\\.ui\\. still clean";
+    });
+    // sign it
+    at(2000, function () { actEl.textContent = ":ScryRatify"; });
+    at(620, function () {
+      render({ typed: NEW_TARGET, stamp: "-- @w0zro 2026-07-27 7c41ab",
+               verdict: '<span class="vb">✓ defined</span>', header: H_SIGNED, fresh: false, cursor: false });
+      noteEl.textContent = "signed";
+    });
+    at(2800, function () { actEl.innerHTML = "&nbsp;"; noteEl.innerHTML = "&nbsp;"; });
+    at(500, build);
   }
   function run() {
     timers.forEach(clearTimeout); timers.length = 0;
@@ -711,12 +728,8 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
 
   var rings = [], motes = [];
   for (var m = 0; m < 26; m++) {
-    motes.push({
-      x: Math.random(), y: Math.random(),
-      r: 0.4 + Math.random() * 1.2,
-      vy: -0.02 - Math.random() * 0.05,
-      a: 0.1 + Math.random() * 0.3
-    });
+    motes.push({ x: Math.random(), y: Math.random(), r: 0.4 + Math.random() * 1.2,
+                 vy: -0.02 - Math.random() * 0.05, a: 0.1 + Math.random() * 0.3 });
   }
   function spawn() {
     rings.push({ x: Math.random() * W, y: Math.random() * H, r: 0, max: 90 + Math.random() * 190, a: 0.16 });
@@ -726,7 +739,6 @@ pre .k { color: var(--syn-kw); } pre .s { color: var(--syn-str); } pre .c { colo
   function frame(ts) {
     cx.clearRect(0, 0, W, H);
     if (ts - last > 1500) { spawn(); last = ts; }
-
     for (var i = rings.length - 1; i >= 0; i--) {
       var g = rings[i];
       g.r += 0.42;

@@ -1,18 +1,20 @@
 # scry.nvim
 
-**A ledger of what you believe about your codebase, continuously audited
-against what the code actually does.**
+**Work out what you're changing. Then conjure it.**
 
 `:h scry`
 
-Git records what happened. scry records what you *think is true*, and tells
-you the moment the code stops agreeing.
+One buffer holds what your product is and what you're about to change it to.
+You describe the thing — prose at the altitude you actually think at, with
+lines underneath that get checked against the real code. Writing the
+description *is* the work: if you can't state what a concern does, you don't
+know it yet.
 
-You write a plain-language model of what your project does. scry checks it
-against the real code and shows what's backed, what's claimed but missing,
-and what's violated. The beliefs are yours, so they can be wrong — and that's
-the point. A lint failure means the code is wrong; a **divergence means
-someone is wrong, and deciding who is the product.**
+A change is stated the same way — a claim that isn't true yet. It comes back
+**`✗ absent`**. Nothing has broken; that's your worklist, in the same
+vocabulary as everything already there. When the description says what you
+actually mean, `:ScryCascade` hands it to a conjurer, the code lands, and the
+claim goes green.
 
 ```
 scry · 8 claims · 5 backed · 1 missing · 1 violated · 1 unchecked · 2 unratified   checked 40s ago (files on disk)

@@ -1,4 +1,4 @@
-*scry.txt*    A ledger of what you believe about your code, continuously audited
+*scry.txt*    Work out what you're changing, then conjure it
 
 Author:  w0zro
 License: MIT (see |scry-license|)
@@ -25,29 +25,32 @@ CONTENTS                                                       *scry-contents*
 ==============================================================================
 1. INTRODUCTION                                            *scry-introduction*
 
-Git records what happened. scry records what you *think is true*, and tells
-you the moment the code stops agreeing.
+scry is where you work out what your product is and what you are about to
+change it to — and then conjure that change.
 
-You author a plain-language model of what your codebase does — concerns, and
-claims about them. scry checks those claims against the real code and shows
-what is backed, what is claimed but missing, and what is violated. The
-beliefs are yours, so they can be wrong: a lint failure means the code is
-wrong, but a divergence means SOMEONE is wrong, and deciding who is the
-product.
+|:Scry| opens one buffer. In it you describe the thing: prose at whatever
+altitude you actually think at, with lines underneath that can be checked
+against the real code. Writing the description is the work. If you cannot
+state what a concern does, you do not know it yet, and that is the useful
+part.
 
-Three verbs, three tools: conjuring is how code arrives (conjurer.nvim),
-presentation is where lists live (quickfix.pro), and scry is the glass —
-the ledger and the audit. Ratification is the loop that binds them: code
-that entered your tree without passing through anyone's understanding is
-theory-less, however correct it is, and ratifying a claim is the smallest
-act that puts a person back in the loop.
+A change is stated the same way — a claim that is not true yet. It comes
+back `✗ absent`. Nothing has broken; that is your worklist, written in the
+same vocabulary as everything already there. When the description says what
+you actually mean, |:ScryCascade| hands it to a conjurer with the concern as
+context, the code lands, and the claim goes green. |:ScryRatify| is you
+signing that you understood what arrived.
 
-Not the same as repairing the theory. A program's theory lives in the people
-who built it and cannot be fully written down; scry does not try to capture
-it and cannot restore it once it is gone. What it does is narrow the drift —
-keep the checkable surface of your understanding honest, and make the moment
-you stopped understanding something visible instead of silent. That
-distinction matters more, not less, the less code you write by hand.
+Three tools, three jobs: the glass is where a change gets thought through
+(scry.nvim), conjuring is how code arrives (conjurer.nvim), and lists are
+where it gets reviewed (quickfix.pro).
+
+The checks are a means, not the point. They keep the description honest
+while you write it — you find out you meant something slightly different
+from what you typed, which is the whole reason to type it. What scry cannot
+do is recover your understanding for you: a program's theory lives in the
+people who built it, and this narrows the drift rather than storing the
+theory. See |scry-honesty| for what each verdict does and does not assert.
 
 ==============================================================================
 2. THE GLASS                                                      *scry-glass*
