@@ -75,9 +75,9 @@ function M.check()
 
   -- Optional neighbours.
   if pcall(require, "conjurer.quickfix") then
-    health.ok("conjurer.nvim found (:Conjure can hand off casting)")
+    health.ok("conjurer.nvim found (scry conjures through it)")
   else
-    health.info("conjurer.nvim not found — :Conjure seeds the list, you cast it")
+    health.error("conjurer.nvim is REQUIRED — install vim-pro/conjurer.nvim")
   end
   if pcall(require, "quickfix-pro") then
     health.ok("quickfix.pro found (seeded entries get decorated)")

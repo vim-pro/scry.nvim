@@ -470,8 +470,9 @@ Every line here is a limit scry intends to keep stating plainly.
 
 `:checkhealth scry` reports: Neovim version, ripgrep and the lua treesitter
 parser (the resolver's two legs), where your map is and how many claims it
-holds, where the holdout lives — warning if it sits inside the repo — and
-whether conjurer.nvim and quickfix.pro are present.
+holds, where the holdout lives — warning if it sits inside the repo — whether
+conjurer.nvim is installed (an ERROR when missing — it is required), and
+whether quickfix.pro is present.
 
 ==============================================================================
 15. LICENSE                                                     *scry-license*

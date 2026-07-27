@@ -261,12 +261,13 @@ function M.seed(root, claim, intent, handoff)
   })
 
   if handoff then
+    -- conjurer is a hard dependency: scry conjures through it, and there is
+    -- no by-hand mode to fall back to.
     local ok, conjurer_qf = pcall(require, "conjurer.quickfix")
-    if ok then
-      conjurer_qf.all(built.intent)
-    else
-      vim.notify("[scry] seeded the quickfix list (conjurer not installed — cast it yourself)")
+    if not ok then
+      error("[scry] conjurer.nvim is required — install vim-pro/conjurer.nvim", 0)
     end
+    conjurer_qf.all(built.intent)
   end
   return built
 end

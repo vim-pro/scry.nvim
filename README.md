@@ -115,8 +115,8 @@ vim.pack.add({ "https://github.com/vim-pro/scry.nvim" })
 ```
 
 Requires Neovim 0.10+, **ripgrep**, and the lua treesitter parser (bundled).
-conjurer.nvim and quickfix.pro are optional — scry works without them, you
-just cast the seeded list yourself.
+**Requires [conjurer.nvim](https://github.com/vim-pro/conjurer.nvim)** —
+scry conjures through it. quickfix.pro is optional polish for the list.
 
 `:Scry` to start. `:checkhealth scry` to verify.
 
