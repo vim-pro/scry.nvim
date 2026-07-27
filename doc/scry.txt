@@ -1,0 +1,304 @@
+*scry.txt*    A ledger of what you believe about your code, continuously audited
+
+Author:  w0zro
+License: MIT (see |scry-license|)
+
+==============================================================================
+CONTENTS                                                       *scry-contents*
+
+  1. Introduction ................................ |scry-introduction|
+  2. The glass ................................... |scry-glass|
+  3. The map ..................................... |scry-map|
+  4. Verdicts .................................... |scry-verdicts|
+  5. Ratification ................................ |scry-ratification|
+  6. Theory-debt ................................. |scry-debt|
+  7. The holdout ................................. |scry-holdout|
+  8. The cascade ................................. |scry-cascade|
+  9. Commands .................................... |scry-commands|
+ 10. Configuration ............................... |scry-configuration|
+ 11. Highlights .................................. |scry-highlights|
+ 12. What scry does NOT claim .................... |scry-honesty|
+ 13. Health ...................................... |scry-health|
+ 14. License ..................................... |scry-license|
+
+==============================================================================
+1. INTRODUCTION                                            *scry-introduction*
+
+Git records what happened. scry records what you *think is true*, and tells
+you the moment the code stops agreeing.
+
+You author a plain-language model of what your codebase does — concerns, and
+claims about them. scry checks those claims against the real code and shows
+what is backed, what is claimed but missing, and what is violated. The
+beliefs are yours, so they can be wrong: a lint failure means the code is
+wrong, but a divergence means *someone* is wrong, and deciding who is the
+product.
+
+Three verbs, three tools: conjuring is how code arrives (conjurer.nvim),
+presentation is where lists live (quickfix.pro), and scry is the glass —
+the ledger and the audit. Ratification is the loop that binds them: code
+that entered your tree without passing through anyone's understanding is
+theory-less, however correct it is, and ratifying a claim is the small,
+constant act that fixes that.
+
+==============================================================================
+2. THE GLASS                                                      *scry-glass*
+
+|:Scry| opens `scry://glass` — one editable buffer holding your whole model,
+with verdicts rendered beside each claim as virtual text. The verdicts are
+COMPUTED, never stored: the buffer's text is your beliefs, and everything
+after it is scry's answer.
+
+Editing the model is the primary gesture. `:write` saves it — and routes
+never-claims to the holdout file (|scry-holdout|), announcing where they
+went. Every render carries a header:
+>
+    scry · 7 claims · 5 backed · 1 missing · 1 violated · 2 unratified   checked 40s ago (files on disk)
+<
+"files on disk" is not decoration: scry reads saved files, so an unwritten
+buffer is invisible to it. A verdict is always presented with when it was
+computed and against what.
+
+==============================================================================
+3. THE MAP                                                          *scry-map*
+
+The map is plain text, versioned with the code it describes (default
+`.scry/map.scry`). Line-oriented and deliberately dull:
+>
+    # providers
+      files lua/conjurer/providers/*.lua
+
+      The provider layer turns a Request into text and calls back once on
+      the main loop. Transport only: no UI, no lists.
+
+      contains
+        lua/conjurer/providers/cli.lua:request    -- @michael 2026-07-26 3f9a01
+        lua/conjurer/providers/known.lua:resolve_api
+      calls
+        known.lua::resolve_api
+      never
+        vim\.ui\.
+<
+- `# name` starts a concern.
+- `files` gives the concern's scope as |:grep|-style globs, comma-separated.
+  Reference and prohibition checks are scoped to these files.
+- `contains`, `calls`, `never` open a claim block; claims are indented four
+  spaces.
+- **Everything else is prose.** There are no parse errors: a line is a claim
+  or it is prose, preserved verbatim, never checked, never marked. Write as
+  much explanation as you like — the sentences carry the theory, the claims
+  carry the check.
+
+Claim targets differ by kind, because the claims differ in kind:
+
+    contains   path:symbol            a definition exists at a location
+    calls      [hint::]symbol         target exists, and this concern
+                                      references it
+    never      a ripgrep regex        zero matches in the concern's files
+
+`never` patterns are raw ripgrep regexes — `vim\.ui\.`, not `vim.ui.*`. No
+sugar is applied, because silently mis-escaping a prohibition would be
+exactly the kind of quiet overclaim scry exists to avoid.
+
+==============================================================================
+4. VERDICTS                                                    *scry-verdicts*
+
+The glyph never appears alone. The label states what was actually checked:
+
+    ✓ defined              a definition node with that name exists (treesitter)
+    ✓ referenced (text)    the token occurs in the concern's files (ripgrep)
+    ✓ no matches (rg)      the prohibition found nothing
+    ✗ absent               the definition (or target) does not exist
+    ✗ unreferenced         the target exists, but this concern never mentions it
+    ✗ VIOLATED             a prohibition matched — with the evidence line
+    ∅ unratified           nobody has put their name on this claim
+    – unchecked            no resolver for this language; NOT a pass
+
+That vocabulary is the honesty mechanism, not decoration. The fidelity of
+the evidence travels with the verdict, so the glass cannot render a stronger
+word than the engine that produced it. See |scry-honesty| for what each
+verdict does and does not assert.
+
+==============================================================================
+5. RATIFICATION                                            *scry-ratification*
+
+|:ScryRatify| stamps the claim under the cursor:
+>
+    lua/auth.lua:create_session  -- @w0zro 2026-07-26 6b8f0e
+<
+The hex is the head of a hash of the claim's own text. That makes staleness
+mechanical and free: **edit a claim and it is unratified again**, because the
+hash no longer matches. No hooks, no hidden state, and the stamp is visible
+in `git diff` like any other line.
+
+Why bother? Because you cannot write down a belief without having one.
+Clicking "accept" is free, which is why approval degenerates into LGTM;
+asserting "this concern contains X and never touches Y" is not performable
+by someone who has not looked, and a careless assertion diverges later with
+your name on it. Ratification is theory-building shrunk to an act small
+enough to perform constantly.
+
+A stamp is a record of intent, not authenticated attribution: `@name` is
+whatever `git config user.name` says.
+
+==============================================================================
+6. THEORY-DEBT                                                     *scry-debt*
+
+Two separate numbers, never blended into one score:
+
+- **unratified** — claims nobody has stamped, or whose text changed since.
+- **diverged** — claims that are missing or violated.
+
+The claim count leads every rendering, and that is deliberate: `0 diverged /
+3 claims` means your map is THIN, not that your repo is healthy. Until scry
+can report code that no claim covers, debt says nothing about unclaimed
+code.
+
+`require("scry.debt").statusline()` returns a compact string for your own
+statusline: `scry 14c ✓11 ✗2 ∅3`.
+
+==============================================================================
+7. THE HOLDOUT                                                  *scry-holdout*
+
+A `never` claim is a holdout: it is withheld from the generator and checked
+after. That restores independence mechanically. If the model that writes the
+code is also shown the prohibition, its output satisfying that prohibition
+tells you nothing — it was asked to satisfy it. A prohibition it never saw,
+checked afterwards, is real evidence.
+
+This is why prohibitions and positive claims are stored apart. never-claims
+live OUTSIDE the repository by default, under `stdpath("state")`, keyed to
+the project path. The glass still shows them inline; only storage differs.
+
+Two guarantees, deliberately not conflated:
+
+1. **Withheld from requests** — guaranteed and covered by tests. Everything
+   scry hands a conjurer is built from the concern name, the claim's own
+   target, and the intent you typed. Concern prose is excluded on purpose:
+   prose can restate a prohibition in words no scrubber could catch, so the
+   channel is closed rather than filtered.
+2. **Hidden from the filesystem** — true for a generator that reads your
+   repo; NOT true for one instructed to hunt your filesystem. Independence
+   here is against leakage, not against an adversary.
+
+The cost is honest too: out-of-repo prohibitions are per-machine and
+unversioned. Setting `holdout_path` to an in-repo file shares them with your
+team and gives up guarantee 2 — |:checkhealth| warns when you do.
+
+==============================================================================
+8. THE CASCADE                                                  *scry-cascade*
+
+An absent claim is a piece of work. |:ScryCascade| on that claim seeds the
+quickfix list with the target site and your intent, then hands off to
+conjurer's aggregate driver — which owns the casting and the per-site review
+(see |conjurer-aggregate|). scry never conjures anything itself.
+
+When you save a file the cascade seeded, scry re-checks: the withheld
+prohibitions run against the new code, and the claim that started the work
+re-checks too. So the loop closes visibly — `✗ absent` becomes
+`✓ defined · ∅ unratified`, and |:ScryRatify| is the act that finishes it.
+
+Saving is the trigger because ripgrep reads disk. Unwritten changes are
+invisible to scry, and the header says so.
+
+v0 cascades `contains` claims only.
+
+==============================================================================
+9. COMMANDS                                                    *scry-commands*
+
+                                                                       *:Scry*
+:Scry                   Open (or focus) the glass and check every claim.
+
+                                                                  *:ScryCheck*
+:ScryCheck              Re-check every claim against the files on disk.
+
+                                                                 *:ScryRatify*
+:ScryRatify             Stamp the claim under the cursor with your name, the
+                        date, and a hash of its text. See |scry-ratification|.
+
+                                                                *:ScryCascade*
+:ScryCascade            Turn the absent `contains` claim under the cursor
+                        into quickfix work and hand it to conjurer, with the
+                        concern's prohibitions withheld. See |scry-cascade|.
+
+==============================================================================
+10. CONFIGURATION                                         *scry-configuration*
+
+setup({opts}) is optional. Defaults: >lua
+
+    require("scry").setup({
+      -- The belief map, versioned with the code it describes.
+      map_path = ".scry/map.scry",
+
+      -- Where never-claims live. Empty = outside the repo, under
+      -- stdpath("state"), so a repo-reading generator never sees them.
+      -- An in-repo path shares them with your team and forfeits that.
+      holdout_path = "",
+
+      -- Name written into ratification stamps. Empty = git config user.name.
+      author = "",
+
+      -- Claim-checking engine. Empty = treesitter + ripgrep (lua-first).
+      resolver = "",
+    })
+<
+==============================================================================
+11. HIGHLIGHTS                                               *scry-highlights*
+
+                                                              *hl-ScryBacked*
+ScryBacked              Backed and clean verdicts. Default: DiagnosticOk.
+                                                            *hl-ScryDiverged*
+ScryDiverged            Missing and violated verdicts. Default:
+                        DiagnosticError.
+                                                          *hl-ScryUnratified*
+ScryUnratified          The ∅ marker. Default: DiagnosticWarn.
+                                                            *hl-ScryEvidence*
+ScryEvidence            Evidence lines and unchecked verdicts. Default:
+                        Comment.
+                                                              *hl-ScryHeader*
+ScryHeader              The glass header. Default: Title.
+
+==============================================================================
+12. WHAT SCRY DOES NOT CLAIM                                    *scry-honesty*
+
+Every line here is a limit scry intends to keep stating plainly.
+
+- **"backed" means accounted for, not correct.** The ladder is claimed →
+  backed → exercised. v0 tops out at backed. Nothing scry renders is
+  evidence that your code *works*.
+- **`contains ✓ defined`** asserts a definition with that name exists in
+  that file. It says nothing about its body. The prose above it is
+  unchecked.
+- **`calls ✓ referenced (text)`** asserts the token occurs in the concern's
+  files and the target exists somewhere. It is NOT a resolved call: not
+  reachability, not the same symbol, not proof the call happens. Rung:
+  referenced < resolved < exercised.
+- **`never ✓ no matches (rg)`** asserts no textual match. It is not absence
+  of behaviour — `local ui = vim.ui; ui.input(...)` defeats it. The
+  asymmetry matters: a VIOLATED prohibition is proof, and carries the line
+  that proves it; a clean prohibition is evidence.
+- **Verdicts describe saved files at a moment.** Unwritten buffers and edits
+  made after the check are invisible. The timestamp travels with the render.
+- **Holdout independence is against leakage, not adversaries.** See
+  |scry-holdout| for the two guarantees and which is which.
+- **Theory-debt is coverage-blind.** Until scry reports code no claim
+  covers, a clean map may simply be an empty one — which is why the claim
+  count is rendered first.
+- **Stamps are records, not identity.** `@name` comes from your git config.
+- **`– unchecked` is not a pass.** A language with no resolver renders as
+  unchecked, deliberately, so silence never looks like agreement.
+
+==============================================================================
+13. HEALTH                                                       *scry-health*
+
+`:checkhealth scry` reports: Neovim version, ripgrep and the lua treesitter
+parser (the resolver's two legs), where your map is and how many claims it
+holds, where the holdout lives — warning if it sits inside the repo — and
+whether conjurer.nvim and quickfix.pro are present.
+
+==============================================================================
+14. LICENSE                                                     *scry-license*
+
+MIT. See the LICENSE file in the repository root.
+
+vim:tw=78:ts=8:noet:ft=help:norl:
