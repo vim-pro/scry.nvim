@@ -770,6 +770,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  g += vec2(2.0, -11.0)* cos(dot(vUv, vec2(2.0, -11.0))+ uTime * 0.33) * 0.00042;",
     "  g += vec2(23.0, 17.0) * cos(dot(vUv, vec2(23.0, 17.0)) + uTime * 0.52) * 0.00010;",
     "  g += vec2(-19.0, 26.0)* cos(dot(vUv, vec2(-19.0, 26.0))+ uTime * 0.41) * 0.00008;",
+    "  float lumPre = texture2D(uSim, luv).b;",
+    "  g *= 0.32 + 0.68 * smoothstep(0.03, 0.40, lumPre);",  // faint water barely ripples
     "  vec3 n = normalize(vec3(g * 14.0, 1.0));",
     "  vec2 ruv = clamp(luv + n.xy * 0.05, 0.0, 1.0);",           // refraction
     "  vec3 deep = mix(vec3(0.022, 0.033, 0.041), vec3(0.038, 0.058, 0.070), ruv.y);",
