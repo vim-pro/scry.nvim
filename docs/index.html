@@ -742,7 +742,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  }",
     "  h += v;",
     "  h *= 0.9992;",
-    "  lum = lum * 0.992 + abs(v) * 0.18;",   // calm trains still glow: high gain, slow decay
+    "  lum = lum * 0.994 + abs(v) * 0.13;",   // long time-constant: the glow breathes, it does not throb
     "  lum = min(lum, 1.0);",
     "  gl_FragColor = vec4(h, v, lum, 1.0);",
     "}"
@@ -908,8 +908,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     // fx/fy are the WANDER frequencies — the emitters' travel speed across
     // the surface. At ~0.02 Hz a full circuit takes about a minute; the glow
     // pools drift rather than swim.
-    { fx: 0.022, fy: 0.017, px: 0.0, py: 1.7, amp: 0.060, om: 6.0 },
-    { fx: 0.012, fy: 0.019, px: 4.4, py: 3.0, amp: 0.045, om: 9.5 }
+    { fx: 0.022, fy: 0.017, px: 0.0, py: 1.7, amp: 0.046, om: 6.0 },
+    { fx: 0.012, fy: 0.019, px: 4.4, py: 3.0, amp: 0.034, om: 9.5 }
   ];
 
   function stepAndDraw(ts) {
