@@ -340,42 +340,42 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <section class="waters-sect" id="waters">
   <div class="section-head">
     <h2>Where things <em>stand</em></h2>
-    <div class="s">your work, at a glance — every label says what was actually checked</div>
+    <div class="s">your work, at a glance</div>
   </div>
   <div class="waters">
     <div class="water clear">
       <div class="depth">Done</div>
-      <div class="gloss">the code backs it, and how that was seen</div>
-      <div class="v"><span class="g vb">✓ defined</span><span class="d">a definition node exists (treesitter)</span></div>
-      <div class="v"><span class="g vb">✓ referenced (text)</span><span class="d">the token occurs in the concern's files (ripgrep)</span></div>
-      <div class="v"><span class="g vb">✓ no matches (rg)</span><span class="d">the prohibition found nothing</span></div>
-      <div class="v"><span class="g vb">✓ passing (ran 4m ago)</span><span class="d">that spec exited 0, nothing moved since</span></div>
+      <div class="gloss">the product does what you said it does</div>
+      <div class="v"><span class="g vb">✓ defined</span><span class="d">the thing exists, where you said</span></div>
+      <div class="v"><span class="g vb">✓ referenced (text)</span><span class="d">the connection you described is there</span></div>
+      <div class="v"><span class="g vb">✓ no matches (rg)</span><span class="d">the rule holds</span></div>
+      <div class="v"><span class="g vb">✓ passing (ran 4m ago)</span><span class="d">the behaviour holds, as of moments ago</span></div>
     </div>
     <div class="water fore">
       <div class="depth">To do</div>
       <div class="gloss">described, not yet real</div>
       <div class="v"><span class="g vd">✗ absent</span><span class="d">described, not yet real</span></div>
       <p class="b" style="margin-top:10px">The state you create <strong>on purpose</strong>.
-      A new feature is a claim that isn't true yet; a bug fix is a check that
-      doesn't pass yet. Your whole worklist lives here, in the same vocabulary
-      as everything already done. <code>:Conjure</code> takes it from here.</p>
+      A new feature is part of the product that isn't real yet; a bug fix is a
+      behaviour that doesn't hold yet. Your worklist and your product are the
+      same document. <code>:Conjure</code> takes it from here.</p>
     </div>
     <div class="water omen">
       <div class="depth">Broken</div>
-      <div class="gloss">something regressed, each verdict carrying its evidence</div>
-      <div class="v"><span class="g vd">✗ VIOLATED</span><span class="d">a prohibition matched — with the line that proves it</span></div>
-      <div class="v"><span class="g vd">✗ FAILING</span><span class="d">a spec exited non-zero — with its output</span></div>
-      <div class="v"><span class="g vd">✗ unreferenced</span><span class="d">the target exists; this concern never touches it</span></div>
-      <p class="b" style="margin-top:10px">A violated prohibition is <strong>proof</strong>.
-      A clean one is only evidence — no textual match is not absence of behaviour.</p>
+      <div class="gloss">the product stopped doing what you said — with proof</div>
+      <div class="v"><span class="g vd">✗ VIOLATED</span><span class="d">a rule was broken — with the line that broke it</span></div>
+      <div class="v"><span class="g vd">✗ FAILING</span><span class="d">a behaviour regressed — with the failure in hand</span></div>
+      <div class="v"><span class="g vd">✗ unreferenced</span><span class="d">a connection you described no longer exists</span></div>
+      <p class="b" style="margin-top:10px">A broken rule is <strong>proof</strong>. A rule
+      that merely looks intact is evidence — the glass keeps that distinction for you.</p>
     </div>
     <div class="water murk">
       <div class="depth">Unknown</div>
-      <div class="gloss">what the glass won't guess at — never counted as done</div>
-      <div class="v"><span class="g vn">– unchecked</span><span class="d">no resolver for this language</span></div>
-      <div class="v"><span class="g vn">– unrun</span><span class="d">nobody has run that spec</span></div>
-      <div class="v"><span class="g vn">– stale</span><span class="d">it passed, but the code has moved since</span></div>
-      <div class="v"><span class="g vn">– vacuous?</span><span class="d">it passes while nothing it covers exists yet</span></div>
+      <div class="gloss">what the glass would rather admit than guess — never counted as done</div>
+      <div class="v"><span class="g vn">– unchecked</span><span class="d">the glass can't read this part yet</span></div>
+      <div class="v"><span class="g vn">– unrun</span><span class="d">nobody has asked for proof yet</span></div>
+      <div class="v"><span class="g vn">– stale</span><span class="d">the proof predates your latest change</span></div>
+      <div class="v"><span class="g vn">– vacuous?</span><span class="d">it passes while proving nothing</span></div>
     </div>
   </div>
 </section>
@@ -389,32 +389,30 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   <div class="gaze">
     <div class="stage">
       <div class="k">say what you want</div>
-      <div class="t">Write the change as a claim on the product.</div>
-      <div class="b">It surfaces <code>✗ absent</code> — to do, named. If you can't
-      state it as a claim, you don't know what you're asking for yet, and the
-      glass just told you that for free.</div>
+      <div class="t">Describe the change as part of the product.</div>
+      <div class="b">It shows up as work to do. If you can't describe it, you don't
+      know what you're asking for yet — and finding that out took one sentence
+      instead of one afternoon.</div>
     </div>
     <div class="stage">
       <div class="k">get the proof first</div>
-      <div class="t">Conjure the <code>exercises</code> claim before the code.</div>
-      <div class="b">The check is conjured, you read it — it's short, and it says
-      what "done" means — and <code>:ScryExercise</code> must come back
-      <strong>red</strong>. A check that passes against nothing asserts nothing.</div>
+      <div class="t">Before any code, you get the test.</div>
+      <div class="b">Short, readable, and it fails — the feature doesn't exist yet.
+      Reading it is how you check the machine heard what you meant, while it's
+      still one page instead of a diff.</div>
     </div>
     <div class="stage">
       <div class="k">let the conjurer type</div>
-      <div class="t">Conjure the <code>contains</code> claim.</div>
-      <div class="b">The code lands with the concern as context — and with this
-      concern's <code>never</code> rules and spec paths <strong>withheld</strong>. A
-      model that can read the check writes to pass the check; one that never saw
-      it, checked after, produced evidence.</div>
+      <div class="t">The code arrives knowing the product — not the answers.</div>
+      <div class="b">Your rules and your test were <strong>kept from it</strong>. A
+      model that can see the test writes to pass the test; one that never saw it,
+      checked after, actually proved something.</div>
     </div>
     <div class="stage gold">
       <div class="k">and it's yours</div>
-      <div class="t"><code>:ScryExercise</code> goes green.</div>
-      <div class="b">You named it, sent it, read the check, watched red become green.
-      The <code>∅</code> clears itself — the work passed through your hands, and
-      scry saw it happen.</div>
+      <div class="t">The proof passes, and the work is yours.</div>
+      <div class="b">You asked for it, read the test, watched fail become pass. The
+      glass saw all of that happen — so it already knows whose work this is.</div>
     </div>
   </div>
 </section>
@@ -427,14 +425,12 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   </div>
   <div class="seal-card">
     <div class="line">authored · conjured · red → green · settled</div>
-    <div class="b">Doing the work leaves a trail on the claim it touched: you typed
-    it, you conjured it, its check failed and then passed under your
-    <code>:ScryExercise</code>, it came true on your save. A claim is
-    <strong>yours</strong> when the trail shows you passed through it — and a
-    machine-drafted claim nobody has engaged with stays
-    <code style="color:var(--seal)">∅ untouched</code>, which is the point.
-    <strong>Edit a claim and its trail resets</strong> — every event is keyed to a
-    hash of the claim's text.</div>
+    <div class="b">Work leaves a trail on whatever it touches: you described it,
+    you conjured it, you watched its proof fail and then pass, it came true under
+    your hands. A piece of the product is <strong>yours</strong> when the trail
+    shows you passed through it — and a machine-drafted piece nobody has engaged
+    with stays <code style="color:var(--seal)">∅ untouched</code>, which is the
+    point. Change the description and the trail resets.</div>
   </div>
 </section>
 
@@ -476,18 +472,24 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <div class="s">its limits, stated as plainly as its verdicts</div>
   </div>
   <div class="limits">
-    <div class="row"><b>The map is yours either way.</b> A model may draft it — a
-    draft arrives untouched. The danger was never half-right guesses; it's unowned
-    claims that read as understood. Working through one is what makes it yours.</div>
-    <div class="row"><b>Backed is not correct.</b> claimed → backed → exercised. Nothing here says your code is right.</div>
-    <div class="row"><b><code>contains ✓</code></b> — a definition with that name exists. Nothing about its body.</div>
-    <div class="row"><b><code>calls ✓</code></b> — the token occurs and the target exists. Not a resolved call.</div>
-    <div class="row"><b><code>never ✓</code></b> — no textual match. <code>local ui = vim.ui</code> defeats it.</div>
-    <div class="row"><b><code>exercises ✓</code></b> — a process exited 0, at a stated age. Not proof a feature works.</div>
-    <div class="row"><b>Verdicts describe saved files.</b> Unwritten buffers are invisible; the timestamp travels with the render.</div>
-    <div class="row"><b>Withholding guards against leakage,</b> not adversaries. A spec must live in the tree to run, so hiding it is request-level only.</div>
-    <div class="row"><b><code>:Conjure</code> seeds the file's first line.</b> scry knows which file, not where in it. Placement is the model's call; review is yours.</div>
-    <div class="row"><b>The trail is per-machine.</b> Ownership lives in local state like run results — a teammate's glass shows their trail, not yours.</div>
+    <div class="row"><b>The description is yours either way.</b> A model may draft
+    it, and a draft arrives untouched. The danger was never wrong guesses — it's
+    unowned pieces that read as understood.</div>
+    <div class="row"><b>Done means accounted for, not right.</b> The glass says the
+    product matches its description — not that the description was wise.</div>
+    <div class="row"><b>Every ✓ names its evidence,</b> and never claims more than
+    what was actually seen. The full ladder of what each label does and doesn't
+    assert is a chapter of the manual.</div>
+    <div class="row"><b>A rule can be dodged in ways the glass can't see.</b> That's
+    why a broken rule is proof and an intact one is only evidence.</div>
+    <div class="row"><b>The glass reads saved work.</b> What you haven't written yet
+    is invisible, and every answer says when it looked.</div>
+    <div class="row"><b>Kept-back rules guard against leakage, not adversaries.</b>
+    They keep honest generations honest; they don't survive a hunt.</div>
+    <div class="row"><b>The conjurer chooses placement.</b> The glass knows which
+    file the work belongs in, not where in it. Review is yours.</div>
+    <div class="row"><b>The trail stays with you.</b> A teammate's glass shows their
+    work, not yours.</div>
   </div>
 </section>
 

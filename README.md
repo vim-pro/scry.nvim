@@ -5,10 +5,10 @@
 `:h scry`
 
 Features, fixes, and refactors start in the glass, not in the code. One
-buffer describes the product — prose at the altitude you think at, with
-checkable claims underneath — and you work by changing the description: a
-new feature is a claim that isn't true yet (`✗ absent`), a bug fix is a
-check that doesn't pass yet.
+buffer describes the product, and you work by changing the description: a
+new feature is a part of the product that isn't real yet, a bug fix is a
+behaviour that doesn't hold yet. Your worklist and your product are the
+same document.
 
 `:Conjure` takes it from there: the check is conjured first (you read
 it, it must fail), then the code — with the check and the concern's
