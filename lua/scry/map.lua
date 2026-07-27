@@ -75,8 +75,14 @@ function M.parse(lines)
         }
         table.insert(concern.claims, claim)
         table.insert(map.claims, claim)
-      elseif line:match("^%s*$") or not line:match("^    ") then
-        -- blank or dedented line ends the section; the line itself is prose
+      elseif not line:match("^%s*$") and not line:match("^    ") then
+        -- A DEDENTED non-blank line ends the section; the line is prose.
+        --
+        -- A blank line deliberately does not. It reads like a terminator to a
+        -- human, but treating it as one silently demotes every claim after it
+        -- to prose — never checked, never rendered, and for a never-block,
+        -- routed into the repo by glass.split. Indentation is the grammar;
+        -- vertical space is layout.
         section = nil
       end
       -- anything else: prose, preserved in lines, no model entry needed

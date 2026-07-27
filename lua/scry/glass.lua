@@ -45,20 +45,32 @@ function M.compose(map_lines, holdout_lines)
   local never_blocks = {} -- name -> lines
   do
     local current, collecting = nil, false
+    -- Mirror of split()'s rule: a blank inside a block is held, and only
+    -- committed once another pattern proves it was interior. Without this,
+    -- the blanks split() now writes to the holdout would truncate the block
+    -- on the way back in, and patterns would vanish from the glass.
+    local held = {}
     for _, line in ipairs(holdout_lines) do
       local name = line:match("^# (.+)$")
       if name then
         current = vim.trim(name)
         collecting = false
+        held = {}
       elseif current then
         if line:match("^  never%s*$") then
           collecting = true
+          held = {}
           never_blocks[current] = never_blocks[current] or {}
           table.insert(never_blocks[current], line)
+        elseif collecting and line:match("^%s*$") then
+          held[#held + 1] = line
         elseif collecting and line:match("^    %S") then
+          vim.list_extend(never_blocks[current], held)
+          held = {}
           table.insert(never_blocks[current], line)
         else
           collecting = false
+          held = {}
         end
       end
     end
@@ -107,32 +119,45 @@ function M.split(lines)
   local in_never = false
   local never_count = 0
 
+  -- Blank lines inside a never block are undecided until we see what follows.
+  -- A blank between two patterns is part of the block and must travel to the
+  -- holdout with them; a blank AFTER the last pattern is map layout. Holding
+  -- them here is what keeps a paragraph break from splitting a block in two
+  -- and depositing the tail — a live prohibition — into the repo.
+  local held = {}
+  local function flush_held(dest)
+    vim.list_extend(dest, held)
+    held = {}
+  end
+
   for _, line in ipairs(lines) do
     local name = line:match("^# (.+)$")
     if name then
+      flush_held(map_lines)
       current_concern = vim.trim(name)
       in_never = false
       map_lines[#map_lines + 1] = line
     elseif line:match("^  never%s*$") then
+      flush_held(map_lines)
       in_never = true
       if current_concern and not emitted_holdout_header[current_concern] then
         holdout_lines[#holdout_lines + 1] = "# " .. current_concern
         emitted_holdout_header[current_concern] = true
       end
       holdout_lines[#holdout_lines + 1] = line
+    elseif in_never and line:match("^%s*$") then
+      held[#held + 1] = line
     elseif in_never and line:match("^    %S") then
+      flush_held(holdout_lines) -- the blanks were interior after all
       holdout_lines[#holdout_lines + 1] = line
       never_count = never_count + 1
     else
-      if in_never and not (line:match("^%s*$")) then
-        in_never = false
-      elseif in_never and line:match("^%s*$") then
-        in_never = false
-        -- a blank after a never block belongs to the map layout
-      end
+      flush_held(map_lines)
+      in_never = false
       map_lines[#map_lines + 1] = line
     end
   end
+  flush_held(map_lines)
   -- A concern that exists ONLY in the holdout leaves a bare "# name" line in
   -- map_lines with no content; keep it — harmless, and round-trip stable.
   return map_lines, holdout_lines, never_count
@@ -212,16 +237,35 @@ end
 function M.open(root)
   root = root or vim.fn.getcwd()
   local config = require("scry").config
-  state.root = root
 
-  if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
-    local win = vim.fn.bufwinid(state.buf)
+  local function focus(buf)
+    local win = vim.fn.bufwinid(buf)
     if win ~= -1 then
       vim.api.nvim_set_current_win(win)
     else
-      vim.api.nvim_win_set_buf(0, state.buf)
+      vim.api.nvim_win_set_buf(0, buf)
     end
+  end
+
+  local reusing = state.buf and vim.api.nvim_buf_is_valid(state.buf)
+  if reusing and state.root == root then
+    focus(state.buf)
     M.check()
+    return
+  end
+  if reusing and vim.bo[state.buf].modified then
+    -- state.root is what M.write() writes to. Re-pointing it at a new root
+    -- while the buffer still holds another project's beliefs would save those
+    -- beliefs over this project's map — silently, and irreversibly. Refuse,
+    -- and leave the user looking at the buffer that has the unsaved work.
+    focus(state.buf)
+    vim.notify(
+      ("[scry] the glass has unsaved changes for %s — :w or :bwipeout it before opening %s"):format(
+        vim.fn.fnamemodify(state.root, ":~"),
+        vim.fn.fnamemodify(root, ":~")
+      ),
+      vim.log.levels.WARN
+    )
     return
   end
 
@@ -232,24 +276,34 @@ function M.open(root)
     composed = { "# my project", "  files lua/**/*.lua", "", "  contains", "    path/to/file.lua:symbol" }
   end
 
-  local buf = vim.api.nvim_create_buf(true, false)
-  vim.api.nvim_buf_set_name(buf, "scry://glass")
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, composed)
-  vim.bo[buf].buftype = "acwrite"
-  vim.bo[buf].bufhidden = "hide"
-  vim.bo[buf].swapfile = false
-  vim.bo[buf].filetype = "scry"
+  local buf = state.buf
+  if reusing then
+    -- Same buffer, different project: replace the content, then re-point the
+    -- root. The order is the invariant — state.root always describes what is
+    -- actually in the buffer.
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, composed)
+    state.report = nil
+    state.debt = nil
+  else
+    buf = vim.api.nvim_create_buf(true, false)
+    vim.api.nvim_buf_set_name(buf, "scry://glass")
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, composed)
+    vim.bo[buf].buftype = "acwrite"
+    vim.bo[buf].bufhidden = "hide"
+    vim.bo[buf].swapfile = false
+    vim.bo[buf].filetype = "scry"
+    vim.api.nvim_create_autocmd("BufWriteCmd", {
+      buffer = buf,
+      callback = function()
+        M.write()
+      end,
+    })
+  end
   vim.bo[buf].modified = false
   state.buf = buf
+  state.root = root
 
-  vim.api.nvim_create_autocmd("BufWriteCmd", {
-    buffer = buf,
-    callback = function()
-      M.write()
-    end,
-  })
-
-  vim.api.nvim_win_set_buf(0, buf)
+  focus(buf)
   M.check()
 end
 

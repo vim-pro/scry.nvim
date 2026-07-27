@@ -31,7 +31,7 @@ You author a plain-language model of what your codebase does — concerns, and
 claims about them. scry checks those claims against the real code and shows
 what is backed, what is claimed but missing, and what is violated. The
 beliefs are yours, so they can be wrong: a lint failure means the code is
-wrong, but a divergence means *someone* is wrong, and deciding who is the
+wrong, but a divergence means SOMEONE is wrong, and deciding who is the
 product.
 
 Three verbs, three tools: conjuring is how code arrives (conjurer.nvim),
@@ -53,11 +53,16 @@ Editing the model is the primary gesture. `:write` saves it — and routes
 never-claims to the holdout file (|scry-holdout|), announcing where they
 went. Every render carries a header:
 >
-    scry · 7 claims · 5 backed · 1 missing · 1 violated · 2 unratified   checked 40s ago (files on disk)
+    scry · 7 claims · 4 backed · 1 missing · 1 violated · 1 unchecked · 2 unratified   checked 40s ago (files on disk)
 <
 "files on disk" is not decoration: scry reads saved files, so an unwritten
 buffer is invisible to it. A verdict is always presented with when it was
 computed and against what.
+
+`backed + missing + violated + unchecked` always equals the claim count. The
+unchecked column appears only when it is non-zero, and it is there so that
+"0 missing · 0 violated" can never be read as a clean bill of health for
+claims no engine ever answered. See |scry-debt|.
 
 ==============================================================================
 3. THE MAP                                                          *scry-map*
@@ -88,6 +93,13 @@ The map is plain text, versioned with the code it describes (default
   or it is prose, preserved verbatim, never checked, never marked. Write as
   much explanation as you like — the sentences carry the theory, the claims
   carry the check.
+
+Indentation is the grammar; vertical space is layout. A blank line does NOT
+close a claim block — you can paragraph a long list of prohibitions and every
+one of them is still a claim. Only a dedented non-blank line ends a block.
+(This matters more than it looks: a blank treated as a terminator would demote
+the rest of a `never` block to prose, which both stops checking those patterns
+and routes them into the repository on the next |:write|.)
 
 Claim targets differ by kind, because the claims differ in kind:
 
@@ -149,13 +161,20 @@ Two separate numbers, never blended into one score:
 - **unratified** — claims nobody has stamped, or whose text changed since.
 - **diverged** — claims that are missing or violated.
 
+A claim is also always in exactly one verdict column — backed, missing,
+violated, or **unchecked**. Unchecked collects everything no engine could
+answer: no resolver for the language, a parse failure, a resolver error, or
+no check having run yet. It is not a pass, so it is counted rather than
+omitted; a column that vanished when empty of good news would let the reader
+infer safety by subtraction.
+
 The claim count leads every rendering, and that is deliberate: `0 diverged /
 3 claims` means your map is THIN, not that your repo is healthy. Until scry
 can report code that no claim covers, debt says nothing about unclaimed
 code.
 
 `require("scry.debt").statusline()` returns a compact string for your own
-statusline: `scry 14c ✓11 ✗2 ∅3`.
+statusline: `scry 14c ✓11 ✗2 ∅3`, gaining a `–N` when anything is unchecked.
 
 ==============================================================================
 7. THE HOLDOUT                                                  *scry-holdout*

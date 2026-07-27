@@ -35,6 +35,37 @@ H.ok(table.concat(holdout_lines, "\n"):find("# auth", 1, true) ~= nil, "holdout 
 local recomposed = glass.compose(map_lines, holdout_lines)
 H.eq(table.concat(recomposed, "\n"), text, "compose∘split is identity on composed input")
 
+-- 2b) A blank line inside a never block is layout, not a terminator. Treating
+-- it as one split the block and routed the tail into the REPO map file — a
+-- live prohibition committed where a repo-reading generator sees it, and
+-- demoted to prose so it stopped being checked. Both halves must survive.
+local paragraphed = {
+  "# sessions",
+  "  files lua/session.lua",
+  "  never",
+  "    print\\(",
+  "",
+  "    io\\.write",
+  "",
+  "# billing",
+}
+local pm, ph, pn = glass.split(paragraphed)
+H.eq(pn, 2, "both patterns counted across the paragraph break")
+local pm_text, ph_text = table.concat(pm, "\n"), table.concat(ph, "\n")
+H.ok(pm_text:find("print", 1, true) == nil, "no prohibition leaked into the repo map")
+H.ok(pm_text:find("io\\.write", 1, true) == nil, "not even the one after the blank line")
+H.ok(ph_text:find("print\\(", 1, true) ~= nil, "first pattern held out")
+H.ok(ph_text:find("io\\.write", 1, true) ~= nil, "second pattern held out too")
+-- ...and the trailing blank is map layout, not holdout content
+H.eq(pm[#pm], "# billing", "the concern header still routes to the map")
+H.ok(ph[#ph]:find("io\\.write", 1, true) ~= nil, "the holdout ends at its last pattern")
+-- the parser agrees: both are claims, not prose
+local reparsed = require("scry.map").parse(ph)
+H.eq(#reparsed.claims, 2, "the holdout reparses as two never-claims, not one plus prose")
+-- and they survive the trip back into the glass
+local back = glass.compose(pm, ph)
+H.ok(table.concat(back, "\n"):find("io\\.write", 1, true) ~= nil, "the interleaved block is whole again")
+
 -- 3) end-to-end against the fixture: open, check with the real resolver,
 -- assert rendered verdicts; write-split to temp locations.
 local work = vim.fn.tempname()
@@ -99,5 +130,44 @@ H.ok(saved_map:find("create_session", 1, true) ~= nil, "map file saved")
 H.ok(saved_map:find("-- @", 1, true) ~= nil, "stamp persisted to the map file")
 H.ok(saved_map:find("never", 1, true) == nil, "no never block leaked into the repo map")
 H.ok(saved_hold:find("logging\\.debug", 1, true) ~= nil, "holdout file holds the patterns")
+
+-- 6) The glass is one buffer, but :Scry can be run from any project. state.root
+-- is what write() saves to, so it must never point somewhere the buffer's
+-- content did not come from: re-pointing it while the buffer still held
+-- another project's beliefs saved those beliefs over this project's map.
+local other = vim.fn.tempname()
+vim.fn.mkdir(other .. "/.scry", "p")
+vim.fn.mkdir(other .. "/lua", "p")
+vim.fn.writefile({ "local M = {}", "function M.only_here() end", "return M" }, other .. "/lua/other.lua")
+vim.fn.writefile({ "# other", "  files lua/*.lua", "", "  contains", "    lua/other.lua:only_here" }, other .. "/.scry/map.scry")
+
+require("scry.glass").open(other)
+H.ok(H.wait(function()
+  return glass._state.root == other and glass._state.report ~= nil
+end, 8000), "opening a second project re-composes the glass")
+local shown = table.concat(vim.api.nvim_buf_get_lines(glass._state.buf, 0, -1, false), "\n")
+H.ok(shown:find("only_here", 1, true) ~= nil, "the buffer shows the second project")
+H.ok(shown:find("create_session", 1, true) == nil, "and not the first project's beliefs")
+
+vim.api.nvim_buf_call(glass._state.buf, function()
+  vim.cmd("silent write")
+end)
+local first_map = table.concat(H.read_lines(work .. "/.scry/map.scry"), "\n")
+H.ok(first_map:find("create_session", 1, true) ~= nil, "the FIRST project's map is untouched")
+H.ok(first_map:find("only_here", 1, true) == nil, "no cross-project overwrite")
+
+-- ...and unsaved work is never silently discarded to make room for another root
+vim.api.nvim_buf_set_lines(glass._state.buf, 0, 0, false, { "# scratch" })
+local warned_open
+local rn2 = vim.notify
+vim.notify = function(msg, level)
+  if level == vim.log.levels.WARN then
+    warned_open = msg
+  end
+end
+require("scry.glass").open(work)
+vim.notify = rn2
+H.eq(glass._state.root, other, "a modified glass refuses to re-point at another root")
+H.ok(warned_open and warned_open:find("unsaved", 1, true) ~= nil, "and says why: " .. tostring(warned_open))
 
 H.done("glass_spec PASS")
