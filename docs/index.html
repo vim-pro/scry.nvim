@@ -742,7 +742,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  }",
     "  h += v;",
     "  h *= 0.9992;",
-    "  lum = lum * 0.985 + abs(v) * 0.10;",   // excite on agitation, ~1s afterglow
+    "  lum = lum * 0.992 + abs(v) * 0.18;",   // calm trains still glow: high gain, slow decay
     "  lum = min(lum, 1.0);",
     "  gl_FragColor = vec4(h, v, lum, 1.0);",
     "}"
@@ -760,11 +760,11 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  float hd = texture2D(uSim, vUv - vec2(0.0, uTexel.y)).r;",
     "  float hu = texture2D(uSim, vUv + vec2(0.0, uTexel.y)).r;",
     "  vec2 g = vec2(hl - hr, hd - hu);",
-    "  g += vec2(9.0, 4.0)  * cos(dot(vUv, vec2(9.0, 4.0))  + uTime * 0.60) * 0.00070;",
-    "  g += vec2(-5.0, 8.0) * cos(dot(vUv, vec2(-5.0, 8.0)) + uTime * 0.43) * 0.00058;",
-    "  g += vec2(2.0, -11.0)* cos(dot(vUv, vec2(2.0, -11.0))+ uTime * 0.81) * 0.00042;",
-    "  g += vec2(23.0, 17.0) * cos(dot(vUv, vec2(23.0, 17.0)) + uTime * 1.30) * 0.00019;",
-    "  g += vec2(-19.0, 26.0)* cos(dot(vUv, vec2(-19.0, 26.0))+ uTime * 1.05) * 0.00015;",
+    "  g += vec2(9.0, 4.0)  * cos(dot(vUv, vec2(9.0, 4.0))  + uTime * 0.26) * 0.00070;",
+    "  g += vec2(-5.0, 8.0) * cos(dot(vUv, vec2(-5.0, 8.0)) + uTime * 0.19) * 0.00058;",
+    "  g += vec2(2.0, -11.0)* cos(dot(vUv, vec2(2.0, -11.0))+ uTime * 0.33) * 0.00042;",
+    "  g += vec2(23.0, 17.0) * cos(dot(vUv, vec2(23.0, 17.0)) + uTime * 0.52) * 0.00010;",
+    "  g += vec2(-19.0, 26.0)* cos(dot(vUv, vec2(-19.0, 26.0))+ uTime * 0.41) * 0.00008;",
     "  vec3 n = normalize(vec3(g * 14.0, 1.0));",
     "  vec2 ruv = clamp(vUv + n.xy * 0.05, 0.0, 1.0);",           // refraction
     "  vec3 deep = mix(vec3(0.022, 0.033, 0.041), vec3(0.038, 0.058, 0.070), ruv.y);",
@@ -777,9 +777,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  float lum = sim.b;",
     "  vec3 col = deep;",
     "  float glow2 = lum * lum;",
-    "  col += vec3(0.30, 0.62, 0.54) * glow2 * 0.15;",
-    "  col += vec3(0.56, 0.70, 0.74) * glow2 * glow2 * 0.09;",
-    "  col += vec3(0.56, 0.70, 0.74) * spec * 0.30;",             // mercury glint on slopes
+    "  col += vec3(0.20, 0.78, 0.88) * glow2 * 0.22;",
+    "  col += vec3(0.50, 0.95, 1.00) * glow2 * glow2 * 0.16;",
+    "  col += vec3(0.56, 0.70, 0.74) * spec * 0.24;",             // mercury glint on slopes
     "  col += vec3(0.56, 0.70, 0.74) * max(-n.y, 0.0) * 0.02;",   // soft sheen
     "  col += vec3(0.79, 0.66, 0.31) * max(h, 0.0) * 0.025;",      // gold in the crests
     "  gl_FragColor = vec4(col, 1.0);",
@@ -888,9 +888,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     // om sets the radiated wavelength: λ ≈ waveSpeed · 2π/om, and the sim's
     // wave speed is ~1.3 texels/frame — so om below ~6 rad/s radiates waves
     // longer than the grid itself and reads as breathing, not rippling.
-    { fx: 0.071, fy: 0.053, px: 0.0, py: 1.7, amp: 0.095, om: 14.0 },
-    { fx: 0.047, fy: 0.089, px: 2.1, py: 0.4, amp: 0.080, om: 21.0 },
-    { fx: 0.036, fy: 0.061, px: 4.4, py: 3.0, amp: 0.070, om: 9.0 }
+    { fx: 0.071, fy: 0.053, px: 0.0, py: 1.7, amp: 0.060, om: 6.0 },
+    { fx: 0.036, fy: 0.061, px: 4.4, py: 3.0, amp: 0.045, om: 9.5 }
   ];
 
   function stepAndDraw(ts) {
