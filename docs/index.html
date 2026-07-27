@@ -728,7 +728,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "varying vec2 vUv;",
     "void main(){",
     "  vec4 p = texture2D(uPrev, vUv);",
-    "  float h = p.r, v = p.g;",
+    "  float h = p.r, v = p.g, lum = p.b;",
     "  float sum = texture2D(uPrev, vUv + vec2(uTexel.x, 0.0)).r",
     "            + texture2D(uPrev, vUv - vec2(uTexel.x, 0.0)).r",
     "            + texture2D(uPrev, vUv + vec2(0.0, uTexel.y)).r",
@@ -742,7 +742,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  }",
     "  h += v;",
     "  h *= 0.9992;",
-    "  gl_FragColor = vec4(h, v, 0.0, 1.0);",
+    "  lum = lum * 0.985 + abs(v) * 0.10;",   // excite on agitation, ~1s afterglow
+    "  lum = min(lum, 1.0);",
+    "  gl_FragColor = vec4(h, v, lum, 1.0);",
     "}"
   ].join("\n");
 
@@ -770,8 +772,13 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  deep += vec3(0.31, 0.44, 0.50) * glow * 0.10;",            // sunken mercury glow
     "  vec3 L = normalize(vec3(-0.25, 0.4, 0.85));",
     "  float spec = pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), 110.0);",
-    "  float h = texture2D(uSim, vUv).r;",
+    "  vec4 sim = texture2D(uSim, vUv);",
+    "  float h = sim.r;",
+    "  float lum = sim.b;",
     "  vec3 col = deep;",
+    "  float glow2 = lum * lum;",
+    "  col += vec3(0.30, 0.62, 0.54) * glow2 * 0.15;",
+    "  col += vec3(0.56, 0.70, 0.74) * glow2 * glow2 * 0.09;",
     "  col += vec3(0.56, 0.70, 0.74) * spec * 0.30;",             // mercury glint on slopes
     "  col += vec3(0.56, 0.70, 0.74) * max(-n.y, 0.0) * 0.02;",   // soft sheen
     "  col += vec3(0.79, 0.66, 0.31) * max(h, 0.0) * 0.025;",      // gold in the crests
