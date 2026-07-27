@@ -783,8 +783,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  float lum = sim.b;",
     "  vec3 col = deep;",
     "  float glow2 = lum * lum;",
-    "  col += vec3(0.20, 0.78, 0.88) * glow2 * 0.22;",
-    "  col += vec3(0.50, 0.95, 1.00) * glow2 * glow2 * 0.16;",
+    "  col += vec3(0.42, 0.72, 1.00) * glow2 * 0.22;",
+    "  col += vec3(0.66, 0.88, 1.00) * glow2 * glow2 * 0.16;",
     "  col += vec3(0.56, 0.70, 0.74) * spec * 0.24;",             // mercury glint on slopes
     "  col += vec3(0.56, 0.70, 0.74) * max(-n.y, 0.0) * 0.02;",   // soft sheen
     "  col += vec3(0.79, 0.66, 0.31) * max(h, 0.0) * 0.025;",      // gold in the crests
@@ -794,8 +794,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "    float d2 = dot(lp, lp);",
     "    float body = exp(-d2 / 0.012);",                 // the thing itself
     "    float halo = exp(-d2 / 0.10);",                  // its light in the water
-    "    col += vec3(0.16, 0.55, 0.62) * halo * 0.055;",
-    "    col += vec3(0.35, 0.85, 0.90) * body * 0.10;",
+    "    col += vec3(0.32, 0.55, 0.85) * halo * 0.055;",
+    "    col += vec3(0.58, 0.80, 1.00) * body * 0.10;",
     "  }",
     "  float mist = sin(dot(luv, vec2(6.0, 4.5)) + uTime * 0.11)",
     "             * sin(dot(luv, vec2(-3.5, 7.0)) - uTime * 0.077);",
