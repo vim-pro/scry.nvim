@@ -16,6 +16,14 @@ local M = {}
 -- The open cascade: { concern, target, files[], augroup }
 local active = nil
 
+--- Absolute, symlink-resolved path — the only form two spellings of the same
+--- file reliably compare equal in.
+---@param path string
+---@return string
+function M.norm(path)
+  return vim.fn.resolve(vim.fn.fnamemodify(path, ":p"))
+end
+
 M._active = function()
   return active
 end
@@ -72,9 +80,14 @@ local function recheck(reason)
     end
   end
   if #nevers > 0 then
+    -- Scope matters: a concern's `files` globs live in the MAP, its
+    -- prohibitions in the holdout. Checking the holdout alone would leave the
+    -- claims unscoped and search the whole project — reporting a violation in
+    -- a file the concern doesn't own. Merge the map's concerns (for globs)
+    -- with the holdout's never claims.
     local m = mapmod.load(root .. "/" .. config.map_path)
-    local concern = mapmod.concern(m, active.concern)
-    require("scry.check").run(hold, {
+    local scoped = { lines = {}, concerns = m.concerns, claims = nevers }
+    require("scry.check").run(scoped, {
       root = root,
       claims = nevers,
       resolver = require("scry.resolver").get(config.resolver ~= "" and config.resolver or nil),
@@ -93,9 +106,6 @@ local function recheck(reason)
           )
         end
       end
-      -- the concern's globs matter for the never check; if the map has none
-      -- the resolver searched the whole root, which is still honest
-      local _ = concern
       glass.check()
     end)
   else
@@ -149,11 +159,17 @@ function M.seed(root, claim, intent, handoff)
   local holdout = require("scry.holdout")
   local built = M.build(claim, intent)
 
-  -- The tripwire: nothing that leaves here may contain never-pattern text.
+  -- The tripwire: nothing that leaves here may contain the text of a
+  -- prohibition that will be CHECKED against the result. That is this
+  -- concern's nevers — scoped deliberately, and it mirrors recheck() exactly.
+  -- A different concern's prohibition is never evaluated against this code
+  -- (nevers are checked over their own concern's globs), so treating it as a
+  -- leak would block honest cascades: "session" is billing's prohibition and
+  -- the sessions concern's whole vocabulary.
   local hold = holdout.load(root, config)
   local nevers = {}
   for _, c in ipairs(hold.claims) do
-    if c.kind == "never" then
+    if c.kind == "never" and c.concern == claim.concern then
       nevers[#nevers + 1] = c.target
     end
   end
@@ -176,11 +192,20 @@ function M.seed(root, claim, intent, handoff)
     files = { built.file },
     augroup = group,
   }
+  -- Match on the resolved path in the callback rather than an autocmd
+  -- pattern. Two traps live here: a seeded entry names its file relative to
+  -- the root (so the buffer's name may be relative, and an absolute pattern
+  -- would never match), and :p does not follow symlinks (on macOS /tmp is
+  -- /private/tmp, so the two spellings of the same file compare unequal).
+  -- resolve() on both sides settles both.
+  local want = M.norm(root .. "/" .. built.file)
   vim.api.nvim_create_autocmd("BufWritePost", {
     group = group,
-    pattern = root .. "/" .. built.file,
-    callback = function()
-      recheck("on save")
+    pattern = "*",
+    callback = function(args)
+      if M.norm(args.file) == want then
+        recheck("on save")
+      end
     end,
   })
 

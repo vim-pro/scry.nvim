@@ -201,7 +201,12 @@ re-checks too. So the loop closes visibly — `✗ absent` becomes
 Saving is the trigger because ripgrep reads disk. Unwritten changes are
 invisible to scry, and the header says so.
 
-v0 cascades `contains` claims only.
+Two v0 limits worth knowing. The seeded entry points at the target file's
+first line — scry knows which file should define the symbol, not where in it
+the definition belongs, so the model decides placement and the conjurer's
+review is where you check it. And only `contains` claims cascade: `calls` and
+`never` claims have no single obvious site to seed, and guessing one would be
+worse than refusing.
 
 ==============================================================================
 9. COMMANDS                                                    *scry-commands*

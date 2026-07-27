@@ -73,6 +73,34 @@ H.eq(pcall(holdout.assert_clean, outgoing, never_targets), true, "and passes on 
 local never_claim = hold.claims[1]
 H.eq(pcall(cascade.build, never_claim, "x"), false, "cascade refuses a never claim")
 
+-- 4b) the tripwire is SCOPED to the concern being cascaded. A different
+-- concern's prohibition is never checked against this code (nevers run over
+-- their own concern's globs), so treating it as a leak would block honest
+-- work — a word one concern forbids is often another's whole vocabulary.
+vim.fn.writefile({
+  "# auth",
+  "  never",
+  "    logging\\.debug",
+  "",
+  "# billing",
+  "  never",
+  "    token", -- 'token' is auth's vocabulary, billing's prohibition
+}, work .. "/holdout.scry")
+H.eq(
+  pcall(cascade.seed, work, absent, "define refresh_token from the stored token", false),
+  true,
+  "a foreign concern's prohibition does not block this cascade"
+)
+-- ...while this concern's own prohibition still does
+vim.fn.writefile({ "# auth", "  never", "    refresh_token" }, work .. "/holdout.scry")
+H.eq(
+  pcall(cascade.seed, work, absent, "define refresh_token", false),
+  false,
+  "the concern's own prohibition still trips the tripwire"
+)
+-- restore the fixture holdout for the rest of the spec
+vim.fn.writefile(vim.fn.readfile(H.fixture .. "/holdout.scry"), work .. "/holdout.scry")
+
 -- 5) seed the real list (no handoff), then simulate the conjurer writing a
 -- VIOLATING implementation and saving: the withheld prohibition catches it.
 cascade.seed(work, absent, "define refresh_token", false)
@@ -112,16 +140,49 @@ vim.notify = function(msg, level)
     warned[#warned + 1] = msg
   end
 end
-cascade._recheck("on save")
+-- Fire the REAL wire: write the buffer and let the cascade's autocmd run.
+-- (Calling _recheck() directly would test the check and skip the trigger —
+-- which is exactly how a broken autocmd pattern once passed the specs.)
+local sbuf = vim.fn.bufadd(auth)
+vim.fn.bufload(sbuf)
+vim.api.nvim_buf_call(sbuf, function()
+  vim.cmd("silent edit!") -- pick up the on-disk edit above
+  vim.cmd("silent write")
+end)
 H.ok(H.wait(function()
   return #warned > 0
-end, 8000), "re-check produced a warning")
+end, 8000), "saving the seeded file fired the cascade's re-check")
 vim.notify = rn
 
 local joined = table.concat(warned, "\n")
 H.ok(joined:find("VIOLATED", 1, true) ~= nil, "the withheld prohibition caught the conjured code")
 H.ok(joined:find("logging", 1, true) ~= nil, "the violated pattern is named")
 H.ok(joined:find("lua/auth.lua:", 1, true) ~= nil, "with evidence: file and line")
+
+-- 5b) the re-check is SCOPED to the concern's files. The concern's globs live
+-- in the map and its prohibitions in the holdout, so checking the holdout
+-- alone would leave claims unscoped and report violations in files the
+-- concern doesn't own — a false violation costs more trust than a missed one.
+local outsider = work .. "/lua/logging.lua" -- outside `files lua/auth.lua`
+local ol = vim.fn.readfile(outsider)
+table.insert(ol, #ol, 'local _unused = "logging.debug appears here too"')
+vim.fn.writefile(ol, outsider)
+local warned2 = {}
+vim.notify = function(msg, level)
+  if level == vim.log.levels.WARN then
+    warned2[#warned2 + 1] = msg
+  end
+end
+local done2 = false
+cascade._recheck("scope test")
+H.wait(function()
+  done2 = true
+  return false
+end, 1500)
+vim.notify = rn
+for _, w in ipairs(warned2) do
+  H.ok(w:find("logging.lua", 1, true) == nil, "no violation reported outside the concern's files")
+end
 
 -- 6) the settle path: the seeding claim flips absent → defined on disk
 H.ok(H.wait(function()
