@@ -748,13 +748,18 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "precision highp float;",
     "uniform sampler2D uSim;",
     "uniform vec2 uTexel;",
+    "uniform float uTime;",
     "varying vec2 vUv;",
     "void main(){",
     "  float hl = texture2D(uSim, vUv - vec2(uTexel.x, 0.0)).r;",
     "  float hr = texture2D(uSim, vUv + vec2(uTexel.x, 0.0)).r;",
     "  float hd = texture2D(uSim, vUv - vec2(0.0, uTexel.y)).r;",
     "  float hu = texture2D(uSim, vUv + vec2(0.0, uTexel.y)).r;",
-    "  vec3 n = normalize(vec3(vec2(hl - hr, hd - hu) * 14.0, 1.0));",
+    "  vec2 g = vec2(hl - hr, hd - hu);",
+    "  g += vec2(9.0, 4.0)  * cos(dot(vUv, vec2(9.0, 4.0))  + uTime * 0.60) * 0.00070;",
+    "  g += vec2(-5.0, 8.0) * cos(dot(vUv, vec2(-5.0, 8.0)) + uTime * 0.43) * 0.00058;",
+    "  g += vec2(2.0, -11.0)* cos(dot(vUv, vec2(2.0, -11.0))+ uTime * 0.81) * 0.00042;",
+    "  vec3 n = normalize(vec3(g * 14.0, 1.0));",
     "  vec2 ruv = clamp(vUv + n.xy * 0.05, 0.0, 1.0);",           // refraction
     "  vec3 deep = mix(vec3(0.022, 0.033, 0.041), vec3(0.038, 0.058, 0.070), ruv.y);",
     "  float glow = smoothstep(0.45, 1.0, ruv.y) * max(1.0 - abs(ruv.x - 0.5) * 1.6, 0.0);",
@@ -854,6 +859,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   var uCount = gl.getUniformLocation(simProg, "uCount");
   var uSim = gl.getUniformLocation(drawProg, "uSim");
   var uTexelD = gl.getUniformLocation(drawProg, "uTexel");
+  var uTimeD = gl.getUniformLocation(drawProg, "uTime");
 
   var src = 0, running = true;
   document.addEventListener("visibilitychange", function () {
@@ -861,9 +867,24 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     if (running) requestAnimationFrame(frame);
   });
 
+  // undercurrents: slow wandering points that continuously stir the surface.
+  // Their wakes are what make the water feel alive between raindrops.
+  var CURRENTS = [
+    { fx: 0.071, fy: 0.053, px: 0.0, py: 1.7, amp: 0.020 },
+    { fx: 0.047, fy: 0.089, px: 2.1, py: 0.4, amp: 0.016 },
+    { fx: 0.036, fy: 0.061, px: 4.4, py: 3.0, amp: 0.013 }
+  ];
+
   function stepAndDraw(ts) {
-    if (ts - lastRain > 850) {
-      drop(Math.random(), Math.random(), Math.random() < 0.2 ? 0.42 : 0.15);
+    var wt = ts * 0.001;
+    for (var c = 0; c < CURRENTS.length; c++) {
+      var cur = CURRENTS[c];
+      drop(0.5 + 0.42 * Math.sin(wt * cur.fx * 6.283 + cur.px),
+           0.5 + 0.40 * Math.sin(wt * cur.fy * 6.283 + cur.py),
+           cur.amp);
+    }
+    if (ts - lastRain > 4200) {
+      drop(Math.random(), Math.random(), Math.random() < 0.3 ? 0.34 : 0.18);
       lastRain = ts;
     }
     var batch = drops.splice(0, 8);
@@ -900,6 +921,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     gl.bindTexture(gl.TEXTURE_2D, fields[src].tex);
     gl.uniform1i(uSim, 0);
     gl.uniform2f(uTexelD, 1 / SW, 1 / SH);
+    gl.uniform1f(uTimeD, ts * 0.001);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     window.__waterGL = true;
