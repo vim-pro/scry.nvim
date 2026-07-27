@@ -301,6 +301,12 @@ function M.open(root)
         M.write()
       end,
     })
+    -- One verb everywhere: conjurer's global :Conjure casts over a range;
+    -- this buffer-local one shadows it in the glass only, and casts the
+    -- claim under the cursor instead.
+    vim.api.nvim_buf_create_user_command(buf, "Conjure", function()
+      require("scry.cascade").start()
+    end, { desc = "Conjure the claim under the cursor" })
     -- Claims that appear under the user's own edits are AUTHORED — that is
     -- the whole ownership gesture. state.map is the renderer's snapshot, so
     -- scry's own writes never register as authorship.

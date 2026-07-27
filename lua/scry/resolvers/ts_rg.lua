@@ -218,7 +218,7 @@ end
 
 --- exercises: `path` or `path:assertion label`.
 ---
---- This check READS; it never runs anything. |:ScryRun| runs and records; a
+--- This check READS; it never runs anything. |:ScryExercise| runs and records; a
 --- check reports what the last run left, and only while nothing it depended
 --- on has moved since. A stale pass is reported as unchecked rather than as
 --- a pass, because it is the one verdict whose staleness is invisible: the
@@ -253,7 +253,7 @@ function M.check_exercises(ctx, claim, cb)
 
   local run = runs.load(ctx.root)[spec]
   if not run then
-    cb({ status = "unchecked", fidelity = "none", label = "– unrun (:ScryRun)" })
+    cb({ status = "unchecked", fidelity = "none", label = "– unrun (:ScryExercise)" })
     return
   end
 

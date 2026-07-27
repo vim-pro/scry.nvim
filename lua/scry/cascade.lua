@@ -133,7 +133,7 @@ function M.start()
   local glass = require("scry.glass")
   local state = glass._state
   if not (state.buf and vim.api.nvim_get_current_buf() == state.buf) then
-    vim.notify("[scry] :ScryCascade works in the glass buffer", vim.log.levels.WARN)
+    vim.notify("[scry] :Conjure works on a claim line in the glass", vim.log.levels.WARN)
     return
   end
   local mapmod = require("scry.map")

@@ -5,7 +5,7 @@
 --
 --   authored    you typed or edited the claim's text in the glass
 --   cascaded    you sent it to the conjurer
---   red/green   its spec failed, then passed, under your :ScryRun
+--   red/green   its spec failed, then passed, under your :ScryExercise
 --   settled     a claim you cascaded came true on your save
 --
 -- A claim is OWNED when the trail shows a person passed through it:

@@ -3,7 +3,7 @@
 -- Every other verdict scry renders is a static read of a file — cheap, and
 -- honest to recompute on every render. A test run is none of those: it is
 -- slow, it has side effects, and it can hang. So `:Scry` must NEVER run
--- anything. Running is an explicit act (|:ScryRun|); checking reads what the
+-- anything. Running is an explicit act (|:ScryExercise|); checking reads what the
 -- last run left behind.
 --
 -- That buys correctness at the price of staleness, and staleness is the

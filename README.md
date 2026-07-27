@@ -10,7 +10,7 @@ checkable claims underneath — and you work by changing the description: a
 new feature is a claim that isn't true yet (`✗ absent`), a bug fix is a
 check that doesn't pass yet.
 
-`:ScryCascade` takes it from there: the check is conjured first (you read
+`:Conjure` takes it from there: the check is conjured first (you read
 it, it must fail), then the code — with the check and the concern's
 prohibitions withheld from the model that writes it. The code is where you
 review, not where you start.
@@ -39,7 +39,7 @@ scry · 8 claims · 5 backed · 1 missing · 1 violated · 1 unchecked · 2 unto
     vim\.fn\.setqflist                                                        ✗ VIOLATED
         └ lua/conjurer/providers/cli.lua:88 → vim.fn.setqflist(...)
   exercises
-    tests/cli_spec.lua                                                        – unrun (:ScryRun)
+    tests/cli_spec.lua                                                        – unrun (:ScryExercise)
 ```
 
 One editable buffer. The claims are your text; everything to the right is
@@ -76,8 +76,8 @@ Structural claims say *where things are*; an exercised claim says *what
 holds*. Neither is the primary axis — adding a feature usually wants one of
 each, and fixing a bug often wants only the second.
 
-**Checking never runs anything.** `:Scry` reads what the last `:ScryRun`
-recorded; only `:ScryRun` executes. A glass that shelled out to your test
+**Checking never runs anything.** `:Scry` reads what the last `:ScryExercise`
+recorded; only `:ScryExercise` executes. A glass that shelled out to your test
 suite whenever you opened it is a glass you'd stop opening. The price is
 staleness, so a run fingerprints the concern's files as it starts — move any
 of them and `✓ passing` degrades to `– stale`, which is not a pass.
@@ -93,7 +93,7 @@ generator was self-consistent. See `:h scry-independence`.
 An absent claim is a piece of work:
 
 ```vim
-:ScryCascade      " on a ✗ absent claim
+:Conjure          " in the glass, on a ✗ absent claim
 ```
 
 scry seeds the quickfix list with the target site and your intent, then hands

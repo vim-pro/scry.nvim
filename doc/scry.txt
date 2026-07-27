@@ -33,7 +33,7 @@ description. A new feature is a claim that is not true yet (`✗ absent`).
 A bug fix is a check that does not pass yet. Your worklist and your
 product share one vocabulary.
 
-|:ScryCascade| takes a claim from there: the check is conjured first — you
+|scry-conjure| takes a claim from there: the check is conjured first — you
 read it, and it must fail — then the code, with the check and the
 concern's prohibitions withheld from the model that writes it. The code is
 where you review, not where you start.
@@ -176,8 +176,8 @@ The ordinary actions of doing the work each record a trail event on the
 claim they touch:
 
     authored     you typed or edited the claim's text in the glass
-    cascaded     you sent it to the conjurer (|:ScryCascade|)
-    red / green  its spec failed, then passed, under your |:ScryRun|
+    cascaded     you sent it to the conjurer (|scry-conjure|)
+    red / green  its spec failed, then passed, under your |:ScryExercise|
     settled      a claim you cascaded came true on your save
 
 A claim is YOURS — and drops its `∅ untouched` marker — when the trail
@@ -247,7 +247,7 @@ team and gives up guarantee 2 — |:checkhealth| warns when you do.
 ==============================================================================
 8. THE CASCADE                                                  *scry-cascade*
 
-An absent claim is a piece of work. |:ScryCascade| on that claim seeds the
+An absent claim is a piece of work. |scry-conjure| on that claim seeds the
 quickfix list with the target site and your intent, then hands off to
 conjurer's aggregate driver — which owns the casting and the per-site review
 (see |conjurer-aggregate|). scry never conjures anything itself.
@@ -277,11 +277,11 @@ INDEPENDENCE OF THE CHECK                                  *scry-independence*
 `contains` and `exercises` both cascade, and the ORDER between them is the
 mechanism, not a convention:
 >
-    1.  :ScryCascade on the absent `exercises` claim   → conjures the CHECK
+    1.  :Conjure on the absent `exercises` claim   → conjures the CHECK
     2.  read it                                         ← the judgment act
-    3.  :ScryRun                                        → it must be RED
-    4.  :ScryCascade on the absent `contains` claim    → conjures the CODE
-    5.  :ScryRun                                        → green, and the
+    3.  :ScryExercise                                        → it must be RED
+    4.  :Conjure on the absent `contains` claim    → conjures the CODE
+    5.  :ScryExercise                                        → green, and the
                                                           holdout re-checks
     6.  it is yours — you cascaded it and it came true
 <
@@ -333,7 +333,7 @@ An `exercises` claim names a spec, optionally with an assertion label:
         tests/aggregate_spec.lua:driven casts never open a review tab
 <
 **Checking never runs anything.** |:Scry| and |:ScryCheck| read what the last
-|:ScryRun| recorded; only |:ScryRun| executes. That separation is deliberate.
+|:ScryExercise| recorded; only |:ScryExercise| executes. That separation is deliberate.
 Every other verdict is a static read — cheap, repeatable, harmless to
 recompute. Running a suite is slow, has side effects, and can hang, and a
 glass that shelled out to your test suite whenever you opened it is a glass
@@ -363,15 +363,16 @@ every concern that exercises it.
                                                                   *:ScryCheck*
 :ScryCheck              Re-check every claim against the files on disk.
 
-                                                                    *:ScryRun*
-:ScryRun [{concern}]    Run the specs named by this map's `exercises` claims
+                                                                    *:ScryExercise*
+:ScryExercise [{concern}]
+                        Run the specs named by this map's `exercises` claims
                         and record the results, then re-check. The only
                         command in scry that executes your code. With a
                         concern name, runs only that concern's specs.
                         See |scry-exercised|.
 
-                                                                *:ScryCascade*
-:ScryCascade            Turn the absent claim under the cursor into quickfix
+                                                                *scry-conjure*
+:Conjure            Turn the absent claim under the cursor into quickfix
                         work and hand it to conjurer, with the concern's
                         prohibitions withheld. On an `exercises` claim it
                         conjures the check; on a `contains` claim it conjures
@@ -397,7 +398,7 @@ setup({opts}) is optional. Defaults: >lua
 
       -- How to run ONE spec for `exercises` claims: the spec's path is
       -- appended, and exit 0 means passing. Nothing here runs on :Scry —
-      -- only on :ScryRun. Left empty, exercises claims render "– unrun",
+      -- only on :ScryExercise. Left empty, exercises claims render "– unrun",
       -- which is honest: scry would rather say it does not know than guess
       -- your project's test command.
       test = { cmd = {} },   -- e.g. { "nvim", "--headless", "-u", "NONE", "-l" }

@@ -63,7 +63,7 @@ function M.check()
       specs,
       specs == 1 and "" or "s"
     ))
-    health.info("runs happen on :ScryRun only — checking never executes anything")
+    health.info("runs happen on :ScryExercise only — checking never executes anything")
   elseif specs > 0 then
     health.warn(("%d exercises claim%s but no test command"):format(specs, specs == 1 and "" or "s"), {
       "They render '– unrun', which is honest but never becomes evidence.",
@@ -75,9 +75,9 @@ function M.check()
 
   -- Optional neighbours.
   if pcall(require, "conjurer.quickfix") then
-    health.ok("conjurer.nvim found (:ScryCascade can hand off casting)")
+    health.ok("conjurer.nvim found (:Conjure can hand off casting)")
   else
-    health.info("conjurer.nvim not found — :ScryCascade seeds the list, you cast it")
+    health.info("conjurer.nvim not found — :Conjure seeds the list, you cast it")
   end
   if pcall(require, "quickfix-pro") then
     health.ok("quickfix.pro found (seeded entries get decorated)")

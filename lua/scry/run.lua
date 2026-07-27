@@ -1,4 +1,4 @@
--- :ScryRun — the only thing in scry that executes your code.
+-- :ScryExercise — the only thing in scry that executes your code.
 --
 -- Kept apart from checking on purpose. Every other verdict is a static read,
 -- so re-computing it on every render costs nothing and can't surprise you.
@@ -117,7 +117,7 @@ function M.start(opts)
       if not run.ok then
         failed[#failed + 1] = s.spec
       end
-      -- red-then-green under your own :ScryRun is the trail for these claims
+      -- red-then-green under your own :ScryExercise is the trail for these claims
       for _, claim in ipairs(by_spec[s.spec] or {}) do
         prov.record(state.root, claim, run.ok and "green" or "red")
       end

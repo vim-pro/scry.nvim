@@ -30,7 +30,7 @@ local M = {}
 ---@field check_calls fun(ctx: scry.Ctx, claim: scry.Claim, cb: fun(v: scry.Verdict))
 ---@field check_never fun(ctx: scry.Ctx, claim: scry.Claim, cb: fun(v: scry.Verdict))
 ---@field check_exercises fun(ctx: scry.Ctx, claim: scry.Claim, cb: fun(v: scry.Verdict))
----  MUST NOT execute anything. It reports what the last |:ScryRun| recorded.
+---  MUST NOT execute anything. It reports what the last |:ScryExercise| recorded.
 
 local registry = {}
 

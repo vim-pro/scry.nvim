@@ -358,7 +358,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <p class="b" style="margin-top:10px">The state you create <strong>on purpose</strong>.
       A new feature is a claim that isn't true yet; a bug fix is a check that
       doesn't pass yet. Your whole worklist lives here, in the same vocabulary
-      as everything already done. <code>:ScryCascade</code> takes it from here.</p>
+      as everything already done. <code>:Conjure</code> takes it from here.</p>
     </div>
     <div class="water omen">
       <div class="depth">Broken</div>
@@ -398,7 +398,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <div class="k">get the proof first</div>
       <div class="t">Cascade the <code>exercises</code> claim before the code.</div>
       <div class="b">The check is conjured, you read it — it's short, and it says
-      what "done" means — and <code>:ScryRun</code> must come back
+      what "done" means — and <code>:ScryExercise</code> must come back
       <strong>red</strong>. A check that passes against nothing asserts nothing.</div>
     </div>
     <div class="stage">
@@ -411,7 +411,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     </div>
     <div class="stage gold">
       <div class="k">and it's yours</div>
-      <div class="t"><code>:ScryRun</code> goes green.</div>
+      <div class="t"><code>:ScryExercise</code> goes green.</div>
       <div class="b">You named it, sent it, read the check, watched red become green.
       The <code>∅</code> clears itself — the work passed through your hands, and
       scry saw it happen.</div>
@@ -429,7 +429,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <div class="line">authored · cascaded · red → green · settled</div>
     <div class="b">Doing the work leaves a trail on the claim it touched: you typed
     it, you cascaded it, its check failed and then passed under your
-    <code>:ScryRun</code>, it came true on your save. A claim is
+    <code>:ScryExercise</code>, it came true on your save. A claim is
     <strong>yours</strong> when the trail shows you passed through it — and a
     machine-drafted claim nobody has engaged with stays
     <code style="color:var(--seal)">∅ untouched</code>, which is the point.
@@ -451,8 +451,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         <tbody>
           <tr><td><span class="hg">:Scry</span></td><td>Open the glass; check every claim.</td></tr>
           <tr><td><span class="hg">:ScryCheck</span></td><td>Re-check against the files on disk.</td></tr>
-          <tr><td><span class="hg">:ScryCascade</span></td><td>Conjure the absent claim under the cursor, prohibitions withheld.</td></tr>
-          <tr><td><span class="hg">:ScryRun</span></td><td>Run the specs behind <code>exercises</code> claims, then re-check. The only command that executes your code.</td></tr>
+          <tr><td><span class="hg">:Conjure</span></td><td>In the glass, casts the claim under the cursor, prohibitions withheld — the same verb that casts over a motion everywhere else.</td></tr>
+          <tr><td><span class="hg">:ScryExercise</span></td><td>Run the specs behind <code>exercises</code> claims, then re-check. The only command that executes your code.</td></tr>
         </tbody>
       </table>
     </div>
@@ -619,7 +619,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
                  header: H_ABSENT, fresh: true, cursor: false });
         noteEl.textContent = "new work, named";
       });
-      at(2100, function () { actEl.textContent = ":ScryCascade"; });
+      at(2100, function () { actEl.textContent = ":Conjure"; });
       at(650, function () {
         render({ typed: NEW_TARGET, verdict: '<span class="vn">◴ conjuring…</span>',
                  header: H_ABSENT, fresh: false, cursor: false });

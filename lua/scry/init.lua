@@ -23,7 +23,7 @@ M.config = {
   -- Claim-checking engine. Empty = treesitter + ripgrep (lua-first).
   resolver = "",
   -- How to run one spec, for `exercises` claims: the spec's path is appended
-  -- and exit 0 means passing. Nothing here runs on :Scry — only on :ScryRun.
+  -- and exit 0 means passing. Nothing here runs on :Scry — only on :ScryExercise.
   -- Left empty, exercises claims render "– unrun", which is honest: scry
   -- would rather say it doesn't know than guess a project's test command.
   test = { cmd = {} },
@@ -45,11 +45,7 @@ vim.api.nvim_create_user_command("ScryCheck", function()
   end)
 end, { desc = "Re-check every claim against the files on disk" })
 
-vim.api.nvim_create_user_command("ScryCascade", function()
-  require("scry.cascade").start()
-end, { desc = "Conjure the absent claim under the cursor via the quickfix list" })
-
-vim.api.nvim_create_user_command("ScryRun", function(a)
+vim.api.nvim_create_user_command("ScryExercise", function(a)
   require("scry.run").start({ concern = a.args ~= "" and a.args or nil })
 end, { nargs = "?", desc = "Run the specs behind this map's exercises claims, then re-check" })
 
