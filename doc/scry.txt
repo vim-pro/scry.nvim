@@ -155,6 +155,8 @@ The glyph never appears alone. The label states what was actually checked:
     – unchecked            no resolver for this language; NOT a pass
     – unrun                nobody has run that spec yet; NOT a pass
     – stale                it passed, but the code has moved since; NOT a pass
+    – vacuous?             it passes, and nothing its concern claims exists
+                           yet — so it is asserting nothing. NOT a pass
 
 That vocabulary is the honesty mechanism, not decoration. The fidelity of
 the evidence travels with the verdict, so the glass cannot render a stronger
@@ -250,12 +252,65 @@ re-checks too. So the loop closes visibly — `✗ absent` becomes
 Saving is the trigger because ripgrep reads disk. Unwritten changes are
 invisible to scry, and the header says so.
 
+A claim may name a file that does not exist yet — that is the normal state of
+work not yet done. Seeding creates it (and its parent directories), because
+conjurer rewrites a region of a buffer and needs one to rewrite.
+
 Two v0 limits worth knowing. The seeded entry points at the target file's
 first line — scry knows which file should define the symbol, not where in it
 the definition belongs, so the model decides placement and the conjurer's
-review is where you check it. And only `contains` claims cascade: `calls` and
-`never` claims have no single obvious site to seed, and guessing one would be
-worse than refusing.
+review is where you check it. And `calls` and `never` claims do not cascade:
+neither has a single obvious site to seed, and guessing one would be worse
+than refusing.
+
+------------------------------------------------------------------------------
+INDEPENDENCE OF THE CHECK                                  *scry-independence*
+
+`contains` and `exercises` both cascade, and the ORDER between them is the
+mechanism, not a convention:
+>
+    1.  :ScryCascade on the absent `exercises` claim   → conjures the CHECK
+    2.  read it, and ratify it                          ← the judgment act
+    3.  :ScryRun                                        → it must be RED
+    4.  :ScryCascade on the absent `contains` claim    → conjures the CODE
+    5.  :ScryRun                                        → green, and the
+                                                          holdout re-checks
+    6.  :ScryRatify the claim
+<
+Why in that order. If the check and the code are both generated from the same
+claim, they are not independent — they are two samples from one generator
+reading one sentence, so they share its misreadings. Both can be confidently
+wrong in the same direction and the suite is green. When a person wrote the
+code, their reading of the claim was an independent sample; remove that and
+`✓ passing` decays into *the generator was self-consistent*.
+
+So two things restore it, and both are enforced rather than advised:
+
+**The spec is withheld from the code request.** Cascading a `contains` claim
+adds every spec path in that concern to the tripwire, exactly as it adds the
+concern's prohibitions. An intent that names the test is refused. Code written
+while looking at the test is code written to pass the test, which is the one
+thing an acceptance check must not be written to do.
+
+The limit is stated plainly: this is request-level withholding only. A
+never-pattern can live outside the repository; a spec has to be in the tree to
+run, so a generator instructed to read your repository will find it. Same
+distinction as |scry-holdout|, and it is kept sharp for the same reason.
+
+**A check written before the code must fail.** One that passes against a
+feature nobody has built is asserting nothing — the commonest way a conjured
+test is worthless, and invisible from inside the run, since the process exits
+0 either way. So a check downgrades a passing `exercises` claim to
+`– vacuous?` when every `contains` claim in its concern is still absent. It is
+deliberately conservative: a half-built concern has plenty for a spec to
+legitimately exercise, and a false alarm would teach you to ignore the real
+one.
+
+Step 2 is the one no mechanism can do for you. If almost nothing is written
+by hand, the artifact you must actually read is the check — it is short,
+declarative, and sits at the altitude of the claim, which makes "yes, that is
+what I meant" a performable act in a way that reading the implementation is
+not.
 
 ==============================================================================
 8b. EXERCISED CLAIMS                                          *scry-exercised*
@@ -312,9 +367,12 @@ every concern that exercises it.
                         See |scry-exercised|.
 
                                                                 *:ScryCascade*
-:ScryCascade            Turn the absent `contains` claim under the cursor
-                        into quickfix work and hand it to conjurer, with the
-                        concern's prohibitions withheld. See |scry-cascade|.
+:ScryCascade            Turn the absent claim under the cursor into quickfix
+                        work and hand it to conjurer, with the concern's
+                        prohibitions withheld. On an `exercises` claim it
+                        conjures the check; on a `contains` claim it conjures
+                        the code, additionally withholding the concern's spec
+                        paths. See |scry-cascade| and |scry-independence|.
 
 ==============================================================================
 10. CONFIGURATION                                         *scry-configuration*

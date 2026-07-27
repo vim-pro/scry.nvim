@@ -28,24 +28,38 @@ M._active = function()
   return active
 end
 
---- Build everything that leaves scry for a contains-claim. Pure: no side
+--- Build everything that leaves scry for a cascadable claim. Pure: no side
 --- effects, no buffer or list writes — so a spec can walk every outgoing
---- string and prove no never-pattern text rides along.
+--- string and prove no withheld text rides along.
+---
+--- Two kinds cascade, and the order between them is the point. An
+--- `exercises` claim conjures the CHECK; a `contains` claim conjures the
+--- CODE. Doing the check first, and withholding it from the code request,
+--- is what keeps a green result from meaning "the generator agreed with
+--- itself" — see |scry-independence|.
 ---@param claim scry.Claim
 ---@param intent string
----@return { items: table[], intent: string, file: string, symbol: string }
+---@return { kind: string, items: table[], intent: string, file: string, symbol: string? }
 function M.build(claim, intent)
-  if claim.kind ~= "contains" then
-    error("[scry] cascade supports contains claims (got " .. claim.kind .. ")", 0)
+  local file, symbol, text
+  if claim.kind == "contains" then
+    file, symbol = claim.target:match("^(.-):([%w_.]+)$")
+    if not file then
+      error("[scry] malformed contains target (want path:symbol)", 0)
+    end
+    -- The entry text becomes request.note in conjurer, so it says only what
+    -- the claim says.
+    text = ("scry: %s should define %s"):format(claim.concern, symbol)
+  elseif claim.kind == "exercises" then
+    file = claim.target:match("^([^:]+):") or claim.target
+    symbol = claim.target:match("^[^:]+:(.+)$") -- the assertion label, if any
+    text = symbol and ("scry: %s needs a spec asserting: %s"):format(claim.concern, symbol)
+      or ("scry: %s needs a spec"):format(claim.concern)
+  else
+    error("[scry] cascade supports contains and exercises claims (got " .. claim.kind .. ")", 0)
   end
-  local file, symbol = claim.target:match("^(.-):([%w_.]+)$")
-  if not file then
-    error("[scry] malformed contains target (want path:symbol)", 0)
-  end
-  -- The entry text becomes request.note in conjurer, so it says only what
-  -- the claim says.
-  local text = ("scry: %s should define %s"):format(claim.concern, symbol)
   return {
+    kind = claim.kind,
     file = file,
     symbol = symbol,
     intent = intent,
@@ -136,12 +150,23 @@ function M.start()
     vim.notify("[scry] no claim on this line", vim.log.levels.WARN)
     return
   end
-  if claim.kind ~= "contains" then
-    vim.notify("[scry] cascade supports contains claims (this is a " .. claim.kind .. " claim)", vim.log.levels.WARN)
+  if claim.kind ~= "contains" and claim.kind ~= "exercises" then
+    vim.notify(
+      "[scry] cascade supports contains and exercises claims (this is a " .. claim.kind .. " claim)",
+      vim.log.levels.WARN
+    )
     return
   end
 
-  vim.ui.input({ prompt = "Conjure: ", default = "define " .. claim.target:match(":([%w_.]+)$") }, function(intent)
+  local default
+  if claim.kind == "contains" then
+    default = "define " .. (claim.target:match(":([%w_.]+)$") or claim.target)
+  else
+    local label = claim.target:match("^[^:]+:(.+)$")
+    default = label and ("write a spec asserting " .. label) or "write a spec for this concern"
+  end
+
+  vim.ui.input({ prompt = "Conjure: ", default = default }, function(intent)
     if not intent or intent == "" then
       return
     end
@@ -159,22 +184,46 @@ function M.seed(root, claim, intent, handoff)
   local holdout = require("scry.holdout")
   local built = M.build(claim, intent)
 
-  -- The tripwire: nothing that leaves here may contain the text of a
-  -- prohibition that will be CHECKED against the result. That is this
-  -- concern's nevers — scoped deliberately, and it mirrors recheck() exactly.
-  -- A different concern's prohibition is never evaluated against this code
-  -- (nevers are checked over their own concern's globs), so treating it as a
-  -- leak would block honest cascades: "session" is billing's prohibition and
-  -- the sessions concern's whole vocabulary.
+  -- The tripwire: nothing that leaves here may contain the text of something
+  -- that will be CHECKED against the result.
+  --
+  -- That is this concern's nevers — scoped deliberately, and it mirrors
+  -- recheck() exactly. A different concern's prohibition is never evaluated
+  -- against this code (nevers are checked over their own concern's globs), so
+  -- treating it as a leak would block honest cascades: "session" is billing's
+  -- prohibition and the sessions concern's whole vocabulary.
   local hold = holdout.load(root, config)
-  local nevers = {}
+  local withheld = {}
   for _, c in ipairs(hold.claims) do
     if c.kind == "never" and c.concern == claim.concern then
-      nevers[#nevers + 1] = c.target
+      withheld[#withheld + 1] = c.target
+    end
+  end
+  -- ...and, when conjuring CODE, this concern's spec paths. A code request
+  -- that names the test is a request to satisfy the test, which is the one
+  -- thing an acceptance check must not be written to do. Withholding the
+  -- path is all scry can enforce — the spec itself lives in the tree and a
+  -- generator that reads the repo will find it (see |scry-independence|).
+  if claim.kind == "contains" then
+    local m = require("scry.map").load(root .. "/" .. config.map_path)
+    for _, c in ipairs(m.claims) do
+      if c.kind == "exercises" and c.concern == claim.concern then
+        withheld[#withheld + 1] = c.target:match("^([^:]+):") or c.target
+      end
     end
   end
   local outgoing = { built.intent, built.items[1].text }
-  holdout.assert_clean(outgoing, nevers)
+  holdout.assert_clean(outgoing, withheld)
+
+  -- A claim can name a file that does not exist yet — that is the normal
+  -- state of work not yet done. Conjurer rewrites a region of a buffer, so
+  -- give it one.
+  local abs = root .. "/" .. built.file
+  if not vim.loop.fs_stat(abs) then
+    vim.fn.mkdir(vim.fn.fnamemodify(abs, ":h"), "p")
+    vim.fn.writefile({ "" }, abs)
+    vim.notify(("[scry] created %s"):format(built.file))
+  end
 
   vim.fn.setqflist({}, " ", {
     title = "scry: " .. claim.concern,

@@ -69,9 +69,23 @@ poisoned = not ok
 H.eq(poisoned, true, "assert_clean errors when a never-pattern appears in an outgoing string")
 H.eq(pcall(holdout.assert_clean, outgoing, never_targets), true, "and passes on the real payload")
 
--- 4) cascade only accepts contains claims
+-- 4) cascade accepts contains and exercises; nothing else
 local never_claim = hold.claims[1]
 H.eq(pcall(cascade.build, never_claim, "x"), false, "cascade refuses a never claim")
+
+-- 4a) an exercises claim cascades into a CHECK. The entry text asks for a
+-- spec and carries the assertion — nothing about how to implement anything.
+local ex = { kind = "exercises", target = "tests/auth_spec.lua:refresh reissues a session", concern = "auth" }
+local ex_built = cascade.build(ex, "write a spec asserting refresh reissues a session")
+H.eq(ex_built.kind, "exercises", "the build knows which rung it is on")
+H.eq(ex_built.file, "tests/auth_spec.lua", "the spec path is the target file")
+H.eq(ex_built.symbol, "refresh reissues a session", "the assertion label survives")
+H.ok(ex_built.items[1].text:find("needs a spec", 1, true) ~= nil, "asks for a check: " .. ex_built.items[1].text)
+H.eq(
+  cascade.build({ kind = "exercises", target = "tests/x_spec.lua", concern = "auth" }, "i").file,
+  "tests/x_spec.lua",
+  "a claim naming only a file still builds"
+)
 
 -- 4b) the tripwire is SCOPED to the concern being cascaded. A different
 -- concern's prohibition is never checked against this code (nevers run over
@@ -100,6 +114,36 @@ H.eq(
 )
 -- restore the fixture holdout for the rest of the spec
 vim.fn.writefile(vim.fn.readfile(H.fixture .. "/holdout.scry"), work .. "/holdout.scry")
+
+-- 4c) INDEPENDENCE OF THE CHECK. When conjuring code, the concern's spec
+-- paths are withheld too. A code request that names the test is a request to
+-- satisfy the test — which is the one thing an acceptance check must not be
+-- written to do, and the reason a conjured test is worth anything at all.
+local mapf = work .. "/.scry/map.scry"
+local base = vim.fn.readfile(mapf)
+vim.fn.writefile(vim.list_extend(vim.deepcopy(base), { "  exercises", "    tests/auth_spec.lua" }), mapf)
+H.eq(
+  pcall(cascade.seed, work, absent, "make tests/auth_spec.lua pass", false),
+  false,
+  "an intent naming the concern's spec trips the tripwire"
+)
+H.eq(
+  pcall(cascade.seed, work, absent, "define refresh_token from the stored session", false),
+  true,
+  "an intent that describes the behaviour instead passes"
+)
+-- ...but conjuring the SPEC may of course name the spec
+H.eq(
+  pcall(cascade.seed, work, {
+    kind = "exercises",
+    target = "tests/auth_spec.lua",
+    concern = "auth",
+  }, "write a spec for tests/auth_spec.lua", false),
+  true,
+  "the spec's own cascade is not blocked by its own path"
+)
+H.ok(vim.loop.fs_stat(work .. "/tests/auth_spec.lua") ~= nil, "seeding created the absent spec file")
+vim.fn.writefile(base, mapf)
 
 -- 5) seed the real list (no handoff), then simulate the conjurer writing a
 -- VIOLATING implementation and saving: the withheld prohibition catches it.

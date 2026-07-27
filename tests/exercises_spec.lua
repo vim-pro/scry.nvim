@@ -146,4 +146,66 @@ local m2 = map.parse({
 H.eq(#run.specs(m2), 2, "two distinct spec files, not three runs")
 H.eq(#run.specs(m2, "nope"), 0, "and a concern filter narrows it")
 
+-- 9) THE VACUITY GATE. A spec written before the code must fail; one that
+-- passes while nothing it should exercise exists is asserting nothing. The
+-- run itself cannot tell you this — the process exits 0 either way — so the
+-- check has to notice it across claims.
+local vac = vim.fn.tempname()
+vim.fn.mkdir(vac .. "/lua", "p")
+vim.fn.mkdir(vac .. "/tests", "p")
+vim.fn.writefile({ "os.exit(0)" }, vac .. "/tests/eager_spec.lua")
+vim.fn.writefile({ "local M = {}", "return M" }, vac .. "/lua/thing.lua")
+local mv = map.parse({
+  "# unbuilt",
+  "  files lua/*.lua",
+  "  contains",
+  "    lua/thing.lua:not_written_yet",
+  "  exercises",
+  "    tests/eager_spec.lua",
+})
+require("scry").setup({ test = { cmd = { "nvim", "--headless", "-u", "NONE", "-l" } } })
+-- The run must record everything a later check will ask about: an
+-- unrecorded dependency counts as changed, which is what run.start does.
+local function vac_deps()
+  local d = runs.scope(vac, { "lua/*.lua" })
+  d[#d + 1] = "tests/eager_spec.lua"
+  return d
+end
+local ran = false
+run.one(vac, "tests/eager_spec.lua", require("scry").config, vac_deps(), function()
+  ran = true
+end)
+H.ok(H.wait(function()
+  return ran
+end, 20000), "the eager spec ran green")
+
+local rv
+require("scry.check").run(mv, { root = vac, resolver = resolver }, function(r)
+  rv = r
+end)
+H.ok(H.wait(function()
+  return rv ~= nil
+end, 10000), "checked")
+local gated = rv.verdicts[map.claim_id(mv.claims[2])]
+H.eq(gated.status, "unchecked", "a green spec over an unbuilt concern is not a pass")
+H.ok(gated.label:find("vacuous", 1, true) ~= nil, "and is named as such: " .. gated.label)
+
+-- ...and the gate stays quiet once the concern is actually built. A
+-- half-finished concern has plenty for a spec to legitimately exercise; a
+-- false "vacuous" would teach you to ignore the real one.
+vim.fn.writefile({ "local M = {}", "function M.not_written_yet() end", "return M" }, vac .. "/lua/thing.lua")
+run.one(vac, "tests/eager_spec.lua", require("scry").config, vac_deps(), function() end)
+H.wait(function()
+  return false
+end, 1500)
+local rv2
+require("scry.check").run(mv, { root = vac, resolver = resolver }, function(r)
+  rv2 = r
+end)
+H.ok(H.wait(function()
+  return rv2 ~= nil
+end, 10000), "re-checked")
+H.eq(rv2.verdicts[map.claim_id(mv.claims[1])].status, "backed", "the definition landed")
+H.eq(rv2.verdicts[map.claim_id(mv.claims[2])].status, "backed", "so the spec counts as a pass again")
+
 H.done("exercises_spec PASS")
