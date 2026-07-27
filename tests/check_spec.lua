@@ -10,7 +10,7 @@ local SRC = {
   "# a",
   "  files lua/*.lua",
   "  contains",
-  "    x.lua:one  -- @w0zro 2026-07-26 " .. require("scry.ratify").hash("x.lua:one"),
+  "    x.lua:one",
   "    x.lua:two",
   "  never",
   "    bad_pattern",
@@ -47,14 +47,14 @@ calls[3].cb({ status = "violated", fidelity = "rg-text", label = "✗ VIOLATED",
 H.ok(report ~= nil, "settled once, after the last verdict")
 H.ok(report.at > 0, "report is timestamped")
 
--- debt: claim 1 ratified+backed; claim 2 unratified+missing; claim 3
--- unratified+violated → counted once per axis
+-- debt: ownership is provenance-based now; with no root every claim is
+-- untouched, and the verdict axis is unaffected
 local d = debt.count(m, report)
 H.eq(d.claims, 3, "claim count")
 H.eq(d.backed, 1, "backed")
 H.eq(d.missing, 1, "missing")
 H.eq(d.violated, 1, "violated")
-H.eq(d.unratified, 2, "unratified counts both stampless claims")
+H.eq(d.untouched, 3, "with no trail, every claim is untouched")
 
 -- header renders separate numbers with the claim count leading
 local header = debt.header(d, report.at)

@@ -98,20 +98,26 @@ local function row_of(needle)
   end
 end
 H.ok(virt[row_of("create_session")]:find("✓ defined", 1, true) ~= nil, "backed verdict rendered")
-H.ok(virt[row_of("create_session")]:find("∅ unratified", 1, true) ~= nil, "unratified marker rendered")
+H.ok(virt[row_of("create_session")]:find("∅ untouched", 1, true) ~= nil, "untouched marker rendered")
 H.ok(virt[row_of("refresh_token")]:find("✗ absent", 1, true) ~= nil, "absent verdict rendered")
 H.ok(virt[row_of("logging\\.debug")]:find("VIOLATED", 1, true) ~= nil, "violation rendered")
 H.ok(virt[row_of("logging\\.debug")]:find("lua/auth.lua:9", 1, true) ~= nil, "evidence line rendered")
 H.ok(virt[0] ~= nil and virt[0]:find("claims", 1, true) ~= nil, "header present")
 H.ok(virt[0]:find("files on disk", 1, true) ~= nil, "header carries the disk caveat")
 
--- 4) ratify the cursor claim, then hand-edit it → unratified returns
-vim.api.nvim_win_set_cursor(0, { row_of("create_session") + 1, 0 })
-require("scry.glass").ratify_current()
-local stamped = vim.api.nvim_buf_get_lines(buf, row_of("create_session"), row_of("create_session") + 1, false)[1]
-H.ok(stamped:find("-- @", 1, true) ~= nil, "stamp written into the buffer line")
+-- 4) ownership is inferred from the work: record an authored event for the
+-- cursor claim and the marker clears on the next render — no command, no stamp
+local prov = require("scry.provenance")
+local target_claim
+for _, c in ipairs(glass._state.map.claims) do
+  if c.target == "lua/auth.lua:create_session" then
+    target_claim = c
+  end
+end
+prov.record(work, target_claim, "authored")
+require("scry.glass").render()
 local virt2 = H.virt_by_row(buf, ns)
-H.ok(virt2[row_of("create_session")]:find("∅ unratified", 1, true) == nil, "ratified claim loses the marker")
+H.ok(virt2[row_of("create_session")]:find("∅ untouched", 1, true) == nil, "a claim with a trail loses the marker")
 
 -- 5) write: split-save both files + notification
 local notified
@@ -127,7 +133,6 @@ H.ok(notified and notified:find("never%-claim") ~= nil, "write notifies the hold
 local saved_map = table.concat(H.read_lines(work .. "/.scry/map.scry"), "\n")
 local saved_hold = table.concat(H.read_lines(work .. "/holdout-test.scry"), "\n")
 H.ok(saved_map:find("create_session", 1, true) ~= nil, "map file saved")
-H.ok(saved_map:find("-- @", 1, true) ~= nil, "stamp persisted to the map file")
 H.ok(saved_map:find("never", 1, true) == nil, "no never block leaked into the repo map")
 H.ok(saved_hold:find("logging\\.debug", 1, true) ~= nil, "holdout file holds the patterns")
 

@@ -72,33 +72,27 @@ local weird = map.parse({
 H.eq(#weird.claims, 1, "claim before the dedent parsed; line after it is prose")
 H.eq(weird.claims[1].target, "real.lua:sym", "the real claim survived its weird neighbors")
 
--- 6) ratify: stamp, staleness, restamp
-local ratify = require("scry.ratify")
-local m2 = map.parse(vim.deepcopy(SRC))
-local claim = m2.claims[2]
-H.eq(ratify.ratified(claim), false, "unstamped claim is unratified")
-ratify.stamp(m2, claim, "w0zro", "2026-07-26")
-H.eq(ratify.ratified(claim), true, "stamped claim is ratified")
--- the stamp landed in the LINE, and reparsing sees it
-local m3 = map.parse(map.serialize(m2))
-H.eq(m3.claims[2].stamp.user, "w0zro", "stamp survives serialize+reparse")
-H.eq(ratify.ratified(m3.claims[2]), true, "reparsed claim still ratified")
--- editing the target invalidates the hash mechanically
-m3.claims[2].target = "lua/conjurer/providers/known.lua:resolve_api_v2"
-H.eq(ratify.ratified(m3.claims[2]), false, "edited claim is unratified again")
--- claim 1's pre-existing stamp hash doesn't match its real sha (fixture
--- used a made-up hash) — staleness catches fabricated stamps too
-H.eq(ratify.ratified(m3.claims[1]), false, "wrong-hash stamp reads as unratified")
-
--- 7) author() must return exactly one value: it's called inline as
--- stamp(map, claim, author(config)), so a second return value would land in
--- the date parameter and produce a stamp that fails its own format.
-local a, extra = ratify.author({ author = "" })
-H.eq(extra, nil, "author() returns a single value")
-H.ok(type(a) == "string" and a ~= "", "author() resolved a name")
--- and stamp() defends the date shape regardless of what it is handed
-local m4 = map.parse({ "# c", "  contains", "    f.lua:sym" })
-ratify.stamp(m4, m4.claims[1], "someone", 0)
-H.eq(ratify.ratified(map.parse(map.serialize(m4)).claims[1]), true, "a bogus date is replaced, stamp stays valid")
+-- Ownership is inferred, never performed: the provenance trail is keyed to
+-- a hash of the claim's text, so EDITING a claim voids its trail — the old
+-- ratification property, kept without the stamp.
+local prov = require("scry.provenance")
+local root = vim.fn.tempname()
+vim.fn.mkdir(root, "p")
+local m2 = map.parse({ "# a", "  contains", "    x.lua:one" })
+local claim = m2.claims[1]
+H.eq(prov.owned(root, claim), false, "an untouched claim is not owned")
+prov.record(root, claim, "authored")
+H.eq(prov.owned(root, claim), true, "authoring is ownership")
+claim = { kind = claim.kind, target = "x.lua:two", concern = claim.concern, lnum = claim.lnum }
+H.eq(prov.owned(root, claim), false, "an edited claim's trail is void")
+prov.record(root, claim, "cascaded")
+H.eq(prov.owned(root, claim), false, "cascading alone is not ownership")
+prov.record(root, claim, "green")
+H.eq(prov.owned(root, claim), true, "cascaded and came true is ownership")
+-- stamps from the ratification era still PARSE (legacy lines are claims with
+-- a stamp field), they just no longer mean anything
+local legacy = map.parse({ "# a", "  contains", "    x.lua:one  -- @w0zro 2026-07-26 abc123" })
+H.eq(legacy.claims[1].target, "x.lua:one", "legacy stamped claim still parses to its target")
+H.eq(legacy.claims[1].stamp.user, "w0zro", "and keeps its stamp as data")
 
 H.done("map_spec PASS")

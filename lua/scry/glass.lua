@@ -176,12 +176,12 @@ function M.render()
     return
   end
   local mapmod = require("scry.map")
-  local ratify = require("scry.ratify")
+  local prov = require("scry.provenance")
   local debt = require("scry.debt")
   vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
 
   state.map = combined_map()
-  state.debt = debt.count(state.map, state.report)
+  state.debt = debt.count(state.map, state.report, state.root)
 
   -- header (virt_lines above line 1)
   pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, 0, 0, {
@@ -197,8 +197,8 @@ function M.render()
         or (v.status == "unchecked" and "ScryEvidence" or "ScryDiverged")
       parts[#parts + 1] = { "   " .. v.label, hl }
     end
-    if not ratify.ratified(claim) then
-      parts[#parts + 1] = { " · ∅ unratified", "ScryUnratified" }
+    if not (state.root and prov.owned(state.root, claim)) then
+      parts[#parts + 1] = { " · ∅ untouched", "ScryUnratified" }
     end
     if #parts > 0 then
       local mark = { virt_text = parts, virt_text_pos = "eol" }
@@ -225,6 +225,9 @@ function M.check(cb)
   local m = combined_map()
   require("scry.check").run(m, { root = state.root, resolver = require("scry.resolver").get() }, function(report)
     state.report = report
+    -- turn state transitions into trail events (cascaded → settled) before
+    -- rendering, so ownership appears the moment the work comes true
+    require("scry.provenance").sync(state.root, m, report)
     M.render()
     if cb then
       cb()
@@ -298,6 +301,14 @@ function M.open(root)
         M.write()
       end,
     })
+    -- Claims that appear under the user's own edits are AUTHORED — that is
+    -- the whole ownership gesture. state.map is the renderer's snapshot, so
+    -- scry's own writes never register as authorship.
+    require("scry.provenance").watch(buf, function()
+      return state.root
+    end, function()
+      return state.map
+    end)
   end
   vim.bo[buf].modified = false
   state.buf = buf
@@ -327,27 +338,6 @@ function M.write()
     )
   )
   M.check()
-end
-
---- Ratify the claim on the cursor line (glass only).
-function M.ratify_current()
-  if vim.api.nvim_get_current_buf() ~= state.buf then
-    vim.notify("[scry] :ScryRatify works in the glass buffer", vim.log.levels.WARN)
-    return
-  end
-  local lnum = vim.api.nvim_win_get_cursor(0)[1]
-  state.map = combined_map()
-  for _, claim in ipairs(state.map.claims) do
-    if claim.lnum == lnum then
-      local ratify = require("scry.ratify")
-      local line = ratify.stamp(state.map, claim, ratify.author(require("scry").config))
-      vim.api.nvim_buf_set_lines(state.buf, lnum - 1, lnum, false, { line })
-      M.render()
-      vim.notify(("[scry] ratified: %s"):format(claim.target))
-      return
-    end
-  end
-  vim.notify("[scry] no claim on this line", vim.log.levels.WARN)
 end
 
 return M

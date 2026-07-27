@@ -13,7 +13,9 @@ local M = {}
 ---@field unchecked integer no resolver, parse failure, resolver error, or no
 ---  verdict at all. NOT a pass — the fourth column exists so this can never
 ---  be inferred by subtraction.
----@field unratified integer no stamp, or stamp stale against current text.
+---@field untouched integer no work has passed through this claim: not
+---  authored by hand, not cascaded to completion. Ownership is INFERRED
+---  from the trail (see provenance.lua), never performed as an act.
 
 --- Count a map + report into debt numbers. A claim can count on both the
 --- diverged and unratified axes; each axis counts it once.
@@ -24,14 +26,15 @@ local M = {}
 --- to conclude the rest are fine.
 ---@param map_ scry.Map
 ---@param report scry.Report?
+---@param root string? Project root; without it nothing counts as owned.
 ---@return scry.Debt
-function M.count(map_, report)
+function M.count(map_, report, root)
   local mapmod = require("scry.map")
-  local ratify = require("scry.ratify")
-  local d = { claims = #map_.claims, backed = 0, missing = 0, violated = 0, unchecked = 0, unratified = 0 }
+  local prov = require("scry.provenance")
+  local d = { claims = #map_.claims, backed = 0, missing = 0, violated = 0, unchecked = 0, untouched = 0 }
   for _, claim in ipairs(map_.claims) do
-    if not ratify.ratified(claim) then
-      d.unratified = d.unratified + 1
+    if not (root and prov.owned(root, claim)) then
+      d.untouched = d.untouched + 1
     end
     local v = report and report.verdicts[mapmod.claim_id(claim)]
     local status = v and v.status
@@ -60,13 +63,13 @@ function M.header(d, at)
   -- and unratified: nothing an engine declined to answer may be omitted from
   -- the one line the reader actually glances at.
   local unchecked = d.unchecked > 0 and (" · %d unchecked"):format(d.unchecked) or ""
-  return ("scry · %d claims · %d backed · %d missing · %d violated%s · %d unratified   %s (files on disk)"):format(
+  return ("scry · %d claims · %d backed · %d missing · %d violated%s · %d untouched   %s (files on disk)"):format(
     d.claims,
     d.backed,
     d.missing,
     d.violated,
     unchecked,
-    d.unratified,
+    d.untouched,
     when
   )
 end

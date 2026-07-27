@@ -13,11 +13,15 @@ check that doesn't pass yet.
 `:ScryCascade` takes it from there: the check is conjured first (you read
 it, it must fail), then the code — with the check and the concern's
 prohibitions withheld from the model that writes it. The code is where you
-review, not where you start, and `:ScryRatify` is you signing that what
-landed is what you meant.
+review, not where you start.
+
+**There is nothing to sign.** Ownership is inferred from the work: type a
+claim yourself, or cascade one and watch it come true, and its `∅ untouched`
+marker clears. Edit a claim and its trail voids mechanically — every event
+is keyed to a hash of the claim's text.
 
 ```
-scry · 8 claims · 5 backed · 1 missing · 1 violated · 1 unchecked · 2 unratified   checked 40s ago (files on disk)
+scry · 8 claims · 5 backed · 1 missing · 1 violated · 1 unchecked · 2 untouched   checked 40s ago (files on disk)
 
 # providers
   files lua/conjurer/providers/*.lua
@@ -27,10 +31,10 @@ scry · 8 claims · 5 backed · 1 missing · 1 violated · 1 unchecked · 2 unra
 
   contains
     lua/conjurer/providers/cli.lua:request    -- @michael 2026-07-26 3f9a01   ✓ defined
-    lua/conjurer/providers/known.lua:resolve_api                              ✓ defined · ∅ unratified
+    lua/conjurer/providers/known.lua:resolve_api                              ✓ defined · ∅ untouched
   calls
     known.lua::resolve_api                    -- @michael 2026-07-26 b71e00   ✓ referenced (text)
-    stream.lua::parse_sse                                                     ✗ absent · ∅ unratified
+    stream.lua::parse_sse                                                     ✗ absent · ∅ untouched
   never
     vim\.ui\.                                                                 ✓ no matches (rg)
     vim\.fn\.setqflist                                                        ✗ VIOLATED
@@ -48,11 +52,12 @@ scry's answer, computed and never stored.
 prose is preserved verbatim and never checked. The sentences carry the
 theory; the claims carry the check. That split is the whole trick.
 
-**Ratification is the loop.** `:ScryRatify` stamps a claim with your name and
-a hash of its text — so **editing a claim un-ratifies it**, mechanically, no
-hooks. Why bother? Clicking "accept" is free, which is why approval
-degenerates into LGTM. You cannot write down a belief without having one, and
-a careless one diverges later with your name on it.
+**Ownership is inferred, never performed.** The actions of doing the work —
+authoring a claim, cascading it, running its check red then green — leave a
+trail, and the trail is what clears `∅ untouched`. Editing a claim voids its
+trail mechanically. Clicking "accept" is free, which is why approval
+degenerates into LGTM; a trail can only exist if the work actually passed
+through your hands.
 
 **Prohibitions are a holdout.** `never` claims are withheld from the model
 that writes your code and checked afterwards. If the generator is shown the
@@ -60,9 +65,9 @@ prohibition, its output satisfying it tells you nothing — it was asked to.
 A rule it never saw, checked after, is real evidence. That's why prohibitions
 are stored outside the repo by default.
 
-**Theory-debt is a number.** How much of your system has nobody put their
-name on? Conjuring generates that debt at machine speed; ratification is the
-only thing that pays it down. `scry 14c ✓11 ✗2 ∅3`.
+**Theory-debt is a number.** How much of your system has no one engaged
+with? Conjuring generates untouched claims at machine speed; working through
+them is the only thing that pays it down. `scry 14c ✓11 ✗2 ∅3`.
 
 ## Two axes of evidence
 
@@ -81,7 +86,7 @@ staleness, so a run fingerprints the concern's files as it starts — move any
 of them and `✓ passing` degrades to `– stale`, which is not a pass.
 
 Both `contains` and `exercises` cascade, and the order is the mechanism:
-conjure the **check** first, ratify it, confirm it goes **red**, then conjure
+conjure the **check** first, confirm it goes **red**, then conjure
 the code *with the spec withheld*. Two generations from one sentence share its
 misreadings, so a suite written by whoever wrote the code proves only that the
 generator was self-consistent. See `:h scry-independence`.
@@ -99,8 +104,8 @@ off to [conjurer.nvim](https://github.com/vim-pro/conjurer.nvim) — which owns
 the casting and per-site review. **scry never conjures anything itself.**
 
 When you save the file, the withheld prohibitions run against the new code and
-the claim re-checks: `✗ absent` becomes `✓ defined · ∅ unratified`, and
-ratifying it finishes the loop. If the generated code trips a rule it never
+the claim re-checks: `✗ absent` becomes `✓ defined` — and because
+you cascaded it and it came true, it's yours, no further act. If the generated code trips a rule it never
 saw, you find out with the evidence line.
 
 ## Install
@@ -124,7 +129,6 @@ just cast the seeded list yourself.
 require("scry").setup({
   map_path = ".scry/map.scry",  -- versioned with the code it describes
   holdout_path = "",            -- "" = never-claims outside the repo
-  author = "",                  -- "" = git config user.name
   resolver = "",                -- "" = treesitter + ripgrep
   test = { cmd = {} },          -- how to run ONE spec; the path is appended.
                                 -- Empty = exercises claims stay "– unrun".

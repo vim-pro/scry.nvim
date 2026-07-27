@@ -10,7 +10,7 @@ CONTENTS                                                       *scry-contents*
   2. The glass ................................... |scry-glass|
   3. The map ..................................... |scry-map|
   4. Verdicts .................................... |scry-verdicts|
-  5. Ratification ................................ |scry-ratification|
+  5. Ownership ................................... |scry-ownership|
   6. Theory-debt ................................. |scry-debt|
   7. The holdout ................................. |scry-holdout|
   8. The cascade ................................. |scry-cascade|
@@ -36,9 +36,14 @@ product share one vocabulary.
 |:ScryCascade| takes a claim from there: the check is conjured first — you
 read it, and it must fail — then the code, with the check and the
 concern's prohibitions withheld from the model that writes it. The code is
-where you review, not where you start. |:ScryRatify| is you signing that
-what landed is what you meant, and editing the claim un-signs it
-mechanically.
+where you review, not where you start.
+
+Ownership is INFERRED from that work, never performed as an act. There is
+no sign-this command anywhere in scry: typing a claim yourself, cascading
+one and watching it come true, running its check red and then green — the
+trail those actions leave is what clears the `∅ untouched` marker. Editing
+a claim voids its trail mechanically, because every event is keyed to a
+hash of the claim's text. See |scry-ownership|.
 
 Three tools, three jobs: the glass is where you work (scry.nvim), the
 conjurer types (conjurer.nvim), and the list is where changes get reviewed
@@ -63,7 +68,7 @@ Editing the model is the primary gesture. `:write` saves it — and routes
 never-claims to the holdout file (|scry-holdout|), announcing where they
 went. Every render carries a header:
 >
-    scry · 7 claims · 4 backed · 1 missing · 1 violated · 1 unchecked · 2 unratified   checked 40s ago (files on disk)
+    scry · 7 claims · 4 backed · 1 missing · 1 violated · 1 unchecked · 2 untouched   checked 40s ago (files on disk)
 <
 "files on disk" is not decoration: scry reads saved files, so an unwritten
 buffer is invisible to it. A verdict is always presented with when it was
@@ -153,7 +158,7 @@ The glyph never appears alone. The label states what was actually checked:
     ✗ unreferenced         the target exists, but this concern never mentions it
     ✗ VIOLATED             a prohibition matched — with the evidence line
     ✗ FAILING              that spec exited non-zero — with its output
-    ∅ unratified           nobody has put their name on this claim
+    ∅ untouched            no work has passed through this claim yet
     – unchecked            no resolver for this language; NOT a pass
     – unrun                nobody has run that spec yet; NOT a pass
     – stale                it passed, but the code has moved since; NOT a pass
@@ -166,33 +171,37 @@ word than the engine that produced it. See |scry-honesty| for what each
 verdict does and does not assert.
 
 ==============================================================================
-5. RATIFICATION                                            *scry-ratification*
+5. OWNERSHIP                                                  *scry-ownership*
 
-|:ScryRatify| stamps the claim under the cursor:
->
-    lua/auth.lua:create_session  -- @w0zro 2026-07-26 6b8f0e
-<
-The hex is the head of a hash of the claim's own text. That makes staleness
-mechanical and free: **edit a claim and it is unratified again**, because the
-hash no longer matches. No hooks, no hidden state, and the stamp is visible
-in `git diff` like any other line.
+There is nothing to sign. Ownership is inferred from the ordinary actions
+of doing the work, each recorded as a trail event on the claim it touched:
 
-Why bother? Because you cannot write down a belief without having one.
-Clicking "accept" is free, which is why approval degenerates into LGTM;
-asserting "this concern contains X and never touches Y" is not performable
-by someone who has not looked, and a careless assertion diverges later with
-your name on it. Ratification is theory-building shrunk to an act small
-enough to perform constantly.
+    authored     you typed or edited the claim's text in the glass
+    cascaded     you sent it to the conjurer (|:ScryCascade|)
+    red / green  its spec failed, then passed, under your |:ScryRun|
+    settled      a claim you cascaded came true on your save
 
-A stamp is a record of intent, not authenticated attribution: `@name` is
-whatever `git config user.name` says.
+A claim is OWNED — and drops its `∅ untouched` marker — when the trail
+shows a person passed through it: authored, or cascaded and it came true.
+A machine-drafted claim nobody has engaged with stays marked, which is
+exactly what the marker is for: inventory is not understanding.
+
+Every event is keyed to a hash of the claim's text at the moment it was
+recorded, so the old ratification property survives without the ceremony:
+edit a claim and its trail is void, mechanically, no hooks. Trails live
+outside the repo under `stdpath("state")`, like run results — they are
+facts about what you did on this machine, not something to commit.
+
+Stamps from the ratification era (`-- @name date hex`) still parse; they
+are kept as data and mean nothing.
 
 ==============================================================================
 6. THEORY-DEBT                                                     *scry-debt*
 
 Two separate numbers, never blended into one score:
 
-- **unratified** — claims nobody has stamped, or whose text changed since.
+- **untouched** — claims no work has passed through: not authored by hand,
+  not cascaded to completion. See |scry-ownership|.
 - **diverged** — claims that are missing or violated.
 
 A claim is also always in exactly one verdict column — backed, missing,
@@ -208,7 +217,7 @@ can report code that no claim covers, debt says nothing about unclaimed
 code.
 
 `require("scry.debt").statusline()` returns a compact string for your own
-statusline: `scry 14c ✓11 ✗2 ∅3`, gaining a `–N` when anything is unchecked.
+statusline: `scry 14c ✓11 ✗2 ∅3`, gaining a `–N` when anything is unchecked; `∅` counts untouched claims.
 
 ==============================================================================
 7. THE HOLDOUT                                                  *scry-holdout*
@@ -248,8 +257,8 @@ conjurer's aggregate driver — which owns the casting and the per-site review
 
 When you save a file the cascade seeded, scry re-checks: the withheld
 prohibitions run against the new code, and the claim that started the work
-re-checks too. So the loop closes visibly — `✗ absent` becomes
-`✓ defined · ∅ unratified`, and |:ScryRatify| is the act that finishes it.
+re-checks too. So the loop closes visibly — `✗ absent` becomes `✓ defined`,
+and because you cascaded it and it came true, it is yours — no further act.
 
 Saving is the trigger because ripgrep reads disk. Unwritten changes are
 invisible to scry, and the header says so.
@@ -272,12 +281,12 @@ INDEPENDENCE OF THE CHECK                                  *scry-independence*
 mechanism, not a convention:
 >
     1.  :ScryCascade on the absent `exercises` claim   → conjures the CHECK
-    2.  read it, and ratify it                          ← the judgment act
+    2.  read it                                         ← the judgment act
     3.  :ScryRun                                        → it must be RED
     4.  :ScryCascade on the absent `contains` claim    → conjures the CODE
     5.  :ScryRun                                        → green, and the
                                                           holdout re-checks
-    6.  :ScryRatify the claim
+    6.  it is yours — you cascaded it and it came true
 <
 Why in that order. If the check and the code are both generated from the same
 claim, they are not independent — they are two samples from one generator
@@ -357,10 +366,6 @@ every concern that exercises it.
                                                                   *:ScryCheck*
 :ScryCheck              Re-check every claim against the files on disk.
 
-                                                                 *:ScryRatify*
-:ScryRatify             Stamp the claim under the cursor with your name, the
-                        date, and a hash of its text. See |scry-ratification|.
-
                                                                     *:ScryRun*
 :ScryRun [{concern}]    Run the specs named by this map's `exercises` claims
                         and record the results, then re-check. The only
@@ -390,9 +395,6 @@ setup({opts}) is optional. Defaults: >lua
       -- An in-repo path shares them with your team and forfeits that.
       holdout_path = "",
 
-      -- Name written into ratification stamps. Empty = git config user.name.
-      author = "",
-
       -- Claim-checking engine. Empty = treesitter + ripgrep (lua-first).
       resolver = "",
 
@@ -413,7 +415,7 @@ ScryBacked              Backed and clean verdicts. Default: DiagnosticOk.
 ScryDiverged            Missing and violated verdicts. Default:
                         DiagnosticError.
                                                           *hl-ScryUnratified*
-ScryUnratified          The ∅ marker. Default: DiagnosticWarn.
+ScryUnratified          The ∅ untouched marker. Default: DiagnosticWarn.
                                                             *hl-ScryEvidence*
 ScryEvidence            Evidence lines and unchecked verdicts. Default:
                         Comment.
@@ -460,7 +462,8 @@ Every line here is a limit scry intends to keep stating plainly.
 - **Theory-debt is coverage-blind.** Until scry reports code no claim
   covers, a clean map may simply be an empty one — which is why the claim
   count is rendered first.
-- **Stamps are records, not identity.** `@name` comes from your git config.
+- **The trail is per-machine.** Ownership events live in local state, like
+  run results — a teammate's glass shows their own trail, not yours.
 - **`– unchecked` is not a pass.** A language with no resolver renders as
   unchecked, deliberately, so silence never looks like agreement.
 

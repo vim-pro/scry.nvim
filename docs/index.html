@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>scry.nvim — where you work now</title>
-<meta name="description" content="The surface you write software from. Describe the change — a feature, a fix — into the product's description; a conjurer does the typing; you review and sign what lands.">
+<meta name="description" content="The surface you write software from. Describe the change — a feature, a fix — into the product's description; a conjurer does the typing; you review what lands, and ownership is inferred from the work.">
 <meta property="og:title" content="scry.nvim — where you work now">
-<meta property="og:description" content="Add features and fix bugs from the product's description. A conjurer does the typing; you sign what lands.">
+<meta property="og:description" content="Add features and fix bugs from the product's description. A conjurer does the typing; ownership is inferred from the work.">
 <meta property="og:url" content="https://scry.vim.pro">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://scry.vim.pro/og.png">
@@ -302,7 +302,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   <p class="rel sub">Add a feature, fix a bug, tighten a hot path — by describing the
   change into the product, in the buffer that describes everything else it does.
   A conjurer does the typing. The code is where you <em>review</em>, not where you
-  start.</p>
+  start — and nothing asks for a signature: ownership is inferred from the work
+  itself.</p>
 
   <div class="rel summoning" id="summoning">
     <span class="install-chip">
@@ -318,7 +319,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <section class="glass-sect" id="glass">
   <div class="glass-caption">
     <span class="t">The glass</span>
-    <span class="s">say what you want · watch it land · sign off</span>
+    <span class="s">say what you want · watch it land · it's yours</span>
   </div>
   <div class="terminal">
     <div class="term-bar">
@@ -410,28 +411,31 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       it, checked after, produced evidence.</div>
     </div>
     <div class="stage gold">
-      <div class="k">sign off</div>
-      <div class="t"><code>:ScryRun</code> goes green. <code>:ScryRatify</code> puts your name on it.</div>
-      <div class="b">The work is done when it's understood, not when it lands — the
-      signature is you saying you read what arrived and it's what you meant.</div>
+      <div class="k">and it's yours</div>
+      <div class="t"><code>:ScryRun</code> goes green — nothing left to do.</div>
+      <div class="b">You named it, sent it, read the check, watched red become green.
+      That trail <strong>is</strong> the ownership — the <code>∅</code> clears itself,
+      because the work passed through your hands and scry saw it happen.</div>
     </div>
   </div>
 </section>
 
-<!-- ============================= the seal ============================ -->
+<!-- ============================= the trail ============================ -->
 <section class="seal-sect" id="seal">
   <div class="section-head">
-    <h2>The <em>seal</em></h2>
-    <div class="s">the one thing in the glass that is warm</div>
+    <h2>The <em>trail</em></h2>
+    <div class="s">ownership is inferred — there is nothing to sign</div>
   </div>
   <div class="seal-card">
-    <div class="line">lua/auth.lua:create_session  <span class="stamp">-- @w0zro 2026-07-26 6b8f0e</span></div>
-    <div class="b">Your name, the date, six hex of <code>sha256</code> of the claim's
-    own text. <strong>Edit the claim and the seal breaks</strong> — the hash stops
-    matching, the <code style="color:var(--seal)">∅ unsigned</code> mark returns. No
-    hooks, no hidden state, visible in <code>git diff</code>. Signing is cheap to do
-    and impossible to fake having done: you can't put your name on a sentence you
-    haven't read.</div>
+    <div class="line">authored · cascaded · red → green · settled</div>
+    <div class="b">Doing the work leaves a trail on the claim it touched: you typed
+    it, you cascaded it, its check failed and then passed under your
+    <code>:ScryRun</code>, it came true on your save. A claim is
+    <strong>yours</strong> when the trail shows you passed through it — and a
+    machine-drafted claim nobody has engaged with stays
+    <code style="color:var(--seal)">∅ untouched</code>, which is the point.
+    <strong>Edit a claim and its trail is void</strong> — every event is keyed to a
+    hash of the claim's text. The old honesty, none of the ceremony.</div>
   </div>
 </section>
 
@@ -450,7 +454,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
           <tr><td><span class="hg">:ScryCheck</span></td><td>Re-check against the files on disk.</td></tr>
           <tr><td><span class="hg">:ScryCascade</span></td><td>Conjure the absent claim under the cursor, prohibitions withheld.</td></tr>
           <tr><td><span class="hg">:ScryRun</span></td><td>Run the specs behind <code>exercises</code> claims, then re-check. The only command that executes your code.</td></tr>
-          <tr><td><span class="hg">:ScryRatify</span></td><td>Sign the claim under the cursor.</td></tr>
         </tbody>
       </table>
     </div>
@@ -474,9 +477,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <div class="s">its limits, stated as plainly as its verdicts</div>
   </div>
   <div class="limits">
-    <div class="row"><b>The map is yours either way.</b> A model may draft it — a draft
-    arrives unsigned. The danger was never half-right guesses; it's unowned claims
-    that read as understood. Only your signature makes one yours.</div>
+    <div class="row"><b>The map is yours either way.</b> A model may draft it — a
+    draft arrives untouched. The danger was never half-right guesses; it's unowned
+    claims that read as understood. Working through one is what makes it yours.</div>
     <div class="row"><b>Backed is not correct.</b> claimed → backed → exercised. Nothing here says your code is right.</div>
     <div class="row"><b><code>contains ✓</code></b> — a definition with that name exists. Nothing about its body.</div>
     <div class="row"><b><code>calls ✓</code></b> — the token occurs and the target exists. Not a resolved call.</div>
@@ -485,7 +488,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <div class="row"><b>Verdicts describe saved files.</b> Unwritten buffers are invisible; the timestamp travels with the render.</div>
     <div class="row"><b>Withholding guards against leakage,</b> not adversaries. A spec must live in the tree to run, so hiding it is request-level only.</div>
     <div class="row"><b>The cascade seeds the file's first line.</b> scry knows which file, not where in it. Placement is the model's call; review is yours.</div>
-    <div class="row"><b>Seals are records, not identity.</b> <code>@name</code> is your git config.</div>
+    <div class="row"><b>The trail is per-machine.</b> Ownership lives in local state like run results — a teammate's glass shows their trail, not yours.</div>
   </div>
 </section>
 
@@ -538,7 +541,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
   /* ---------- the glass demo ----------
      The arc is the workflow: a settled map, you type the claim for the change
-     you want, it surfaces absent, you cascade it, it comes true, you sign. */
+     you want, it surfaces absent, you cascade it, it comes true — yours. */
   var body = document.getElementById("termBody");
   var actEl = document.getElementById("termAct");
   var noteEl = document.getElementById("termNote");
@@ -547,10 +550,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
   var NEW_TARGET = "providers/ollama.lua:request";
   var SETTLED = [
-    ['    <span class="tgt">providers/cli.lua:request</span>  <span class="stamp">-- @w0zro 2026-07-26 3f9a01</span>',
-     '<span class="vb">✓ defined</span>'],
-    ['    <span class="tgt">providers/known.lua:resolve</span>  <span class="stamp">-- @w0zro 2026-07-26 b71e00</span>',
-     '<span class="vb">✓ defined</span>']
+    ['    <span class="tgt">providers/cli.lua:request</span>', '<span class="vb">✓ defined</span>'],
+    ['    <span class="tgt">providers/known.lua:resolve</span>', '<span class="vb">✓ defined</span>']
   ];
 
   function gline(txt, vd, cls) {
@@ -583,13 +584,13 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     body.innerHTML = h;
   }
 
-  var H_SETTLED = "scry · 4 claims · 4 backed · 0 unsigned   checked 2m ago (files on disk)";
-  var H_ABSENT  = "scry · 5 claims · 4 backed · 1 missing · 1 unsigned   just checked (files on disk)";
-  var H_DONE    = "scry · 5 claims · 5 backed · 1 unsigned   just checked (files on disk)";
-  var H_SIGNED  = "scry · 5 claims · 5 backed · 0 unsigned   just checked (files on disk)";
+  var H_SETTLED = "scry · 4 claims · 4 backed · 0 untouched   checked 2m ago (files on disk)";
+  var H_ABSENT  = "scry · 5 claims · 4 backed · 1 missing · 1 untouched   just checked (files on disk)";
+  var H_DONE    = "scry · 5 claims · 5 backed · 1 untouched   just checked (files on disk)";
+  
 
   if (reduced) {
-    render({ typed: NEW_TARGET, verdict: '<span class="vd">✗ absent</span> · <span class="vu">∅ unsigned</span>',
+    render({ typed: NEW_TARGET, verdict: '<span class="vd">✗ absent</span> · <span class="vu">∅ untouched</span>',
              header: H_ABSENT, fresh: false, cursor: false });
   } else {
     var t = 0, steps = [], timers = [];
@@ -615,7 +616,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         noteEl.textContent = "written · gazing";
       });
       at(560, function () {
-        render({ typed: NEW_TARGET, verdict: '<span class="vd">✗ absent</span> · <span class="vu">∅ unsigned</span>',
+        render({ typed: NEW_TARGET, verdict: '<span class="vd">✗ absent</span> · <span class="vu">∅ untouched</span>',
                  header: H_ABSENT, fresh: true, cursor: false });
         noteEl.textContent = "new work, named";
       });
@@ -626,15 +627,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         noteEl.textContent = "conjurer typing · never-rules withheld";
       });
       at(2300, function () {
-        render({ typed: NEW_TARGET, verdict: '<span class="vb">✓ defined</span> · <span class="vu">∅ unsigned</span>',
+        render({ typed: NEW_TARGET, verdict: '<span class="vb">✓ defined</span>',
                  header: H_DONE, fresh: true, cursor: false });
-        noteEl.textContent = "landed: providers/ollama.lua · vim\\.ui\\. still clean";
-      });
-      at(2000, function () { actEl.textContent = ":ScryRatify"; });
-      at(620, function () {
-        render({ typed: NEW_TARGET, stamp: "-- @w0zro 2026-07-27 7c41ab",
-                 verdict: '<span class="vb">✓ defined</span>', header: H_SIGNED, fresh: false, cursor: false });
-        noteEl.textContent = "signed";
+        noteEl.textContent = "landed: providers/ollama.lua · yours — you sent it, it came true";
       });
       at(2800, function () { actEl.innerHTML = "&nbsp;"; noteEl.innerHTML = "&nbsp;"; });
       at(500, build);
