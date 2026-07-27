@@ -644,46 +644,277 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   }
 
   /* ---------- the water ----------
-     Rain on a still surface: ripples that expand and fade, nothing else.
-     The page floats on it. */
+     A real fluid, not a drawing of one. The wave equation runs on the GPU
+     over a ping-ponged height+velocity field; the render pass computes
+     surface normals, refracts a deep gradient through them, and lights the
+     slopes with a mercury specular. Rain falls on it; the pointer disturbs
+     it. Where WebGL (or the float textures it needs) is missing, it falls
+     back to the old 2D rings — and under reduced-motion, to stillness. */
   var cv = document.getElementById("waterFx");
   if (!cv || reduced) return;
-  var cx = cv.getContext("2d"), W = 0, H = 0, dpr = Math.min(devicePixelRatio || 1, 2);
+
+  function ringsFallback() {
+    var cx2 = cv.getContext("2d"), W = 0, H = 0, dpr2 = Math.min(devicePixelRatio || 1, 2);
+    function size2() {
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = W * dpr2; cv.height = H * dpr2;
+      cx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+    }
+    size2();
+    addEventListener("resize", size2);
+    var rings = [], last = 0;
+    function frame2(ts) {
+      cx2.clearRect(0, 0, W, H);
+      if (ts - last > 1300) {
+        var x = Math.random() * W, y = Math.random() * H;
+        for (var k = 0; k < 2; k++) rings.push({ x: x, y: y, r: -k * 14, max: 70 + Math.random() * 150, a: 0.15 - k * 0.04 });
+        if (rings.length > 18) rings.splice(0, rings.length - 18);
+        last = ts;
+      }
+      for (var i = rings.length - 1; i >= 0; i--) {
+        var g = rings[i];
+        g.r += 0.4;
+        if (g.r < 0) continue;
+        if (g.r >= g.max) { rings.splice(i, 1); continue; }
+        cx2.beginPath();
+        cx2.arc(g.x, g.y, g.r, 0, Math.PI * 2);
+        cx2.strokeStyle = "rgba(143,179,189," + Math.max(0, g.a * (1 - g.r / g.max)).toFixed(3) + ")";
+        cx2.lineWidth = 1;
+        cx2.stroke();
+      }
+      requestAnimationFrame(frame2);
+    }
+    requestAnimationFrame(frame2);
+  }
+
+  var gl = cv.getContext("webgl", { alpha: false, antialias: false, depth: false, stencil: false });
+  if (!gl) { ringsFallback(); return; }
+
+  // The sim needs a renderable float (or half-float) texture.
+  var extF = gl.getExtension("OES_texture_float");
+  var extHF = gl.getExtension("OES_texture_half_float");
+  gl.getExtension("OES_texture_float_linear");
+  gl.getExtension("OES_texture_half_float_linear");
+
+  function compile(type, src) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null;
+  }
+  function program(vs, fs) {
+    var v = compile(gl.VERTEX_SHADER, vs), f = compile(gl.FRAGMENT_SHADER, fs);
+    if (!v || !f) return null;
+    var p = gl.createProgram();
+    gl.attachShader(p, v); gl.attachShader(p, f); gl.linkProgram(p);
+    return gl.getProgramParameter(p, gl.LINK_STATUS) ? p : null;
+  }
+
+  var VS = [
+    "attribute vec2 aPos;",
+    "varying vec2 vUv;",
+    "void main(){ vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }"
+  ].join("\n");
+
+  // height in .r, velocity in .g — the classic shallow-water relaxation
+  var SIM_FS = [
+    "precision highp float;",
+    "uniform sampler2D uPrev;",
+    "uniform vec2 uTexel;",
+    "uniform vec3 uDrops[8];",  // x,y in uv; z = impulse
+    "uniform int uCount;",
+    "varying vec2 vUv;",
+    "void main(){",
+    "  vec4 p = texture2D(uPrev, vUv);",
+    "  float h = p.r, v = p.g;",
+    "  float sum = texture2D(uPrev, vUv + vec2(uTexel.x, 0.0)).r",
+    "            + texture2D(uPrev, vUv - vec2(uTexel.x, 0.0)).r",
+    "            + texture2D(uPrev, vUv + vec2(0.0, uTexel.y)).r",
+    "            + texture2D(uPrev, vUv - vec2(0.0, uTexel.y)).r;",
+    "  v += (sum * 0.25 - h) * 1.6;",
+    "  v *= 0.984;",
+    "  for (int i = 0; i < 8; i++) {",
+    "    if (i >= uCount) break;",
+    "    vec2 d = (vUv - uDrops[i].xy) / uTexel;",
+    "    v += uDrops[i].z * exp(-dot(d, d) / 48.0);",
+    "  }",
+    "  h += v;",
+    "  h *= 0.9992;",
+    "  gl_FragColor = vec4(h, v, 0.0, 1.0);",
+    "}"
+  ].join("\n");
+
+  var DRAW_FS = [
+    "precision highp float;",
+    "uniform sampler2D uSim;",
+    "uniform vec2 uTexel;",
+    "varying vec2 vUv;",
+    "void main(){",
+    "  float hl = texture2D(uSim, vUv - vec2(uTexel.x, 0.0)).r;",
+    "  float hr = texture2D(uSim, vUv + vec2(uTexel.x, 0.0)).r;",
+    "  float hd = texture2D(uSim, vUv - vec2(0.0, uTexel.y)).r;",
+    "  float hu = texture2D(uSim, vUv + vec2(0.0, uTexel.y)).r;",
+    "  vec3 n = normalize(vec3(vec2(hl - hr, hd - hu) * 14.0, 1.0));",
+    "  vec2 ruv = clamp(vUv + n.xy * 0.05, 0.0, 1.0);",           // refraction
+    "  vec3 deep = mix(vec3(0.022, 0.033, 0.041), vec3(0.038, 0.058, 0.070), ruv.y);",
+    "  float glow = smoothstep(0.45, 1.0, ruv.y) * max(1.0 - abs(ruv.x - 0.5) * 1.6, 0.0);",
+    "  deep += vec3(0.31, 0.44, 0.50) * glow * 0.10;",            // sunken mercury glow
+    "  vec3 L = normalize(vec3(-0.25, 0.4, 0.85));",
+    "  float spec = pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), 110.0);",
+    "  float h = texture2D(uSim, vUv).r;",
+    "  vec3 col = deep;",
+    "  col += vec3(0.56, 0.70, 0.74) * spec * 0.30;",             // mercury glint on slopes
+    "  col += vec3(0.56, 0.70, 0.74) * max(-n.y, 0.0) * 0.02;",   // soft sheen
+    "  col += vec3(0.79, 0.66, 0.31) * max(h, 0.0) * 0.06;",      // gold in the crests
+    "  gl_FragColor = vec4(col, 1.0);",
+    "}"
+  ].join("\n");
+
+  var simProg = program(VS, SIM_FS), drawProg = program(VS, DRAW_FS);
+  if (!simProg || !drawProg) { ringsFallback(); return; }
+
+  var quad = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+
+  var SW = 0, SH = 0, texType = 0, fields = null;
+
+  function makeField() {
+    var tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SW, SH, 0, gl.RGBA, texType, null);
+    var fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    var ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return ok ? { tex: tex, fb: fb } : null;
+  }
+
+  function buildFields() {
+    // Simulate at ~1/3 display resolution; the waves are smooth, so the
+    // upsample is invisible and the whole sim stays a few hundred kB.
+    SW = Math.max(160, Math.min(512, Math.floor(cv.clientWidth / 3)));
+    SH = Math.max(120, Math.min(512, Math.floor(cv.clientHeight / 3)));
+    var candidates = [];
+    if (extF) candidates.push(gl.FLOAT);
+    if (extHF) candidates.push(extHF.HALF_FLOAT_OES);
+    for (var c = 0; c < candidates.length; c++) {
+      texType = candidates[c];
+      var a = makeField(), b = makeField();
+      if (a && b) return [a, b];
+    }
+    return null;
+  }
+
+  var dpr = Math.min(devicePixelRatio || 1, 1.75);
   function size() {
-    W = cv.clientWidth; H = cv.clientHeight;
-    cv.width = W * dpr; cv.height = H * dpr;
-    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cv.width = Math.floor(cv.clientWidth * dpr);
+    cv.height = Math.floor(cv.clientHeight * dpr);
+    fields = buildFields();
   }
   size();
-  addEventListener("resize", size);
+  if (!fields) { ringsFallback(); return; }
+  var resizeT;
+  addEventListener("resize", function () {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(size, 150);
+  });
 
-  var rings = [];
-  function spawn() {
-    var x = Math.random() * W, y = Math.random() * H;
-    // a drop is 2-3 concentric rings, offset in time, like real rain
-    for (var k = 0; k < 2 + (Math.random() < 0.4 ? 1 : 0); k++) {
-      rings.push({ x: x, y: y, r: -k * 14, max: 70 + Math.random() * 150, a: 0.15 - k * 0.04 });
+  var drops = [];
+  function drop(x, y, amp) { drops.push([x, y, amp]); }
+
+  // rain, and the first few drops so the surface is alive immediately
+  for (var s0 = 0; s0 < 6; s0++) drop(Math.random(), Math.random(), 0.34);
+  var lastRain = 0;
+
+  // the pointer is a thing trailing through the water
+  var px = -1, py = -1;
+  addEventListener("pointermove", function (e) {
+    var x = e.clientX / cv.clientWidth, y = 1 - e.clientY / cv.clientHeight;
+    if (px >= 0) {
+      var dist = Math.hypot(x - px, y - py);
+      if (dist > 0.004) drop(x, y, Math.min(0.20, dist * 6.0));
     }
-    while (rings.length > 18) rings.shift();
+    px = x; py = y;
+  }, { passive: true });
+  addEventListener("pointerdown", function (e) {
+    drop(e.clientX / cv.clientWidth, 1 - e.clientY / cv.clientHeight, 1.1);
+  }, { passive: true });
+
+  var aSim = gl.getAttribLocation(simProg, "aPos");
+  var aDraw = gl.getAttribLocation(drawProg, "aPos");
+  var uPrev = gl.getUniformLocation(simProg, "uPrev");
+  var uTexelS = gl.getUniformLocation(simProg, "uTexel");
+  var uDrops = gl.getUniformLocation(simProg, "uDrops");
+  var uCount = gl.getUniformLocation(simProg, "uCount");
+  var uSim = gl.getUniformLocation(drawProg, "uSim");
+  var uTexelD = gl.getUniformLocation(drawProg, "uTexel");
+
+  var src = 0, running = true;
+  document.addEventListener("visibilitychange", function () {
+    running = !document.hidden;
+    if (running) requestAnimationFrame(frame);
+  });
+
+  function stepAndDraw(ts) {
+    if (ts - lastRain > 850) {
+      drop(Math.random(), Math.random(), Math.random() < 0.2 ? 0.42 : 0.15);
+      lastRain = ts;
+    }
+    var batch = drops.splice(0, 8);
+    var flat = new Float32Array(24);
+    for (var i = 0; i < batch.length; i++) {
+      flat[i * 3] = batch[i][0]; flat[i * 3 + 1] = batch[i][1]; flat[i * 3 + 2] = batch[i][2];
+    }
+
+    // two sim steps per frame keeps the water lively at 60fps
+    gl.useProgram(simProg);
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.enableVertexAttribArray(aSim);
+    gl.vertexAttribPointer(aSim, 2, gl.FLOAT, false, 0, 0);
+    gl.viewport(0, 0, SW, SH);
+    gl.uniform2f(uTexelS, 1 / SW, 1 / SH);
+    for (var step = 0; step < 2; step++) {
+      var dst = 1 - src;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fields[dst].fb);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, fields[src].tex);
+      gl.uniform1i(uPrev, 0);
+      gl.uniform3fv(uDrops, flat);
+      gl.uniform1i(uCount, step === 0 ? batch.length : 0);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      src = dst;
+    }
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.useProgram(drawProg);
+    gl.enableVertexAttribArray(aDraw);
+    gl.vertexAttribPointer(aDraw, 2, gl.FLOAT, false, 0, 0);
+    gl.viewport(0, 0, cv.width, cv.height);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, fields[src].tex);
+    gl.uniform1i(uSim, 0);
+    gl.uniform2f(uTexelD, 1 / SW, 1 / SH);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    window.__waterGL = true;
   }
-  var last = 0;
+
   function frame(ts) {
-    cx.clearRect(0, 0, W, H);
-    if (ts - last > 1300) { spawn(); last = ts; }
-    for (var i = rings.length - 1; i >= 0; i--) {
-      var g = rings[i];
-      g.r += 0.4;
-      if (g.r < 0) continue;
-      var fade = Math.max(0, g.a * (1 - g.r / g.max));
-      if (g.r >= g.max) { rings.splice(i, 1); continue; }
-      cx.beginPath();
-      cx.arc(g.x, g.y, g.r, 0, Math.PI * 2);
-      cx.strokeStyle = "rgba(143,179,189," + fade.toFixed(3) + ")";
-      cx.lineWidth = 1;
-      cx.stroke();
-    }
+    if (!running || !fields) return;
+    stepAndDraw(ts);
     requestAnimationFrame(frame);
   }
+
+  // Prime the surface synchronously: evolve the seed drops for a moment and
+  // paint one real frame, so there is never a flash of dead black before the
+  // first rAF — and so the water exists even in a hidden tab.
+  for (var warm = 0; warm < 36; warm++) stepAndDraw(warm * 16);
   requestAnimationFrame(frame);
 })();
 </script>
