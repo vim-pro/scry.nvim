@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>scry.nvim — where you work now</title>
-<meta name="description" content="The surface you write software from. Describe the change — a feature, a fix — into the product's description; a conjurer does the typing; you review what lands.">
+<meta name="description" content="The surface you write software from. Describe the change alongside everything the product already does; a conjurer does the typing; the code is where you review.">
 <meta property="og:title" content="scry.nvim — where you work now">
-<meta property="og:description" content="Add features and fix bugs from the product's description. A conjurer does the typing.">
+<meta property="og:description" content="Describe the change; a conjurer does the typing; the code is where you review.">
 <meta property="og:url" content="https://scry.vim.pro">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://scry.vim.pro/og.png">
@@ -297,7 +297,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
 <header class="hero">
   <div class="hero-glow"></div>
-  <div class="rel eyebrow">features, fixes, and refactors start here</div>
+  <div class="rel eyebrow">every change starts in the glass</div>
   <h1 class="rel">This is where<br>you <em>work</em> now.</h1>
   <p class="rel sub">Add a feature, fix a bug, tighten a hot path — describe the
   change, alongside everything the product already does. A conjurer does the
@@ -317,7 +317,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <section class="glass-sect" id="glass">
   <div class="glass-caption">
     <span class="t">The glass</span>
-    <span class="s">say what you want · watch it land · it's yours</span>
+    <span class="s">name it · watch it come true · it's yours</span>
   </div>
   <div class="terminal">
     <div class="term-bar">
@@ -338,7 +338,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <!-- ============================ the waters =========================== -->
 <section class="waters-sect" id="waters">
   <div class="section-head">
-    <h2>Where things <em>stand</em></h2>
+    <h2>What the glass <em>shows</em></h2>
     <div class="s">your work, at a glance</div>
   </div>
   <div class="waters">
@@ -352,8 +352,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     </div>
     <div class="water fore">
       <div class="depth">To do</div>
-      <div class="gloss">described, not yet real</div>
-      <div class="v"><span class="g vd">✗ absent</span><span class="d">described, not yet real</span></div>
+      <div class="gloss">what you've named and not yet made</div>
+      <div class="v"><span class="g vd">✗ absent</span><span class="d">named, not yet real</span></div>
       <p class="b" style="margin-top:10px">The state you create <strong>on purpose</strong>.
       A new feature is part of the product that isn't real yet; a bug fix is a
       behaviour that doesn't hold yet. Your worklist and your product are the
@@ -387,14 +387,14 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   </div>
   <div class="gaze">
     <div class="stage">
-      <div class="k">say what you want</div>
+      <div class="k">name it</div>
       <div class="t">Describe the change as part of the product.</div>
-      <div class="b">It shows up as work to do. If you can't describe it, you don't
+      <div class="b">It surfaces as work to do. If you can't describe it, you don't
       know what you're asking for yet — and finding that out took one sentence
       instead of one afternoon.</div>
     </div>
     <div class="stage">
-      <div class="k">get the proof first</div>
+      <div class="k">the proof comes first</div>
       <div class="t">Before any code, you get the test.</div>
       <div class="b">Short, readable, and it fails — the feature doesn't exist yet.
       Reading it is how you check the machine heard what you meant, while it's
@@ -436,7 +436,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <!-- ============================ reference ============================ -->
 <section class="ref" id="reference">
   <div class="section-head">
-    <h2>Five <em>commands</em></h2>
+    <h2>Four <em>commands</em></h2>
     <div class="s">zero config works · <code>:h scry</code> is the manual</div>
   </div>
   <div class="ref-grid">
@@ -444,10 +444,10 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <table>
         <thead><tr><th>Command</th><th>Does</th></tr></thead>
         <tbody>
-          <tr><td><span class="hg">:Scry</span></td><td>Open the glass; check every claim.</td></tr>
-          <tr><td><span class="hg">:ScryCheck</span></td><td>Re-check against the files on disk.</td></tr>
-          <tr><td><span class="hg">:Conjure</span></td><td>In the glass, casts the claim under the cursor, prohibitions withheld — the same verb that casts over a motion everywhere else.</td></tr>
-          <tr><td><span class="hg">:ScryExercise</span></td><td>Run the specs behind <code>exercises</code> claims, then re-check. The only command that executes your code.</td></tr>
+          <tr><td><span class="hg">:Scry</span></td><td>Open the glass. Everything is checked the moment you look.</td></tr>
+          <tr><td><span class="hg">:ScryCheck</span></td><td>Look again — fresh verdicts from what's on disk.</td></tr>
+          <tr><td><span class="hg">:Conjure</span></td><td>Make the thing under the cursor real — the same verb that conjures over a motion in code.</td></tr>
+          <tr><td><span class="hg">:ScryExercise</span></td><td>Run the proofs. The only command that executes your code.</td></tr>
         </tbody>
       </table>
     </div>
@@ -456,7 +456,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <pre><span class="k">require</span>(<span class="s">"scry"</span>).setup({
   map_path = <span class="s">".scry/map.scry"</span>,
   holdout_path = <span class="s">""</span>,   <span class="c">-- "" = outside the repo</span>
-  author = <span class="s">""</span>,         <span class="c">-- "" = git user.name</span>
   resolver = <span class="s">""</span>,       <span class="c">-- "" = treesitter + rg</span>
   test = { cmd = {} },  <span class="c">-- one spec; path appended</span>
 })</pre>
@@ -505,7 +504,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <a href="https://conjurer.vim.pro">conjurer.nvim</a>
     <a href="#flatter">limits</a>
   </div>
-  <div class="mit">MIT · you work in the glass, conjurer types, the list reviews</div>
+  <div class="mit">MIT · the glass is where you work · conjurer types · the list reviews</div>
 </section>
 
 </div>
@@ -624,12 +623,12 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       at(650, function () {
         render({ typed: NEW_TARGET, verdict: '<span class="vn">◴ conjuring…</span>',
                  header: H_ABSENT, fresh: false, cursor: false });
-        noteEl.textContent = "conjurer typing · never-rules withheld";
+        noteEl.textContent = "conjurer typing · your rules withheld";
       });
       at(2300, function () {
         render({ typed: NEW_TARGET, verdict: '<span class="vb">✓ defined</span>',
                  header: H_DONE, fresh: true, cursor: false });
-        noteEl.textContent = "landed: providers/ollama.lua · yours — you sent it, it came true";
+        noteEl.textContent = "came true: providers/ollama.lua · and the rules held";
       });
       at(2800, function () { actEl.innerHTML = "&nbsp;"; noteEl.innerHTML = "&nbsp;"; });
       at(500, build);
