@@ -14,13 +14,13 @@ CONTENTS                                                       *scry-contents*
   6. Theory-debt ................................. |scry-debt|
   7. The holdout ................................. |scry-holdout|
   8. The cascade ................................. |scry-cascade|
- 8b. Exercised claims ............................ |scry-exercised|
-  9. Commands .................................... |scry-commands|
- 10. Configuration ............................... |scry-configuration|
- 11. Highlights .................................. |scry-highlights|
- 12. What scry does NOT claim .................... |scry-honesty|
- 13. Health ...................................... |scry-health|
- 14. License ..................................... |scry-license|
+  9. Exercised claims ............................ |scry-exercised|
+ 10. Commands .................................... |scry-commands|
+ 11. Configuration ............................... |scry-configuration|
+ 12. Highlights .................................. |scry-highlights|
+ 13. What scry does NOT claim .................... |scry-honesty|
+ 14. Health ...................................... |scry-health|
+ 15. License ..................................... |scry-license|
 
 ==============================================================================
 1. INTRODUCTION                                            *scry-introduction*
@@ -313,7 +313,7 @@ what I meant" a performable act in a way that reading the implementation is
 not.
 
 ==============================================================================
-8b. EXERCISED CLAIMS                                          *scry-exercised*
+9. EXERCISED CLAIMS                                           *scry-exercised*
 
 An `exercises` claim names a spec, optionally with an assertion label:
 >
@@ -347,7 +347,7 @@ Two claims on one spec are one execution, and its recorded dependencies cover
 every concern that exercises it.
 
 ==============================================================================
-9. COMMANDS                                                    *scry-commands*
+10. COMMANDS                                                   *scry-commands*
 
                                                                        *:Scry*
 :Scry                   Open (or focus) the glass and check every claim.
@@ -375,7 +375,7 @@ every concern that exercises it.
                         paths. See |scry-cascade| and |scry-independence|.
 
 ==============================================================================
-10. CONFIGURATION                                         *scry-configuration*
+11. CONFIGURATION                                         *scry-configuration*
 
 setup({opts}) is optional. Defaults: >lua
 
@@ -403,7 +403,7 @@ setup({opts}) is optional. Defaults: >lua
     })
 <
 ==============================================================================
-11. HIGHLIGHTS                                               *scry-highlights*
+12. HIGHLIGHTS                                               *scry-highlights*
 
                                                               *hl-ScryBacked*
 ScryBacked              Backed and clean verdicts. Default: DiagnosticOk.
@@ -419,7 +419,7 @@ ScryEvidence            Evidence lines and unchecked verdicts. Default:
 ScryHeader              The glass header. Default: Title.
 
 ==============================================================================
-12. WHAT SCRY DOES NOT CLAIM                                    *scry-honesty*
+13. WHAT SCRY DOES NOT CLAIM                                    *scry-honesty*
 
 Every line here is a limit scry intends to keep stating plainly.
 
@@ -463,7 +463,7 @@ Every line here is a limit scry intends to keep stating plainly.
   unchecked, deliberately, so silence never looks like agreement.
 
 ==============================================================================
-13. HEALTH                                                       *scry-health*
+14. HEALTH                                                       *scry-health*
 
 `:checkhealth scry` reports: Neovim version, ripgrep and the lua treesitter
 parser (the resolver's two legs), where your map is and how many claims it
@@ -471,7 +471,7 @@ holds, where the holdout lives — warning if it sits inside the repo — and
 whether conjurer.nvim and quickfix.pro are present.
 
 ==============================================================================
-14. LICENSE                                                     *scry-license*
+15. LICENSE                                                     *scry-license*
 
 MIT. See the LICENSE file in the repository root.
 
