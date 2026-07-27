@@ -1,20 +1,20 @@
 # scry.nvim
 
-**Work out what you're changing. Then conjure it.**
+**The surface you write software from.**
 
 `:h scry`
 
-One buffer holds what your product is and what you're about to change it to.
-You describe the thing — prose at the altitude you actually think at, with
-lines underneath that get checked against the real code. Writing the
-description *is* the work: if you can't state what a concern does, you don't
-know it yet.
+Features, fixes, and refactors start in the glass, not in the code. One
+buffer describes the product — prose at the altitude you think at, with
+checkable claims underneath — and you work by changing the description: a
+new feature is a claim that isn't true yet (`✗ absent`), a bug fix is a
+check that doesn't pass yet.
 
-A change is stated the same way — a claim that isn't true yet. It comes back
-**`✗ absent`**. Nothing has broken; that's your worklist, in the same
-vocabulary as everything already there. When the description says what you
-actually mean, `:ScryCascade` hands it to a conjurer, the code lands, and the
-claim goes green.
+`:ScryCascade` takes it from there: the check is conjured first (you read
+it, it must fail), then the code — with the check and the concern's
+prohibitions withheld from the model that writes it. The code is where you
+review, not where you start, and `:ScryRatify` is you signing that what
+landed is what you meant.
 
 ```
 scry · 8 claims · 5 backed · 1 missing · 1 violated · 1 unchecked · 2 unratified   checked 40s ago (files on disk)

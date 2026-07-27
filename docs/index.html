@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>scry.nvim — see what is, and what isn't yet</title>
-<meta name="description" content="A scrying glass for your codebase. Describe the product in one buffer; every claim is checked against the real code. Claims that aren't true yet are the work — conjure them when the description is right.">
-<meta property="og:title" content="scry.nvim — see what is, and what isn't yet">
-<meta property="og:description" content="Describe the product; the glass checks every claim against the real code. What isn't true yet is the work.">
+<title>scry.nvim — where you work now</title>
+<meta name="description" content="The surface you write software from. Describe the change — a feature, a fix — into the product's description; a conjurer does the typing; you review and sign what lands.">
+<meta property="og:title" content="scry.nvim — where you work now">
+<meta property="og:description" content="Add features and fix bugs from the product's description. A conjurer does the typing; you sign what lands.">
 <meta property="og:url" content="https://scry.vim.pro">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://scry.vim.pro/og.png">
@@ -190,7 +190,7 @@ h2 em { font-style: italic; color: var(--mercury); }
 .water .b code { color: var(--text); }
 .water .b strong { color: var(--text); }
 
-/* ---------- the loop: foresight to fact ---------- */
+/* ---------- the loop: the build ---------- */
 .loop-sect { padding-block: 64px 20px; }
 .gaze {
   max-width: 760px; margin: 0 auto;
@@ -297,11 +297,12 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
 <header class="hero">
   <div class="hero-glow"></div>
-  <div class="rel eyebrow">a scrying glass for your codebase</div>
-  <h1 class="rel">See what is.<br>And what <em>isn't yet</em>.</h1>
-  <p class="rel sub">Describe your product in one buffer. The glass checks every line
-  of it against the real code — and a claim that <em>isn't true yet</em> is not an
-  error. It's the work, named. Conjure it when the description is right.</p>
+  <div class="rel eyebrow">features, fixes, and refactors start here</div>
+  <h1 class="rel">This is where<br>you <em>work</em> now.</h1>
+  <p class="rel sub">Add a feature, fix a bug, tighten a hot path — by describing the
+  change into the product, in the buffer that describes everything else it does.
+  A conjurer does the typing. The code is where you <em>review</em>, not where you
+  start.</p>
 
   <div class="rel summoning" id="summoning">
     <span class="install-chip">
@@ -317,7 +318,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <section class="glass-sect" id="glass">
   <div class="glass-caption">
     <span class="t">The glass</span>
-    <span class="s">name the thing you want · watch it surface · sign it</span>
+    <span class="s">say what you want · watch it land · sign off</span>
   </div>
   <div class="terminal">
     <div class="term-bar">
@@ -338,30 +339,30 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <!-- ============================ the waters =========================== -->
 <section class="waters-sect" id="waters">
   <div class="section-head">
-    <h2>What <em>surfaces</em></h2>
-    <div class="s">four depths of the same water — every label says what was actually checked</div>
+    <h2>Where things <em>stand</em></h2>
+    <div class="s">your work, at a glance — every label says what was actually checked</div>
   </div>
   <div class="waters">
     <div class="water clear">
-      <div class="depth">Clear sight</div>
-      <div class="gloss">what the code confirms, and how it was seen</div>
+      <div class="depth">Done</div>
+      <div class="gloss">the code backs it, and how that was seen</div>
       <div class="v"><span class="g vb">✓ defined</span><span class="d">a definition node exists (treesitter)</span></div>
       <div class="v"><span class="g vb">✓ referenced (text)</span><span class="d">the token occurs in the concern's files (ripgrep)</span></div>
       <div class="v"><span class="g vb">✓ no matches (rg)</span><span class="d">the prohibition found nothing</span></div>
       <div class="v"><span class="g vb">✓ passing (ran 4m ago)</span><span class="d">that spec exited 0, nothing moved since</span></div>
     </div>
     <div class="water fore">
-      <div class="depth">Foresight</div>
-      <div class="gloss">the glass also shows what is not yet</div>
+      <div class="depth">To do</div>
+      <div class="gloss">described, not yet real</div>
       <div class="v"><span class="g vd">✗ absent</span><span class="d">described, not yet real</span></div>
-      <p class="b" style="margin-top:10px">This is the verdict you write <strong>on
-      purpose</strong>. State the change as a claim; it surfaces absent; that is your
-      worklist in the same vocabulary as everything already true.
-      <code>:ScryCascade</code> makes it so.</p>
+      <p class="b" style="margin-top:10px">The state you create <strong>on purpose</strong>.
+      A new feature is a claim that isn't true yet; a bug fix is a check that
+      doesn't pass yet. Your whole worklist lives here, in the same vocabulary
+      as everything already done. <code>:ScryCascade</code> takes it from here.</p>
     </div>
     <div class="water omen">
-      <div class="depth">Omens</div>
-      <div class="gloss">warnings, each carrying its evidence</div>
+      <div class="depth">Broken</div>
+      <div class="gloss">something regressed, each verdict carrying its evidence</div>
       <div class="v"><span class="g vd">✗ VIOLATED</span><span class="d">a prohibition matched — with the line that proves it</span></div>
       <div class="v"><span class="g vd">✗ FAILING</span><span class="d">a spec exited non-zero — with its output</span></div>
       <div class="v"><span class="g vd">✗ unreferenced</span><span class="d">the target exists; this concern never touches it</span></div>
@@ -369,8 +370,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       A clean one is only evidence — no textual match is not absence of behaviour.</p>
     </div>
     <div class="water murk">
-      <div class="depth">Murk</div>
-      <div class="gloss">what the glass admits it cannot see — never a pass</div>
+      <div class="depth">Unknown</div>
+      <div class="gloss">what the glass won't guess at — never counted as done</div>
       <div class="v"><span class="g vn">– unchecked</span><span class="d">no resolver for this language</span></div>
       <div class="v"><span class="g vn">– unrun</span><span class="d">nobody has run that spec</span></div>
       <div class="v"><span class="g vn">– stale</span><span class="d">it passed, but the code has moved since</span></div>
@@ -382,36 +383,37 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <!-- ============================= the loop ============================ -->
 <section class="loop-sect" id="loop">
   <div class="section-head">
-    <h2>Foresight to <em>fact</em></h2>
-    <div class="s">the whole workflow is one buffer and three commands</div>
+    <h2>One <em>change</em>, end to end</h2>
+    <div class="s">a feature or a fix, without leaving the glass</div>
   </div>
   <div class="gaze">
     <div class="stage">
-      <div class="k">name it</div>
-      <div class="t">Write the claim for the thing you want.</div>
-      <div class="b">It surfaces <code>✗ absent</code>. If you can't state it as a
-      claim, you don't know what you're asking for yet — the glass just told you
-      that for free.</div>
+      <div class="k">say what you want</div>
+      <div class="t">Write the change as a claim on the product.</div>
+      <div class="b">It surfaces <code>✗ absent</code> — to do, named. If you can't
+      state it as a claim, you don't know what you're asking for yet, and the
+      glass just told you that for free.</div>
     </div>
     <div class="stage">
-      <div class="k">summon the proof first</div>
+      <div class="k">get the proof first</div>
       <div class="t">Cascade the <code>exercises</code> claim before the code.</div>
-      <div class="b">The spec is conjured, you read it, and <code>:ScryRun</code> must
-      come back <strong>red</strong>. A check that passes before the feature exists
-      asserts nothing.</div>
+      <div class="b">The check is conjured, you read it — it's short, and it says
+      what "done" means — and <code>:ScryRun</code> must come back
+      <strong>red</strong>. A check that passes against nothing asserts nothing.</div>
     </div>
     <div class="stage">
-      <div class="k">make it so</div>
+      <div class="k">let the conjurer type</div>
       <div class="t">Cascade the <code>contains</code> claim.</div>
-      <div class="b">conjurer casts it with the concern as context — and with this
+      <div class="b">The code lands with the concern as context — and with this
       concern's <code>never</code> rules and spec paths <strong>withheld</strong>. A
-      rule the generator never saw, checked after, is evidence. One it was shown is
-      obedience.</div>
+      model that can read the check writes to pass the check; one that never saw
+      it, checked after, produced evidence.</div>
     </div>
     <div class="stage gold">
-      <div class="k">sign what you saw</div>
+      <div class="k">sign off</div>
       <div class="t"><code>:ScryRun</code> goes green. <code>:ScryRatify</code> puts your name on it.</div>
-      <div class="b">Foresight is now fact, and someone vouches for it.</div>
+      <div class="b">The work is done when it's understood, not when it lands — the
+      signature is you saying you read what arrived and it's what you meant.</div>
     </div>
   </div>
 </section>
@@ -487,7 +489,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
 <!-- =============================== CTA =============================== -->
 <section class="cta">
-  <div class="line">Name what isn't. <em>Then make it so.</em></div>
+  <div class="line">Start the next change <em>here</em>.</div>
   <span class="install-chip">
     <span class="cm">vim.pack.add</span>
     <span>{ "vim-pro/scry.nvim" }</span>
@@ -498,7 +500,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <a href="https://conjurer.vim.pro">conjurer.nvim</a>
     <a href="#flatter">limits</a>
   </div>
-  <div class="mit">MIT · the glass sees, conjurer casts, the list reviews</div>
+  <div class="mit">MIT · you work in the glass, conjurer types, the list reviews</div>
 </section>
 
 </div>
@@ -613,18 +615,18 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       at(560, function () {
         render({ typed: NEW_TARGET, verdict: '<span class="vd">✗ absent</span> · <span class="vu">∅ unsigned</span>',
                  header: H_ABSENT, fresh: true, cursor: false });
-        noteEl.textContent = "the glass shows what is not yet there";
+        noteEl.textContent = "new work, named";
       });
       at(2100, function () { actEl.textContent = ":ScryCascade"; });
       at(650, function () {
         render({ typed: NEW_TARGET, verdict: '<span class="vn">◴ conjuring…</span>',
                  header: H_ABSENT, fresh: false, cursor: false });
-        noteEl.textContent = "conjurer casting · never-rules withheld";
+        noteEl.textContent = "conjurer typing · never-rules withheld";
       });
       at(2300, function () {
         render({ typed: NEW_TARGET, verdict: '<span class="vb">✓ defined</span> · <span class="vu">∅ unsigned</span>',
                  header: H_DONE, fresh: true, cursor: false });
-        noteEl.textContent = "providers/ollama.lua written · vim\\.ui\\. still clean";
+        noteEl.textContent = "landed: providers/ollama.lua · vim\\.ui\\. still clean";
       });
       at(2000, function () { actEl.textContent = ":ScryRatify"; });
       at(620, function () {
