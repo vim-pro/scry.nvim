@@ -753,12 +753,17 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "uniform sampler2D uSim;",
     "uniform vec2 uTexel;",
     "uniform float uTime;",
+    "uniform float uAspect;",
     "varying vec2 vUv;",
     "void main(){",
-    "  float hl = texture2D(uSim, vUv - vec2(uTexel.x, 0.0)).r;",
-    "  float hr = texture2D(uSim, vUv + vec2(uTexel.x, 0.0)).r;",
-    "  float hd = texture2D(uSim, vUv - vec2(0.0, uTexel.y)).r;",
-    "  float hu = texture2D(uSim, vUv + vec2(0.0, uTexel.y)).r;",
+    "  vec2 pc = vUv - vec2(0.5, 0.45);",       // the orb's heart
+    "  pc.x *= uAspect;",
+    "  float rr = length(pc);",
+    "  vec2 luv = vUv - (pc / max(uAspect, 1.0)) * rr * rr * 0.22;",
+    "  float hl = texture2D(uSim, luv - vec2(uTexel.x, 0.0)).r;",
+    "  float hr = texture2D(uSim, luv + vec2(uTexel.x, 0.0)).r;",
+    "  float hd = texture2D(uSim, luv - vec2(0.0, uTexel.y)).r;",
+    "  float hu = texture2D(uSim, luv + vec2(0.0, uTexel.y)).r;",
     "  vec2 g = vec2(hl - hr, hd - hu);",
     "  g += vec2(9.0, 4.0)  * cos(dot(vUv, vec2(9.0, 4.0))  + uTime * 0.26) * 0.00070;",
     "  g += vec2(-5.0, 8.0) * cos(dot(vUv, vec2(-5.0, 8.0)) + uTime * 0.19) * 0.00058;",
@@ -766,13 +771,13 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  g += vec2(23.0, 17.0) * cos(dot(vUv, vec2(23.0, 17.0)) + uTime * 0.52) * 0.00010;",
     "  g += vec2(-19.0, 26.0)* cos(dot(vUv, vec2(-19.0, 26.0))+ uTime * 0.41) * 0.00008;",
     "  vec3 n = normalize(vec3(g * 14.0, 1.0));",
-    "  vec2 ruv = clamp(vUv + n.xy * 0.05, 0.0, 1.0);",           // refraction
+    "  vec2 ruv = clamp(luv + n.xy * 0.05, 0.0, 1.0);",           // refraction
     "  vec3 deep = mix(vec3(0.022, 0.033, 0.041), vec3(0.038, 0.058, 0.070), ruv.y);",
     "  float glow = smoothstep(0.45, 1.0, ruv.y) * max(1.0 - abs(ruv.x - 0.5) * 1.6, 0.0);",
     "  deep += vec3(0.31, 0.44, 0.50) * glow * 0.10;",            // sunken mercury glow
     "  vec3 L = normalize(vec3(-0.25, 0.4, 0.85));",
     "  float spec = pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), 110.0);",
-    "  vec4 sim = texture2D(uSim, vUv);",
+    "  vec4 sim = texture2D(uSim, luv);",
     "  float h = sim.r;",
     "  float lum = sim.b;",
     "  vec3 col = deep;",
@@ -782,6 +787,17 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  col += vec3(0.56, 0.70, 0.74) * spec * 0.24;",             // mercury glint on slopes
     "  col += vec3(0.56, 0.70, 0.74) * max(-n.y, 0.0) * 0.02;",   // soft sheen
     "  col += vec3(0.79, 0.66, 0.31) * max(h, 0.0) * 0.025;",      // gold in the crests
+    "  float mist = sin(dot(luv, vec2(6.0, 4.5)) + uTime * 0.11)",
+    "             * sin(dot(luv, vec2(-3.5, 7.0)) - uTime * 0.077);",
+    "  mist += 0.6 * sin(dot(luv, vec2(13.0, 9.0)) - uTime * 0.13)",
+    "              * sin(dot(luv, vec2(8.0, -11.0)) + uTime * 0.09);",
+    "  mist = mist * 0.25 + 0.5;",
+    "  float inside = smoothstep(0.95, 0.2, rr);",
+    "  col += vec3(0.16, 0.52, 0.60) * mist * inside * 0.055;",       // inner nebula
+    "  col += vec3(0.20, 0.45, 0.52) * (1.0 - smoothstep(0.0, 0.55, rr)) * 0.040;", // lit heart
+    "  col *= 1.0 - smoothstep(0.55, 1.25, rr) * 0.60;",              // edges fall away
+    "  float sheen = length((vUv - vec2(0.5, 0.82)) * vec2(uAspect * 1.3, 2.4));",
+    "  col += vec3(0.70, 0.85, 0.90) * smoothstep(0.5, 0.0, sheen) * 0.030;",  // glass window
     "  gl_FragColor = vec4(col, 1.0);",
     "}"
   ].join("\n");
@@ -871,6 +887,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   var uSim = gl.getUniformLocation(drawProg, "uSim");
   var uTexelD = gl.getUniformLocation(drawProg, "uTexel");
   var uTimeD = gl.getUniformLocation(drawProg, "uTime");
+  var uAspectD = gl.getUniformLocation(drawProg, "uAspect");
 
   var src = 0, running = true;
   document.addEventListener("visibilitychange", function () {
@@ -938,6 +955,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     gl.uniform1i(uSim, 0);
     gl.uniform2f(uTexelD, 1 / SW, 1 / SH);
     gl.uniform1f(uTimeD, ts * 0.001);
+    gl.uniform1f(uAspectD, cv.width / Math.max(cv.height, 1));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     window.__waterGL = true;
