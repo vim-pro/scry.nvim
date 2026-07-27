@@ -396,14 +396,14 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     </div>
     <div class="stage">
       <div class="k">get the proof first</div>
-      <div class="t">Cascade the <code>exercises</code> claim before the code.</div>
+      <div class="t">Conjure the <code>exercises</code> claim before the code.</div>
       <div class="b">The check is conjured, you read it — it's short, and it says
       what "done" means — and <code>:ScryExercise</code> must come back
       <strong>red</strong>. A check that passes against nothing asserts nothing.</div>
     </div>
     <div class="stage">
       <div class="k">let the conjurer type</div>
-      <div class="t">Cascade the <code>contains</code> claim.</div>
+      <div class="t">Conjure the <code>contains</code> claim.</div>
       <div class="b">The code lands with the concern as context — and with this
       concern's <code>never</code> rules and spec paths <strong>withheld</strong>. A
       model that can read the check writes to pass the check; one that never saw
@@ -426,9 +426,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <div class="s">the work leaves a trail</div>
   </div>
   <div class="seal-card">
-    <div class="line">authored · cascaded · red → green · settled</div>
+    <div class="line">authored · conjured · red → green · settled</div>
     <div class="b">Doing the work leaves a trail on the claim it touched: you typed
-    it, you cascaded it, its check failed and then passed under your
+    it, you conjured it, its check failed and then passed under your
     <code>:ScryExercise</code>, it came true on your save. A claim is
     <strong>yours</strong> when the trail shows you passed through it — and a
     machine-drafted claim nobody has engaged with stays
@@ -486,7 +486,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <div class="row"><b><code>exercises ✓</code></b> — a process exited 0, at a stated age. Not proof a feature works.</div>
     <div class="row"><b>Verdicts describe saved files.</b> Unwritten buffers are invisible; the timestamp travels with the render.</div>
     <div class="row"><b>Withholding guards against leakage,</b> not adversaries. A spec must live in the tree to run, so hiding it is request-level only.</div>
-    <div class="row"><b>The cascade seeds the file's first line.</b> scry knows which file, not where in it. Placement is the model's call; review is yours.</div>
+    <div class="row"><b><code>:Conjure</code> seeds the file's first line.</b> scry knows which file, not where in it. Placement is the model's call; review is yours.</div>
     <div class="row"><b>The trail is per-machine.</b> Ownership lives in local state like run results — a teammate's glass shows their trail, not yours.</div>
   </div>
 </section>
@@ -540,7 +540,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
   /* ---------- the glass demo ----------
      The arc is the workflow: a settled map, you type the claim for the change
-     you want, it surfaces absent, you cascade it, it comes true — yours. */
+     you want, it surfaces absent, you conjure it, it comes true — yours. */
   var body = document.getElementById("termBody");
   var actEl = document.getElementById("termAct");
   var noteEl = document.getElementById("termNote");

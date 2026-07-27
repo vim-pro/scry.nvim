@@ -13,7 +13,7 @@ CONTENTS                                                       *scry-contents*
   5. Ownership ................................... |scry-ownership|
   6. Theory-debt ................................. |scry-debt|
   7. The holdout ................................. |scry-holdout|
-  8. The cascade ................................. |scry-cascade|
+  8. Conjuring from the glass .................... |scry-conjure|
   9. Exercised claims ............................ |scry-exercised|
  10. Commands .................................... |scry-commands|
  11. Configuration ............................... |scry-configuration|
@@ -38,7 +38,7 @@ read it, and it must fail — then the code, with the check and the
 concern's prohibitions withheld from the model that writes it. The code is
 where you review, not where you start.
 
-The work leaves a trail: typing a claim yourself, cascading one and
+The work leaves a trail: typing a claim yourself, conjuring one and
 watching it come true, running its check red and then green. The trail is
 what clears the `∅ untouched` marker, and editing a claim resets it,
 because every event is keyed to a hash of the claim's text. See
@@ -176,12 +176,12 @@ The ordinary actions of doing the work each record a trail event on the
 claim they touch:
 
     authored     you typed or edited the claim's text in the glass
-    cascaded     you sent it to the conjurer (|scry-conjure|)
+    conjured     you sent it to the conjurer (|scry-conjure|)
     red / green  its spec failed, then passed, under your |:ScryExercise|
-    settled      a claim you cascaded came true on your save
+    settled      a claim you conjured came true on your save
 
 A claim is YOURS — and drops its `∅ untouched` marker — when the trail
-shows you passed through it: authored, or cascaded and it came true. A
+shows you passed through it: authored, or conjured and it came true. A
 machine-drafted claim nobody has engaged with stays marked, which is
 exactly what the marker is for: inventory is not understanding.
 
@@ -245,17 +245,17 @@ unversioned. Setting `holdout_path` to an in-repo file shares them with your
 team and gives up guarantee 2 — |:checkhealth| warns when you do.
 
 ==============================================================================
-8. THE CASCADE                                                  *scry-cascade*
+8. CONJURING FROM THE GLASS                                     *scry-conjure*
 
 An absent claim is a piece of work. |scry-conjure| on that claim seeds the
 quickfix list with the target site and your intent, then hands off to
 conjurer's aggregate driver — which owns the casting and the per-site review
 (see |conjurer-aggregate|). scry never conjures anything itself.
 
-When you save a file the cascade seeded, scry re-checks: the withheld
+When you save a file the conjure seeded, scry re-checks: the withheld
 prohibitions run against the new code, and the claim that started the work
 re-checks too. So the loop closes visibly — `✗ absent` becomes `✓ defined`,
-and because you cascaded it and it came true, it is yours.
+and because you conjured it and it came true, it is yours.
 
 Saving is the trigger because ripgrep reads disk. Unwritten changes are
 invisible to scry, and the header says so.
@@ -267,14 +267,14 @@ conjurer rewrites a region of a buffer and needs one to rewrite.
 Two v0 limits worth knowing. The seeded entry points at the target file's
 first line — scry knows which file should define the symbol, not where in it
 the definition belongs, so the model decides placement and the conjurer's
-review is where you check it. And `calls` and `never` claims do not cascade:
+review is where you check it. And `calls` and `never` claims cannot be conjured:
 neither has a single obvious site to seed, and guessing one would be worse
 than refusing.
 
 ------------------------------------------------------------------------------
 INDEPENDENCE OF THE CHECK                                  *scry-independence*
 
-`contains` and `exercises` both cascade, and the ORDER between them is the
+`contains` and `exercises` can both be conjured, and the ORDER is the
 mechanism, not a convention:
 >
     1.  :Conjure on the absent `exercises` claim   → conjures the CHECK
@@ -283,7 +283,7 @@ mechanism, not a convention:
     4.  :Conjure on the absent `contains` claim    → conjures the CODE
     5.  :ScryExercise                                        → green, and the
                                                           holdout re-checks
-    6.  it is yours — you cascaded it and it came true
+    6.  it is yours — you conjured it and it came true
 <
 Why in that order. If the check and the code are both generated from the same
 claim, they are not independent — they are two samples from one generator
@@ -294,7 +294,7 @@ code, their reading of the claim was an independent sample; remove that and
 
 So two things restore it, and both are enforced rather than advised:
 
-**The spec is withheld from the code request.** Cascading a `contains` claim
+**The spec is withheld from the code request.** Conjuring a `contains` claim
 adds every spec path in that concern to the tripwire, exactly as it adds the
 concern's prohibitions. An intent that names the test is refused. Code written
 while looking at the test is code written to pass the test, which is the one
@@ -371,13 +371,12 @@ every concern that exercises it.
                         concern name, runs only that concern's specs.
                         See |scry-exercised|.
 
-                                                                *scry-conjure*
 :Conjure            Turn the absent claim under the cursor into quickfix
                         work and hand it to conjurer, with the concern's
                         prohibitions withheld. On an `exercises` claim it
                         conjures the check; on a `contains` claim it conjures
                         the code, additionally withholding the concern's spec
-                        paths. See |scry-cascade| and |scry-independence|.
+                        paths. See |scry-conjure| and |scry-independence|.
 
 ==============================================================================
 11. CONFIGURATION                                         *scry-configuration*

@@ -85,10 +85,10 @@ prov.record(root, claim, "authored")
 H.eq(prov.owned(root, claim), true, "authoring is ownership")
 claim = { kind = claim.kind, target = "x.lua:two", concern = claim.concern, lnum = claim.lnum }
 H.eq(prov.owned(root, claim), false, "an edited claim's trail is void")
-prov.record(root, claim, "cascaded")
-H.eq(prov.owned(root, claim), false, "cascading alone is not ownership")
+prov.record(root, claim, "conjured")
+H.eq(prov.owned(root, claim), false, "conjuring alone is not ownership")
 prov.record(root, claim, "green")
-H.eq(prov.owned(root, claim), true, "cascaded and came true is ownership")
+H.eq(prov.owned(root, claim), true, "conjured and came true is ownership")
 -- stamps from the ratification era still PARSE (legacy lines are claims with
 -- a stamp field), they just no longer mean anything
 local legacy = map.parse({ "# a", "  contains", "    x.lua:one  -- @w0zro 2026-07-26 abc123" })

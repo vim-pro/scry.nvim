@@ -4,12 +4,12 @@
 -- actions of doing the work leave a trail per claim:
 --
 --   authored    you typed or edited the claim's text in the glass
---   cascaded    you sent it to the conjurer
+--   conjured    you sent it to the conjurer
 --   red/green   its spec failed, then passed, under your :ScryExercise
 --   settled     a claim you cascaded came true on your save
 --
 -- A claim is OWNED when the trail shows a person passed through it:
--- authored, or cascaded-and-it-came-true. Everything else renders ∅
+-- authored, or conjured-and-it-came-true. Everything else renders ∅
 -- untouched — which is precisely the state of machine-drafted inventory
 -- nobody has engaged with.
 --
@@ -55,7 +55,7 @@ end
 --- changed since the last event) voids the old trail first.
 ---@param root string
 ---@param claim scry.Claim
----@param event "authored"|"cascaded"|"red"|"green"|"settled"
+---@param event "authored"|"conjured"|"red"|"green"|"settled"
 function M.record(root, claim, event)
   local mapmod = require("scry.map")
   local t = M.load(root)
@@ -82,12 +82,12 @@ function M.owned(root, claim)
   if trail.authored then
     return true
   end
-  -- cascaded, and it came true under your hands
-  return (trail.cascaded and (trail.settled or trail.green)) and true or false
+  -- conjured, and it came true under your hands
+  return (trail.conjured and (trail.settled or trail.green)) and true or false
 end
 
 --- Called after every check: convert state transitions into events. A claim
---- you cascaded that is now backed has settled — no one needs to say so.
+--- you conjured that is now backed has settled — no one needs to say so.
 ---@param root string
 ---@param map_ scry.Map
 ---@param report scry.Report
@@ -97,7 +97,7 @@ function M.sync(root, map_, report)
   local dirty = false
   for _, claim in ipairs(map_.claims) do
     local trail = t[mapmod.claim_id(claim)]
-    if trail and trail.hash == M.hash(claim) and trail.cascaded and not trail.settled then
+    if trail and trail.hash == M.hash(claim) and trail.conjured and not trail.settled then
       local v = report.verdicts[mapmod.claim_id(claim)]
       if v and (v.status == "backed" or v.status == "clean") then
         trail.settled = true

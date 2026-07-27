@@ -56,7 +56,7 @@ function M.build(claim, intent)
     text = symbol and ("scry: %s needs a spec asserting: %s"):format(claim.concern, symbol)
       or ("scry: %s needs a spec"):format(claim.concern)
   else
-    error("[scry] cascade supports contains and exercises claims (got " .. claim.kind .. ")", 0)
+    error("[scry] :Conjure works on contains and exercises claims (got " .. claim.kind .. ")", 0)
   end
   return {
     kind = claim.kind,
@@ -152,7 +152,7 @@ function M.start()
   end
   if claim.kind ~= "contains" and claim.kind ~= "exercises" then
     vim.notify(
-      "[scry] cascade supports contains and exercises claims (this is a " .. claim.kind .. " claim)",
+      "[scry] :Conjure works on contains and exercises claims (this is a " .. claim.kind .. " claim)",
       vim.log.levels.WARN
     )
     return
@@ -230,7 +230,7 @@ function M.seed(root, claim, intent, handoff)
     items = built.items,
   })
   -- the act of sending work is part of the ownership trail
-  require("scry.provenance").record(root, claim, "cascaded")
+  require("scry.provenance").record(root, claim, "conjured")
 
   if active and active.augroup then
     pcall(vim.api.nvim_del_augroup_by_id, active.augroup)

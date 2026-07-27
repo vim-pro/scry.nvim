@@ -15,7 +15,7 @@ it, it must fail), then the code — with the check and the concern's
 prohibitions withheld from the model that writes it. The code is where you
 review, not where you start.
 
-The work leaves a trail: type a claim yourself, or cascade one and watch it
+The work leaves a trail: type a claim yourself, or conjure one and watch it
 come true, and its `∅ untouched` marker clears. Edit a claim and its trail
 resets — every event is keyed to a hash of the claim's text.
 
@@ -51,7 +51,7 @@ scry's answer, computed and never stored.
 prose is preserved verbatim and never checked. The sentences carry the
 theory; the claims carry the check. That split is the whole trick.
 
-**The work leaves a trail.** Authoring a claim, cascading it, running its
+**The work leaves a trail.** Authoring a claim, conjuring it, running its
 check red then green — each marks the claim it touched, and the trail is
 what clears `∅ untouched`. A trail can only exist if the work actually
 passed through your hands, and editing a claim resets it.
@@ -82,13 +82,13 @@ suite whenever you opened it is a glass you'd stop opening. The price is
 staleness, so a run fingerprints the concern's files as it starts — move any
 of them and `✓ passing` degrades to `– stale`, which is not a pass.
 
-Both `contains` and `exercises` cascade, and the order is the mechanism:
+Both `contains` and `exercises` can be conjured, and the order is the mechanism:
 conjure the **check** first, confirm it goes **red**, then conjure
 the code *with the spec withheld*. Two generations from one sentence share its
 misreadings, so a suite written by whoever wrote the code proves only that the
 generator was self-consistent. See `:h scry-independence`.
 
-## The cascade
+## Conjuring from the glass
 
 An absent claim is a piece of work:
 
@@ -102,7 +102,7 @@ the casting and per-site review. **scry never conjures anything itself.**
 
 When you save the file, the withheld prohibitions run against the new code and
 the claim re-checks: `✗ absent` becomes `✓ defined` — and because
-you cascaded it and it came true, it's yours. If the generated code trips a rule it never
+you conjured it and it came true, it's yours. If the generated code trips a rule it never
 saw, you find out with the evidence line.
 
 ## Install

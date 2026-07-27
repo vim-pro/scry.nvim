@@ -14,7 +14,7 @@ local M = {}
 ---  verdict at all. NOT a pass — the fourth column exists so this can never
 ---  be inferred by subtraction.
 ---@field untouched integer no work has passed through this claim: not
----  authored by hand, not cascaded to completion. Ownership is INFERRED
+---  authored by hand, not conjured to completion. Ownership is INFERRED
 ---  from the trail (see provenance.lua), never performed as an act.
 
 --- Count a map + report into debt numbers. A claim can count on both the
