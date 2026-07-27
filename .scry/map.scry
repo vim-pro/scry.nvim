@@ -1,0 +1,40 @@
+# the map
+  files lua/scry/map.lua
+
+  Plain text in, structure out, plain text back — byte-identical, so a
+  parse/serialize round trip cannot lose anything. Indentation is the
+  grammar; a blank line is layout and does not close a claim block.
+
+  contains
+    lua/scry/map.lua:parse
+    lua/scry/map.lua:serialize
+  exercises
+    tests/map_spec.lua
+
+# the glass
+  files lua/scry/glass.lua
+
+  Two files composed into one editable buffer; :w routes never-blocks to the
+  holdout and everything else to the map. state.root is only ever set
+  alongside the content it describes — otherwise a second project's beliefs
+  save over the first project's map.
+
+  contains
+    lua/scry/glass.lua:compose
+    lua/scry/glass.lua:split
+  exercises
+    tests/glass_spec.lua
+
+# exercised claims
+  files lua/scry/runs.lua, lua/scry/run.lua
+
+  The dynamic evidence axis. Checking never executes anything; :ScryRun does,
+  and records a fingerprint of what it depended on so a pass stops counting as
+  one the moment the code moves.
+
+  contains
+    lua/scry/runs.lua:stale
+    lua/scry/runs.lua:fingerprint
+    lua/scry/run.lua:specs
+  exercises
+    tests/exercises_spec.lua:checking did NOT run the test command

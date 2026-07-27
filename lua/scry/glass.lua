@@ -39,7 +39,6 @@ end
 ---@return string[]
 function M.compose(map_lines, holdout_lines)
   local mapmod = require("scry.map")
-  local hold = mapmod.parse(holdout_lines)
 
   -- Collect each holdout concern's never block lines (header excluded).
   local never_blocks = {} -- name -> lines
@@ -206,9 +205,10 @@ function M.render()
       if v and v.status == "violated" and v.evidence then
         mark.virt_lines = {}
         for _, e in ipairs(v.evidence) do
-          mark.virt_lines[#mark.virt_lines + 1] = {
-            { ("        └ %s:%d → %s"):format(e.path, e.lnum, e.text), "ScryEvidence" },
-          }
+          -- lnum 0 means the evidence has no line to point at (a run's
+          -- output, not a match in a file); showing ":0" would invent one.
+          local where = e.lnum > 0 and ("%s:%d → %s"):format(e.path, e.lnum, e.text) or e.text
+          mark.virt_lines[#mark.virt_lines + 1] = { { "        └ " .. where, "ScryEvidence" } }
         end
       end
       pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, claim.lnum - 1, 0, mark)

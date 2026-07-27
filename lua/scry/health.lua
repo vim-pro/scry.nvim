@@ -53,6 +53,26 @@ function M.check()
     health.info("filesystem: no. Independence is against leakage, not adversaries.")
   end
 
+  -- Dynamic evidence: only usable if scry knows how to run one spec.
+  local cmd = (config.test or {}).cmd or {}
+  local map_ = require("scry.map").load(root .. "/" .. config.map_path)
+  local specs = #require("scry.run").specs(map_)
+  if #cmd > 0 then
+    health.ok(("test command: %s <spec>  (%d spec%s exercised)"):format(
+      table.concat(cmd, " "),
+      specs,
+      specs == 1 and "" or "s"
+    ))
+    health.info("runs happen on :ScryRun only — checking never executes anything")
+  elseif specs > 0 then
+    health.warn(("%d exercises claim%s but no test command"):format(specs, specs == 1 and "" or "s"), {
+      "They render '– unrun', which is honest but never becomes evidence.",
+      "Set test = { cmd = {...} } in setup(); the spec path is appended.",
+    })
+  else
+    health.info("no exercises claims (set test.cmd to use them)")
+  end
+
   -- Optional neighbours.
   if pcall(require, "conjurer.quickfix") then
     health.ok("conjurer.nvim found (:ScryCascade can hand off casting)")

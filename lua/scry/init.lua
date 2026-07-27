@@ -9,6 +9,8 @@ local M = {}
 ---@field holdout_path string|"" Never-claims location; "" = stdpath state (outside the repo).
 ---@field author string|"" Ratification name; "" = git config user.name.
 ---@field resolver string|"" Resolver name; "" = the ts_rg default.
+---@field test { cmd: string[] } How to run ONE spec: cmd with the spec path
+---  appended. Exit 0 is passing. Empty = exercises claims stay unrun.
 
 ---@type scry.Config
 M.config = {
@@ -23,6 +25,11 @@ M.config = {
   author = "",
   -- Claim-checking engine. Empty = treesitter + ripgrep (lua-first).
   resolver = "",
+  -- How to run one spec, for `exercises` claims: the spec's path is appended
+  -- and exit 0 means passing. Nothing here runs on :Scry — only on :ScryRun.
+  -- Left empty, exercises claims render "– unrun", which is honest: scry
+  -- would rather say it doesn't know than guess a project's test command.
+  test = { cmd = {} },
 }
 
 --- Merge user options; define commands. Optional — zero-config works.
@@ -48,5 +55,9 @@ end, { desc = "Ratify the claim under the cursor (stamp it with your name)" })
 vim.api.nvim_create_user_command("ScryCascade", function()
   require("scry.cascade").start()
 end, { desc = "Conjure the absent claim under the cursor via the quickfix list" })
+
+vim.api.nvim_create_user_command("ScryRun", function(a)
+  require("scry.run").start({ concern = a.args ~= "" and a.args or nil })
+end, { nargs = "?", desc = "Run the specs behind this map's exercises claims, then re-check" })
 
 return M

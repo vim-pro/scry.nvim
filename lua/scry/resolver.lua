@@ -12,9 +12,13 @@ local M = {}
 
 ---@class scry.Verdict
 ---@field status "backed"|"missing"|"violated"|"clean"|"unchecked"|"error"
----@field fidelity "ts-def"|"rg-text"|"none" What kind of evidence backs this.
+---@field fidelity "ts-def"|"rg-text"|"run"|"none" What kind of evidence backs
+---  this. "run" is the dynamic class: produced by executing something rather
+---  than reading it, and therefore the only one that can be stale while
+---  still looking authoritative. Anything with fidelity "run" must render
+---  its age.
 ---@field label string Exact rendered wording — resolver-owned, honesty-load-bearing.
----@field evidence scry.Evidence[]?
+---@field evidence scry.Evidence[]? lnum 0 = no line to point at (run output).
 
 ---@class scry.Ctx
 ---@field root string Absolute project root.
@@ -25,6 +29,8 @@ local M = {}
 ---@field check_contains fun(ctx: scry.Ctx, claim: scry.Claim, cb: fun(v: scry.Verdict))
 ---@field check_calls fun(ctx: scry.Ctx, claim: scry.Claim, cb: fun(v: scry.Verdict))
 ---@field check_never fun(ctx: scry.Ctx, claim: scry.Claim, cb: fun(v: scry.Verdict))
+---@field check_exercises fun(ctx: scry.Ctx, claim: scry.Claim, cb: fun(v: scry.Verdict))
+---  MUST NOT execute anything. It reports what the last |:ScryRun| recorded.
 
 local registry = {}
 

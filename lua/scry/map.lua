@@ -9,6 +9,17 @@
 -- There are no parse errors. A line is a concern header, a files line, a
 -- section header, a claim (when inside a section), or prose. Prose is
 -- preserved verbatim, never checked, never marked.
+--
+-- Claim kinds sit on TWO axes, and the split is not cosmetic:
+--
+--   contains / calls / never   STATIC evidence — a definition node, a text
+--     match. Cheap, side-effect-free, computed on every check.
+--   exercises                  DYNAMIC evidence — something was run and it
+--     passed. Slow, stateful, and it can go stale the instant you edit.
+--
+-- Structural claims say where things are; an exercised claim says what
+-- holds. Most real work needs one of each, which is why neither axis is
+-- the primary one.
 local M = {}
 
 ---@class scry.Stamp
@@ -17,7 +28,7 @@ local M = {}
 ---@field hash string  6 hex chars of sha256(target).
 
 ---@class scry.Claim
----@field kind "contains"|"calls"|"never"
+---@field kind "contains"|"calls"|"never"|"exercises"
 ---@field target string Trimmed claim text, stamp excluded. The canonical
 ---  form hashed by ratification.
 ---@field stamp scry.Stamp?
@@ -55,7 +66,10 @@ function M.parse(lines)
       section = nil
     elseif concern then
       local globs = line:match("^  files%s+(.+)$")
-      local sec = line:match("^  (contains)%s*$") or line:match("^  (calls)%s*$") or line:match("^  (never)%s*$")
+      local sec = line:match("^  (contains)%s*$")
+        or line:match("^  (calls)%s*$")
+        or line:match("^  (never)%s*$")
+        or line:match("^  (exercises)%s*$")
       if globs then
         for g in globs:gmatch("[^,]+") do
           table.insert(concern.globs, vim.trim(g))

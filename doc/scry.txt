@@ -14,6 +14,7 @@ CONTENTS                                                       *scry-contents*
   6. Theory-debt ................................. |scry-debt|
   7. The holdout ................................. |scry-holdout|
   8. The cascade ................................. |scry-cascade|
+ 8b. Exercised claims ............................ |scry-exercised|
   9. Commands .................................... |scry-commands|
  10. Configuration ............................... |scry-configuration|
  11. Highlights .................................. |scry-highlights|
@@ -38,8 +39,15 @@ Three verbs, three tools: conjuring is how code arrives (conjurer.nvim),
 presentation is where lists live (quickfix.pro), and scry is the glass —
 the ledger and the audit. Ratification is the loop that binds them: code
 that entered your tree without passing through anyone's understanding is
-theory-less, however correct it is, and ratifying a claim is the small,
-constant act that fixes that.
+theory-less, however correct it is, and ratifying a claim is the smallest
+act that puts a person back in the loop.
+
+Not the same as repairing the theory. A program's theory lives in the people
+who built it and cannot be fully written down; scry does not try to capture
+it and cannot restore it once it is gone. What it does is narrow the drift —
+keep the checkable surface of your understanding honest, and make the moment
+you stopped understanding something visible instead of silent. That
+distinction matters more, not less, the less code you write by hand.
 
 ==============================================================================
 2. THE GLASS                                                      *scry-glass*
@@ -87,8 +95,8 @@ The map is plain text, versioned with the code it describes (default
 - `# name` starts a concern.
 - `files` gives the concern's scope as |:grep|-style globs, comma-separated.
   Reference and prohibition checks are scoped to these files.
-- `contains`, `calls`, `never` open a claim block; claims are indented four
-  spaces.
+- `contains`, `calls`, `never`, `exercises` open a claim block; claims are
+  indented four spaces.
 - **Everything else is prose.** There are no parse errors: a line is a claim
   or it is prose, preserved verbatim, never checked, never marked. Write as
   much explanation as you like — the sentences carry the theory, the claims
@@ -107,10 +115,27 @@ Claim targets differ by kind, because the claims differ in kind:
     calls      [hint::]symbol         target exists, and this concern
                                       references it
     never      a ripgrep regex        zero matches in the concern's files
+    exercises  path[:assertion]       that spec passes — see |scry-exercised|
 
 `never` patterns are raw ripgrep regexes — `vim\.ui\.`, not `vim.ui.*`. No
 sugar is applied, because silently mis-escaping a prohibition would be
 exactly the kind of quiet overclaim scry exists to avoid.
+
+                                                              *scry-two-axes*
+The kinds sit on two axes, and it is worth seeing them that way rather than
+as a list of four:
+
+    contains / calls / never    STATIC — a definition node, a text match.
+                                Cheap, side-effect-free, recomputed on
+                                every check.
+    exercises                   DYNAMIC — something was run and it passed.
+                                Slow, stateful, and stale the moment you
+                                edit.
+
+Structural claims say where things are; an exercised claim says what holds.
+Neither is the primary axis. Adding a feature usually wants one of each —
+`contains` for the thing existing, `exercises` for it working — and fixing a
+bug often wants only the second, since nothing structural changed.
 
 ==============================================================================
 4. VERDICTS                                                    *scry-verdicts*
@@ -120,11 +145,16 @@ The glyph never appears alone. The label states what was actually checked:
     ✓ defined              a definition node with that name exists (treesitter)
     ✓ referenced (text)    the token occurs in the concern's files (ripgrep)
     ✓ no matches (rg)      the prohibition found nothing
+    ✓ passing (ran 4m ago) that spec exited 0, and nothing it depends on has
+                           changed since — the age is part of the verdict
     ✗ absent               the definition (or target) does not exist
     ✗ unreferenced         the target exists, but this concern never mentions it
     ✗ VIOLATED             a prohibition matched — with the evidence line
+    ✗ FAILING              that spec exited non-zero — with its output
     ∅ unratified           nobody has put their name on this claim
     – unchecked            no resolver for this language; NOT a pass
+    – unrun                nobody has run that spec yet; NOT a pass
+    – stale                it passed, but the code has moved since; NOT a pass
 
 That vocabulary is the honesty mechanism, not decoration. The fidelity of
 the evidence travels with the verdict, so the glass cannot render a stronger
@@ -228,6 +258,40 @@ review is where you check it. And only `contains` claims cascade: `calls` and
 worse than refusing.
 
 ==============================================================================
+8b. EXERCISED CLAIMS                                          *scry-exercised*
+
+An `exercises` claim names a spec, optionally with an assertion label:
+>
+    # the aggregate driver
+      files lua/conjurer/quickfix.lua
+
+      exercises
+        tests/aggregate_spec.lua
+        tests/aggregate_spec.lua:driven casts never open a review tab
+<
+**Checking never runs anything.** |:Scry| and |:ScryCheck| read what the last
+|:ScryRun| recorded; only |:ScryRun| executes. That separation is deliberate.
+Every other verdict is a static read — cheap, repeatable, harmless to
+recompute. Running a suite is slow, has side effects, and can hang, and a
+glass that shelled out to your test suite whenever you opened it is a glass
+you would stop opening.
+
+The price is staleness, and staleness is the whole danger of this evidence
+class: `✓ passing` from before your last edit looks like the strongest thing
+scry renders and is the easiest one to be wrong. So a recorded run is
+reported as a pass only while nothing it depended on has moved. Each run
+fingerprints the concern's files and the spec as it starts; a later check
+compares. Any difference and the verdict degrades to `– stale`, which lands
+in the unchecked column, where an unanswered claim belongs.
+
+Fingerprints rather than timestamps, because mtime granularity is one second
+and "edit, then run" finishes inside a single tick — a clock comparison would
+call every fresh run stale forever.
+
+Two claims on one spec are one execution, and its recorded dependencies cover
+every concern that exercises it.
+
+==============================================================================
 9. COMMANDS                                                    *scry-commands*
 
                                                                        *:Scry*
@@ -239,6 +303,13 @@ worse than refusing.
                                                                  *:ScryRatify*
 :ScryRatify             Stamp the claim under the cursor with your name, the
                         date, and a hash of its text. See |scry-ratification|.
+
+                                                                    *:ScryRun*
+:ScryRun [{concern}]    Run the specs named by this map's `exercises` claims
+                        and record the results, then re-check. The only
+                        command in scry that executes your code. With a
+                        concern name, runs only that concern's specs.
+                        See |scry-exercised|.
 
                                                                 *:ScryCascade*
 :ScryCascade            Turn the absent `contains` claim under the cursor
@@ -264,6 +335,13 @@ setup({opts}) is optional. Defaults: >lua
 
       -- Claim-checking engine. Empty = treesitter + ripgrep (lua-first).
       resolver = "",
+
+      -- How to run ONE spec for `exercises` claims: the spec's path is
+      -- appended, and exit 0 means passing. Nothing here runs on :Scry —
+      -- only on :ScryRun. Left empty, exercises claims render "– unrun",
+      -- which is honest: scry would rather say it does not know than guess
+      -- your project's test command.
+      test = { cmd = {} },   -- e.g. { "nvim", "--headless", "-u", "NONE", "-l" }
     })
 <
 ==============================================================================
@@ -301,6 +379,20 @@ Every line here is a limit scry intends to keep stating plainly.
   of behaviour — `local ui = vim.ui; ui.input(...)` defeats it. The
   asymmetry matters: a VIOLATED prohibition is proof, and carries the line
   that proves it; a clean prohibition is evidence.
+- **`exercises ✓ passing`** asserts a spec process exited 0, at a stated
+  time, with nothing it depends on having moved since. It is not proof your
+  feature works — only that whatever that spec checks, held. A spec that
+  asserts nothing passes just as loudly.
+- **A named assertion is a weak check.** `spec.lua:some label` verifies the
+  label appears in the spec's source and the file passes. It is NOT proof
+  that assertion ran, or that it is the reason the file passed. scry cannot
+  see inside a run; it sees an exit code.
+- **An exercised claim is NOT held out the way a prohibition is.** A
+  never-pattern can live outside the repository; a spec cannot — it has to be
+  in the tree to run. So the guarantee is request-level only: scry never puts
+  a test's path or text into what it hands a conjurer. A generator that reads
+  your repository will find the test. See |scry-holdout| for why that
+  distinction is kept sharp.
 - **Verdicts describe saved files at a moment.** Unwritten buffers and edits
   made after the check are invisible. The timestamp travels with the render.
 - **Holdout independence is against leakage, not adversaries.** See

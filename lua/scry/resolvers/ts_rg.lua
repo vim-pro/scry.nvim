@@ -61,6 +61,32 @@ local function read(path)
   return content
 end
 
+-- Human age of a timestamp. Dynamic evidence must never render without one:
+-- the age is the difference between "this passes" and "this passed once".
+local function ago(at)
+  local secs = os.time() - (at or 0)
+  if secs < 60 then
+    return secs .. "s ago"
+  elseif secs < 3600 then
+    return math.floor(secs / 60) .. "m ago"
+  elseif secs < 86400 then
+    return math.floor(secs / 3600) .. "h ago"
+  end
+  return math.floor(secs / 86400) .. "d ago"
+end
+
+-- Failure output as evidence lines, so a failing claim carries the reason the
+-- way a violated prohibition carries its match.
+local function tail_evidence(spec, output)
+  local ev = {}
+  for _, line in ipairs(output or {}) do
+    if vim.trim(line) ~= "" then
+      ev[#ev + 1] = { path = spec, lnum = 0, text = vim.trim(line) }
+    end
+  end
+  return ev
+end
+
 -- Run rg asynchronously; cb(lines|nil, code). Lines are "path:lnum:text".
 local function rg(args, cwd, cb)
   vim.system(vim.list_extend({ "rg", "-n", "--no-heading" }, args), { text = true, cwd = cwd }, function(out)
@@ -160,7 +186,12 @@ function M.check_calls(ctx, claim, cb)
         if code == 2 then
           cb({ status = "error", fidelity = "none", label = "– rg error" })
         elseif lines and #lines > 0 then
-          cb({ status = "backed", fidelity = "rg-text", label = "✓ referenced (text)", evidence = to_evidence(lines, 3) })
+          cb({
+            status = "backed",
+            fidelity = "rg-text",
+            label = "✓ referenced (text)",
+            evidence = to_evidence(lines, 3),
+          })
         else
           cb({ status = "missing", fidelity = "rg-text", label = "✗ unreferenced" })
         end
@@ -183,6 +214,74 @@ function M.check_never(ctx, claim, cb)
       cb({ status = "clean", fidelity = "rg-text", label = "✓ no matches (rg)" })
     end
   end)
+end
+
+--- exercises: `path` or `path:assertion label`.
+---
+--- This check READS; it never runs anything. |:ScryRun| runs and records; a
+--- check reports what the last run left, and only while nothing it depended
+--- on has moved since. A stale pass is reported as unchecked rather than as
+--- a pass, because it is the one verdict whose staleness is invisible: the
+--- file still says "passing" long after the code stopped agreeing.
+function M.check_exercises(ctx, claim, cb)
+  local runs = require("scry.runs")
+  local spec, label = claim.target:match("^([^:]+):(.+)$")
+  spec = spec or claim.target
+
+  if not read(ctx.root .. "/" .. spec) then
+    cb({ status = "missing", fidelity = "none", label = "✗ absent — no such spec file" })
+    return
+  end
+
+  -- If the claim names an assertion, that name must actually appear in the
+  -- spec's source. It is a weak check and it is labelled as one: a passing
+  -- file that contains the label is NOT proof the labelled assertion ran, only
+  -- that it is written down and nothing in the file failed.
+  local labelled = ""
+  if label then
+    local src = read(ctx.root .. "/" .. spec)
+    if not (src and src:find(label, 1, true)) then
+      cb({
+        status = "missing",
+        fidelity = "ts-def",
+        label = "✗ absent — the spec has no assertion by that name",
+      })
+      return
+    end
+    labelled = "; assertion present"
+  end
+
+  local run = runs.load(ctx.root)[spec]
+  if not run then
+    cb({ status = "unchecked", fidelity = "none", label = "– unrun (:ScryRun)" })
+    return
+  end
+
+  local deps = runs.scope(ctx.root, ctx.globs)
+  deps[#deps + 1] = spec
+  if runs.stale(run, ctx.root, deps) then
+    cb({
+      status = "unchecked",
+      fidelity = "none",
+      label = ("– stale (code changed since the run %s)"):format(ago(run.at)),
+    })
+    return
+  end
+
+  if run.ok then
+    cb({
+      status = "backed",
+      fidelity = "run",
+      label = ("✓ passing (ran %s%s)"):format(ago(run.at), labelled),
+    })
+  else
+    cb({
+      status = "violated",
+      fidelity = "run",
+      label = ("✗ FAILING (ran %s)"):format(ago(run.at)),
+      evidence = tail_evidence(spec, run.output),
+    })
+  end
 end
 
 return M
