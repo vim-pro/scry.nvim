@@ -2,7 +2,7 @@
 
 **The surface you write software from.**
 
-`:h scry`
+**[scry.vim.pro](https://scry.vim.pro)** · `:h scry`
 
 Features, fixes, and refactors start in the glass, not in the code. One
 buffer describes the product, and you work by changing the description: a
@@ -142,7 +142,8 @@ vim.pack.add({ "https://github.com/vim-pro/scry.nvim" })
 
 Requires Neovim 0.10+, **ripgrep**, and the lua treesitter parser (bundled).
 **Requires [conjurer.nvim](https://github.com/vim-pro/conjurer.nvim)** —
-scry conjures through it. quickfix-pro is optional polish for the list.
+scry conjures through it. [quickfix-pro.nvim](https://quickfix.vim.pro) is
+optional polish for the list.
 
 `:Scry` to start. `:checkhealth scry` to verify.
 
