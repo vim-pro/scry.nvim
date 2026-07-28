@@ -10,6 +10,11 @@
 "   col 0     feature <name>, or prose
 "   2 spaces  contains / calls / never / exercises
 "   4 spaces  a claim
+"
+" THE RULE THIS FILE KEEPS: it may never colour something as grammar that
+" the parser reads as prose. A syntax file that disagrees with the parser
+" is worse than none, because it tells you a line is checked when nothing
+" will ever check it.
 if exists("b:current_syntax")
   finish
 endif
@@ -20,16 +25,27 @@ endif
 " is honest rather than merely calm.
 syn match scryProse "^.*$"
 
+" GRAMMAR EXISTS ONLY INSIDE A FEATURE. map.parse walks the buffer and skips
+" every line until the first `feature` (`elseif feature then`), so a
+" `contains` above it opens nothing and the target under that is not a
+" claim — they are prose, and they have to look like prose. Scoping the
+" items to this region is what keeps that promise; the last block runs to
+" the end of the buffer.
+syn region scryFeatureBlock
+      \ start="^feature\s"
+      \ end="^feature\s"me=s-1
+      \ keepend
+      \ contains=scryFeatureLine,scryNeverBlock,scrySection,scryClaim,scryProse
+
 " A feature: one thing a user can accomplish. The name carries the page.
-syn match scryFeatureLine "^feature\s.*$" contains=scryKeyword,scryFeatureName
+syn match scryFeatureLine "^feature\s.*$" contained contains=scryKeyword,scryFeatureName
 syn match scryKeyword "^feature\>" contained
 syn match scryFeatureName "\%(^feature\s\+\)\@<=.\+$" contained
 
 " Section headers. `never` is set apart from the others on purpose: the other
 " three say what the code contains, and it says what the code must not — and
 " it is the one whose text lives outside the repository.
-syn match scrySection "^  \%(contains\|calls\|exercises\)\s*$"
-syn match scryNever "^  never\s*$"
+syn match scrySection "^  \%(contains\|calls\|exercises\)\s*$" contained
 
 " A never-block runs until the next section header, feature, or dedented
 " line. A BLANK LINE DOES NOT END IT — that is the map's rule, not a
@@ -38,12 +54,13 @@ syn match scryNever "^  never\s*$"
 syn region scryNeverBlock
       \ start="^  never\s*$"
       \ end="^\%(\S\|  \S\)"me=s-1
-      \ keepend contains=scryNever,scryPattern
+      \ keepend contained contains=scryNever,scryPattern
+syn match scryNever "^  never\s*$" contained
 syn match scryPattern "^    \S.*$" contained contains=scryStamp
 
 " A claim, split like a quickfix row: the path you navigate by, the
 " punctuation that recedes, the symbol you are actually claiming.
-syn match scryClaim "^    \S.*$" contains=scryPath,scrySeparator,scrySymbol,scryStamp
+syn match scryClaim "^    \S.*$" contained contains=scryPath,scrySeparator,scrySymbol,scryStamp
 syn match scryPath "\%(^    \)\@<=[^ :]\+" contained
 syn match scrySeparator ":" contained
 syn match scrySymbol "\%(:\)\@<=[A-Za-z0-9_.]\+" contained

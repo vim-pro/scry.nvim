@@ -639,6 +639,13 @@ it silently for a config file.
 ==============================================================================
 12. HIGHLIGHTS                                               *scry-highlights*
 
+Highlighting never claims more than the parser does. Grammar is coloured
+only inside a feature, because |scry-map|'s parser skips every line before
+the first `feature` — a `contains` above it opens no section and the line
+under that is not a claim. Both render as prose, which is what they are. A
+syntax file that disagreed would be worse than none: it would tell you a
+line was checked when nothing would ever check it.
+
 Every group is a `default link`, so a colorscheme that defines any of them
 wins outright. Verdicts borrow the DIAGNOSTIC groups, because a verdict is
 the same kind of thing a diagnostic is and your scheme has already made
