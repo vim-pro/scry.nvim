@@ -22,6 +22,9 @@ local M = {}
 ---@field broken integer    features with a violated or failing claim.
 ---@field todo integer      features with no evidence holding yet.
 ---@field unknown integer   features nothing has answered for.
+---@field unclaimed integer  files no feature's footprint names. Reflexion's
+---  third verdict: without it, every feature can be done while the map
+---  describes a tenth of the product, and nothing would say so.
 
 --- Count a map + report into debt numbers. A claim can count on both the
 --- diverged and unratified axes; each axis counts it once.
@@ -32,7 +35,8 @@ local M = {}
 --- to conclude the rest are fine.
 ---@param map_ scry.Map
 ---@param report scry.Report?
----@param root string? Project root; without it nothing counts as owned.
+---@param root string? Project root; without it nothing counts as owned, and
+---  divergence cannot be computed.
 ---@return scry.Debt
 function M.count(map_, report, root)
   local mapmod = require("scry.map")
@@ -51,7 +55,20 @@ function M.count(map_, report, root)
     broken = counts.broken,
     todo = counts.absent + counts.unevidenced,
     unknown = counts.unknown,
+    unclaimed = 0,
   }
+  -- Divergence needs the filesystem, so it is best-effort: a repo without
+  -- ripgrep, or a root that has gone away, must not take the whole header
+  -- down with it.
+  if root then
+    local ok, div = pcall(function()
+      return (require("scry.divergence").unclaimed(root, map_, require("scry").config))
+    end)
+    if ok then
+      d.unclaimed = #div
+    end
+  end
+
   for _, claim in ipairs(map_.claims) do
     if not (root and prov.owned(root, claim)) then
       d.untouched = d.untouched + 1
@@ -98,6 +115,7 @@ function M.header(d, at)
   add(d.broken, "broken")
   add(d.todo, "to do")
   add(d.unknown, "unknown")
+  add(d.unclaimed, "unclaimed files")
   local unchecked = d.unchecked > 0 and (" · %d unchecked"):format(d.unchecked) or ""
   local fmt = "scry · %s   %s (files on disk)"
     .. "\n      %d claims · %d backed · %d missing · %d violated%s · %d untouched"

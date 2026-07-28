@@ -20,7 +20,7 @@ come true, and its `∅ untouched` marker clears. Edit a claim and its trail
 resets — every event is keyed to a hash of the claim's text.
 
 ```
-scry · 3 features · 1 building · 1 broken · 1 to do   checked 40s ago (files on disk)
+scry · 3 features · 1 building · 1 broken · 1 to do · 4 unclaimed files   checked 40s ago
       6 claims · 3 backed · 1 missing · 1 violated · 1 unchecked · 4 untouched
 
 feature a user can reset their password                          ◐ 2 of 4
@@ -50,6 +50,13 @@ under them. Everything to the right is scry's answer, computed and never
 stored.
 
 ## The four ideas
+
+**Every feature done is not the same as done.** A map whose features all
+read `✓ done` can still describe a fraction of the product, so the header
+counts the files no feature claims and `:ScryUnclaimed` lists them. Each one
+is a decision: add a claim to the feature that owns it, or name the feature
+nobody wrote down. This is reflexion's third verdict — see
+`:h scry-divergence`.
 
 **Features sit at sea level; claims are their evidence.** A feature is one
 thing a user can accomplish, named the way they'd name it — not "the auth
@@ -140,6 +147,8 @@ require("scry").setup({
   resolver = "",                -- "" = treesitter + ripgrep
   test = { cmd = {} },          -- how to run ONE spec; the path is appended.
                                 -- Empty = exercises claims stay "– unrun".
+  sources = {},                 -- what divergence considers claimable.
+                                -- Empty = everything ripgrep lists.
 })
 ```
 
@@ -160,8 +169,9 @@ full. In short:
 - Verdicts describe **saved files** at a timestamp, which the header carries.
 - Holdout independence is against **leakage, not adversaries** — hidden from
   a generator that reads your repo, not from one told to hunt your disk.
-- Theory-debt is **coverage-blind** until scry can report code no feature
-  claims: a map showing every feature done may simply be a short map.
+- **Divergence is file-level and blunt.** A file a feature uses but never
+  names reads as unclaimed, and `sources` decides what counts as a file. It
+  answers "is anything undescribed", not "is the description any good".
 - **A feature's state is only as good as its claims.** `✓ done` means every
   claim under it holds, not that the feature works.
 

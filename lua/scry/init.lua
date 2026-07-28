@@ -10,6 +10,8 @@ local M = {}
 ---@field resolver string|"" Resolver name; "" = the ts_rg default.
 ---@field test { cmd: string[] } How to run ONE spec: cmd with the spec path
 ---  appended. Exit 0 is passing. Empty = exercises claims stay unrun.
+---@field sources string[] Which files count as claimable, for divergence
+---  (|scry-divergence|). Empty = everything ripgrep lists.
 
 ---@type scry.Config
 M.config = {
@@ -27,6 +29,11 @@ M.config = {
   -- Left empty, exercises claims render "– unrun", which is honest: scry
   -- would rather say it doesn't know than guess a project's test command.
   test = { cmd = {} },
+  -- Which files divergence considers claimable. Empty means everything
+  -- ripgrep lists, which respects .gitignore — scry does not presume to know
+  -- which of your files are product. Narrow it when the noise outweighs the
+  -- signal; having to narrow it is itself information about the repo.
+  sources = {},
 }
 
 --- Merge user options; define commands. Optional — zero-config works.
@@ -44,6 +51,10 @@ vim.api.nvim_create_user_command("ScryCheck", function()
     vim.notify("[scry] checked")
   end)
 end, { desc = "Re-check every claim against the files on disk" })
+
+vim.api.nvim_create_user_command("ScryUnclaimed", function()
+  require("scry.divergence").to_quickfix()
+end, { desc = "List the files no feature claims (reflexion's divergence)" })
 
 vim.api.nvim_create_user_command("ScryExercise", function(a)
   require("scry.run").start({ feature = a.args ~= "" and a.args or nil })

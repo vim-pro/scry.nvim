@@ -12,6 +12,7 @@ CONTENTS                                                       *scry-contents*
      Altitude .................................... |scry-altitude|
      Footprint ................................... |scry-footprint|
   4. Verdicts .................................... |scry-verdicts|
+     Divergence .................................. |scry-divergence|
   5. Ownership ................................... |scry-ownership|
   6. Theory-debt ................................. |scry-debt|
   7. The holdout ................................. |scry-holdout|
@@ -239,6 +240,38 @@ the evidence travels with the verdict, so the glass cannot render a stronger
 word than the engine that produced it. See |scry-honesty| for what each
 verdict does and does not assert.
 
+                                                            *scry-divergence*
+DIVERGENCE — the code no feature claims ~
+
+Reflexion has three verdicts, and the two above are only the first two.
+Convergence is `✓ defined`; absence is `✗ absent`; DIVERGENCE is reality the
+map does not account for. Without it a feature list cannot be read honestly:
+every feature can be `✓ done` while the map describes a tenth of the
+product, and nothing on the page would say so.
+
+A file counts as claimed when some feature's footprint names it
+(|scry-footprint|). Everything else is unclaimed, and the header says how
+many:
+>
+    scry · 9 features · 9 done · 12 unclaimed files   just checked
+<
+|:ScryUnclaimed| puts them in the quickfix list, because that is where every
+other list of work lives. Each one is a decision: add a claim to the feature
+that should own this file, or name the feature nobody wrote down.
+
+Deliberately FILE-level. Enumerating every definition and listing the
+unclaimed ones is the obvious implementation and the wrong one — it produces
+a list of `chomp`, `clip`, and `stat`, which is the implementation wearing a
+product's clothes. "lua/auth/tokens.lua is covered by no feature" is a
+sentence you can act on; "`chomp` is unclaimed" is noise.
+
+Two honest limits. A file a feature genuinely uses but never names still
+reads as unclaimed — correct, because the map's job is to say what the
+product does and silence about a file is silence. And `sources` decides what
+counts as claimable at all; empty means everything ripgrep lists, which
+respects `.gitignore`. Narrowing it is expected, and having to narrow it a
+lot is itself information about the repo.
+
 ==============================================================================
 5. OWNERSHIP                                                  *scry-ownership*
 
@@ -433,6 +466,10 @@ every feature that exercises it.
                                                                   *:ScryCheck*
 :ScryCheck              Re-check every claim against the files on disk.
 
+                                                              *:ScryUnclaimed*
+:ScryUnclaimed          List the files no feature claims in the quickfix
+                        list. See |scry-divergence|.
+
                                                                     *:ScryExercise*
 :ScryExercise [{feature}]
                         Run the specs named by this map's `exercises` claims
@@ -526,9 +563,11 @@ Every line here is a limit scry intends to keep stating plainly.
   made after the check are invisible. The timestamp travels with the render.
 - **Holdout independence is against leakage, not adversaries.** See
   |scry-holdout| for the two guarantees and which is which.
-- **Theory-debt is coverage-blind.** Until scry reports code no claim
-  covers, a clean map may simply be an empty one — which is why the claim
-  count is rendered first.
+- **Divergence is file-level and blunt.** A file a feature uses but never
+  names reads as unclaimed, and what counts as a file at all is `sources`.
+  It answers "is anything undescribed", not "is the description good".
+- **A feature's state is only as good as its claims.** `✓ done` means every
+  claim under it holds — not that the feature works.
 - **The trail is per-machine.** Ownership events live in local state, like
   run results — a teammate's glass shows their own trail, not yours.
 - **`– unchecked` is not a pass.** A language with no resolver renders as
