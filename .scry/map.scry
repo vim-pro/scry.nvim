@@ -1,40 +1,98 @@
-# the map
-  files lua/scry/map.lua
+feature you can see what the product does and where it stands
+  :Scry opens one buffer holding every feature, checked against the code the
+  moment you look. Features carry the state their evidence adds up to; the
+  header leads with them and puts claim counts underneath as the evidence.
 
-  Plain text in, structure out, plain text back — byte-identical, so a
-  parse/serialize round trip cannot lose anything. Indentation is the
-  grammar; a blank line is layout and does not close a claim block.
+  contains
+    lua/scry/glass.lua:open
+    lua/scry/glass.lua:render
+    lua/scry/feature.lua:verdict
+    lua/scry/debt.lua:header
+  calls
+    feature.lua::tally
+  exercises
+    tests/feature_spec.lua:features lead line one
+    tests/glass_spec.lua
+
+feature you can describe a change before you make it
+  Write the claim for what you want and it comes back absent, which is not a
+  fault — it is the work, named, in the same vocabulary as everything already
+  true. If you cannot state it, you do not know what you are asking for yet.
 
   contains
     lua/scry/map.lua:parse
-    lua/scry/map.lua:serialize
+    lua/scry/map.lua:footprint
   exercises
     tests/map_spec.lua
+    tests/feature_spec.lua:a feature may be named with no evidence
 
-# the glass
-  files lua/scry/glass.lua
-
-  Two files composed into one editable buffer; :w routes never-blocks to the
-  holdout and everything else to the map. state.root is only ever set
-  alongside the content it describes — otherwise a second project's beliefs
-  save over the first project's map.
+feature the description can be edited without losing anything
+  The glass is two files composed into one buffer. Saving routes never-blocks
+  to the holdout and the rest to the map, and a parse/serialize round trip is
+  byte-identical, so editing beliefs can never quietly drop one.
 
   contains
     lua/scry/glass.lua:compose
     lua/scry/glass.lua:split
+    lua/scry/map.lua:serialize
   exercises
-    tests/glass_spec.lua
+    tests/glass_spec.lua:compose∘split is identity on composed input
 
-# exercised claims
-  files lua/scry/runs.lua, lua/scry/run.lua
-
-  The dynamic evidence axis. Checking never executes anything; :ScryRun does,
-  and records a fingerprint of what it depended on so a pass stops counting as
-  one the moment the code moves.
+feature you can conjure a change you described
+  :Conjure on an absent claim seeds the quickfix list and hands off to
+  conjurer. The check is conjured before the code, and the code request never
+  sees the check or this feature's prohibitions.
 
   contains
+    lua/scry/cascade.lua:build
+    lua/scry/cascade.lua:seed
+  calls
+    holdout.lua::assert_clean
+  exercises
+    tests/cascade_spec.lua
+
+feature a rule the model never saw still holds afterwards
+  never-claims live outside the repository and are withheld from every
+  request, then checked once the code lands. A prohibition the generator was
+  shown proves nothing by being satisfied; one it never saw is evidence.
+
+  contains
+    lua/scry/holdout.lua:assert_clean
+    lua/scry/holdout.lua:path
+  exercises
+    tests/cascade_spec.lua:assert_clean errors when a never-pattern appears
+
+feature you can prove a change works, and know when the proof goes stale
+  :ScryExercise runs the specs behind exercises claims and records what each
+  run depended on. Checking never executes anything, and a pass whose
+  dependencies have moved degrades rather than lying.
+
+  contains
+    lua/scry/run.lua:specs
     lua/scry/runs.lua:stale
     lua/scry/runs.lua:fingerprint
-    lua/scry/run.lua:specs
   exercises
     tests/exercises_spec.lua:checking did NOT run the test command
+
+feature you can find what the description does not cover
+  Every feature can read done while the map describes a fraction of the
+  product. :ScryUnclaimed lists the files no feature claims, which is what
+  makes "everything done" falsifiable.
+
+  contains
+    lua/scry/divergence.lua:unclaimed
+    lua/scry/divergence.lua:to_quickfix
+  exercises
+    tests/divergence_spec.lua
+
+feature you can tell which parts nobody has engaged with
+  Doing the work leaves a trail on what it touched — authored, conjured, red
+  then green. A claim with no trail keeps its untouched marker, which is
+  exactly the state of machine-drafted description nobody has read.
+
+  contains
+    lua/scry/provenance.lua:owned
+    lua/scry/provenance.lua:record
+    lua/scry/provenance.lua:sync
+  exercises
+    tests/map_spec.lua

@@ -44,7 +44,15 @@ precise: we implement convergence (`✓ defined`) and absence (`✗ absent`) but
 **not divergence**. We cannot report code that no claim covers, which is why the
 claim count leads every render — a clean map may simply be an empty one.
 
-**Open.** Divergence needs recovery (§1). It is the single largest missing piece.
+**Now implemented, file-level.** `:ScryUnclaimed` reports the files no
+feature's footprint names, and the header carries the count. Deliberately
+coarse: enumerating definitions produces a list of `chomp` and `clip`, which
+is vim-pro's documented failure. A file is a sentence you can act on.
+
+**It earned its keep on first use.** Pointed at scry itself, divergence found
+9 of 25 files described by nothing — including `check.lua`, `resolver.lua`,
+and the whole resolver directory. The feature axis alone said nothing was
+wrong.
 
 ---
 
@@ -245,6 +253,14 @@ whose dependencies moved degrades to `– stale`.
   grouping level; the question reopens when a real map gets long.
 - **Is `– unscoped` right** for a feature carrying prose and prohibitions but
   no located claims, or should that be refused at write time?
+- **`sources` and `map_path` are project-scoped but live in a global
+  `setup()`.** Fine for one repo, wrong for several. Dogfooding scry on
+  itself surfaced this: the right `sources` for scry is not the right one for
+  the next project, and there is nowhere to say so per-project.
+- **An unrun `exercises` claim keeps its whole feature out of `done`.** That
+  is correct — unrun is not a pass — but it means a map leaning on exercised
+  evidence reads as all-building until `:ScryExercise` has run once. Worth
+  knowing before it looks like a bug.
 - **Does `calls` earn its place** at `✓ referenced (text)` fidelity, or should it
   move up to tree-sitter identifiers before it is trustworthy?
 - **What a machine-drafted feature list does to ownership** — a hundred untouched
