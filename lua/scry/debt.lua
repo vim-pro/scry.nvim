@@ -17,7 +17,12 @@ local M = {}
 ---  authored by hand, not conjured to completion. Ownership is INFERRED
 ---  from the trail (see provenance.lua), never performed as an act.
 ---@field features integer
----@field done integer      features whose every claim holds.
+---@field done integer      features whose every claim holds AND that someone
+---  here has engaged with.
+---@field unread integer    features whose every claim holds and that nobody
+---  has read: a fresh draft, or a map you have just cloned. Counted apart
+---  from `done` because otherwise the first line of the header reports a
+---  finished product on evidence nobody has looked at.
 ---@field building integer  features with some evidence, none broken.
 ---@field broken integer    features with a violated or failing claim.
 ---@field todo integer      features with no evidence holding yet.
@@ -41,7 +46,7 @@ local M = {}
 function M.count(map_, report, root)
   local mapmod = require("scry.map")
   local prov = require("scry.provenance")
-  local counts = require("scry.feature").tally(map_, report)
+  local counts = require("scry.feature").tally(map_, report, root)
   local d = {
     claims = #map_.claims,
     backed = 0,
@@ -51,6 +56,7 @@ function M.count(map_, report, root)
     untouched = 0,
     features = #map_.features,
     done = counts.done,
+    unread = counts.unread,
     building = counts.partial,
     broken = counts.broken,
     todo = counts.absent + counts.unevidenced,
@@ -111,6 +117,9 @@ function M.header(d, at)
     end
   end
   add(d.done, "done")
+  -- Immediately after done, and before anything else: this is the number that
+  -- keeps "N done" from being read as "N finished".
+  add(d.unread, "unread")
   add(d.building, "building")
   add(d.broken, "broken")
   add(d.todo, "to do")
@@ -134,7 +143,9 @@ end
 --- Compact string for the user's own statusline. Plain function, no
 --- statusline framework: `scry 9f ✓6 ◐2 ✗1 ∅3` — features first. The `–` count appears only
 --- when something went unchecked, for the same reason the header carries it:
---- `✗0` must not be readable as "everything is accounted for".
+--- `✗0` must not be readable as "everything is accounted for". Unread
+--- features fold into the `◐` count rather than the `✓` one: in six
+--- characters the only thing worth preserving is that they are not finished.
 ---@return string
 function M.statusline()
   local glass = require("scry.glass")
@@ -146,7 +157,7 @@ function M.statusline()
   return ("scry %df ✓%d ◐%d ✗%d%s ∅%d"):format(
     d.features,
     d.done,
-    d.building,
+    d.building + d.unread,
     d.broken + d.todo,
     unchecked,
     d.untouched

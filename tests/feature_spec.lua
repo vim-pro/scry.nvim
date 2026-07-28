@@ -152,4 +152,52 @@ H.eq(
   "each counted once"
 )
 
+
+-- UNREAD outranks DONE. Every claim can hold while nobody has read a word of
+-- the feature — which is exactly what a drafting pass produces, and what a
+-- freshly cloned map looks like, since the trail is per-machine and does not
+-- travel with the file. Reporting that as `✓ done` puts a finished product on
+-- the one line the whole design says you scan.
+local unread_root = vim.fn.tempname()
+vim.fn.mkdir(unread_root, "p")
+local drafted = map.parse({
+  "feature you can sign in",
+  "  contains",
+  "    lua/auth.lua:sign_in",
+  "    lua/store.lua:session_put",
+})
+local all_backed = { at = os.time(), verdicts = {} }
+for _, c in ipairs(drafted.claims) do
+  all_backed.verdicts[map.claim_id(c)] = { status = "backed", fidelity = "ts-def", label = "✓ defined" }
+end
+
+-- with no root there is no engagement axis to read, so the evidence axis
+-- answers alone — honest about what it could see
+H.eq(feat.verdict(drafted.features[1], all_backed).state, "done", "no root: the evidence axis alone")
+
+local v = feat.verdict(drafted.features[1], all_backed, unread_root)
+H.eq(v.state, "unread", "with a root and no trail: unread, not done")
+H.eq(v.backed, 2, "the evidence is still reported")
+H.ok(v.label:find("2 of 2 backed", 1, true) ~= nil, "and the label says so: " .. v.label)
+H.eq(feat.tally(drafted, all_backed, unread_root).unread, 1, "the header counts it apart from done")
+H.eq(feat.tally(drafted, all_backed, unread_root).done, 0, "and not as done")
+
+-- ONE owned claim is enough. The question is whether a human has been through
+-- this at all, not whether they finished; holding out for every claim would
+-- report `unread` for work visibly in progress.
+require("scry.provenance").record(unread_root, drafted.claims[1], "authored")
+H.eq(feat.engaged(unread_root, drafted.features[1]), true, "one edited claim means the feature was read")
+H.eq(feat.verdict(drafted.features[1], all_backed, unread_root).state, "done", "so it reads done")
+
+-- Narrow on purpose: unread displaces `done` only. A half-backed feature
+-- nobody has touched still reads as progress, because that is the more useful
+-- reading and it is not claiming to be finished.
+local half = map.parse({ "feature f", "  contains", "    a.lua:one", "    b.lua:two" })
+local one = { at = os.time(), verdicts = {} }
+one.verdicts[map.claim_id(half.claims[1])] = { status = "backed", fidelity = "ts-def", label = "✓ defined" }
+one.verdicts[map.claim_id(half.claims[2])] = { status = "missing", fidelity = "ts-def", label = "✗ absent" }
+local fresh_root = vim.fn.tempname()
+vim.fn.mkdir(fresh_root, "p")
+H.eq(feat.verdict(half.features[1], one, fresh_root).state, "partial", "half-backed and untouched is still partial")
+
 H.done("feature_spec PASS")

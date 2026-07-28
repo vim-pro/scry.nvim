@@ -276,9 +276,18 @@ whose dependencies moved degrades to `– stale`.
   making it literal rather than by argument: drafted claim ids are registered,
   the glass watcher declines to record them as authored, and they sit in the
   untouched count until edited. A hundred untouched claims READS as inventory
-  because that is what the header says it is. What is still open is whether
-  the header should distinguish *drafted* from *never-engaged-with* — both are
-  untouched today, and they are not quite the same thing.
+  because that is what the header says it is.
+
+  Dogfooding the pass immediately found that this was not enough. Every
+  drafted claim was untouched and the header said so — on the second line,
+  among the claim counts — while the first line read `2 features · 2 done`.
+  The untouched count was never the line anyone scans. So `unread` is now a
+  feature state that displaces `done`: backed evidence plus no engagement is
+  its own thing, and it covers a freshly cloned map as well as a fresh draft,
+  since the trail is per-machine and does not travel with the file.
+
+  Still open: whether *drafted* and *never-engaged-with* should read
+  differently. Both are `unread` today and they are not quite the same thing.
 
 ---
 

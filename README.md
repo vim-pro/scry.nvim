@@ -188,7 +188,9 @@ full. In short:
   has a remedy. It renders `✓ present (file, no symbol named)` — a map of
   bare paths is a list of files, which is what features exist to prevent.
 - **A feature's state is only as good as its claims.** `✓ done` means every
-  claim under it holds, not that the feature works.
+  claim under it holds and someone here has read it, not that the feature
+  works. Backed but unread is its own state (`– unread`), because a fresh
+  draft and a freshly cloned map both land there.
 
 ## Development
 

@@ -92,12 +92,26 @@ claims no engine ever answered. See |scry-debt|.
 Each feature carries the state its own evidence adds up to — nothing here is
 authored:
 
-    ✓ done             every claim holds
+    ✓ done             every claim holds, and you have read this
     ✗ broken (1 of 5)  a claim regressed; outranks everything else
+    – unread (5 of 5)  every claim holds and nobody has read it
     ◐ 2 of 5           real progress: some evidence holds
     ✗ not yet          nothing holds — the state you create on purpose
     – unchecked (n)    nothing has answered yet; NOT progress
     – no evidence yet  named, with nothing checkable under it
+
+`– unread` exists because evidence and engagement are different questions,
+and a feature can pass the first while failing the second entirely. That is
+the state a drafting pass leaves behind (|scry-drafting|), and also the state
+a map you have just cloned is in — the trail is per-machine and unversioned,
+so someone else's understanding does not arrive with their file. Calling
+either one `✓ done` would put a finished product on the line you scan.
+
+One owned claim is enough to make a feature read: the question is whether a
+human has been through the description at all, not whether they finished it.
+And `unread` displaces `done` only — a half-backed feature nobody has touched
+still reads `◐ 2 of 5`, because progress is the more useful reading and is not
+a claim of completion.
 
 ==============================================================================
 3. THE MAP                                                          *scry-map*
@@ -684,7 +698,8 @@ Every line here is a limit scry intends to keep stating plainly.
   names reads as unclaimed, and what counts as a file at all is `sources`.
   It answers "is anything undescribed", not "is the description good".
 - **A feature's state is only as good as its claims.** `✓ done` means every
-  claim under it holds — not that the feature works.
+  claim under it holds and someone here has read it — not that the feature
+  works.
 - **The trail is per-machine.** Ownership events live in local state, like
   run results — a teammate's glass shows their own trail, not yours.
 - **`– unchecked` is not a pass.** A language with no resolver renders as

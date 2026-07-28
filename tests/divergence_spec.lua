@@ -65,13 +65,21 @@ vim.fn.delete(work .. "/holdout.scry")
 
 -- 3) THE POINT. Every feature done, and the map still describes a third of
 -- the product. Divergence is the only thing on the page that says so.
+--
+-- The feature has to be genuinely READ as well as backed, or this measures
+-- the wrong thing: an unengaged feature reads `unread` rather than `done`
+-- (see feature.lua), and the sharpest version of the divergence point is a
+-- feature you have been through, that really is finished, with a third of the
+-- product still described by nothing.
 local all_done = { at = os.time(), verdicts = {} }
 for _, c in ipairs(m.claims) do
   all_done.verdicts[map.claim_id(c)] = { status = "backed", fidelity = "ts-def", label = "✓ defined" }
+  require("scry.provenance").record(work, c, "authored")
 end
 local d = debt.count(m, all_done, work)
 H.eq(d.features, 1, "one feature")
 H.eq(d.done, 1, "and it is done")
+H.eq(d.unread, 0, "and read, so `done` is the honest word for it")
 H.eq(d.todo, 0, "nothing outstanding, by the feature axis alone")
 H.eq(d.unclaimed, 4, "yet four files are described by nothing")
 local header = debt.header(d, all_done.at)

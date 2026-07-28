@@ -198,7 +198,7 @@ function M.render()
   -- Each feature carries the state its evidence adds up to. This is the line
   -- a reader actually scans, so it gets the strongest rendering on the page.
   for _, feature in ipairs(state.map.features) do
-    local v = feat.verdict(feature, state.report)
+    local v = feat.verdict(feature, state.report, state.root)
     local hl = (v.state == "done" and "ScryBacked")
       or (v.state == "broken" and "ScryDiverged")
       or (v.state == "partial" and "ScryUnratified")
