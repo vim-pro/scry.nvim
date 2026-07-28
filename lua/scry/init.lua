@@ -56,6 +56,10 @@ vim.api.nvim_create_user_command("ScryUnclaimed", function()
   require("scry.divergence").to_quickfix()
 end, { desc = "List the files no feature claims (reflexion's divergence)" })
 
+vim.api.nvim_create_user_command("ScryDraft", function()
+  require("scry.recover").start()
+end, { desc = "Draft features for the files no feature claims (the scrying pass)" })
+
 vim.api.nvim_create_user_command("ScryExercise", function(a)
   require("scry.run").start({ feature = a.args ~= "" and a.args or nil })
 end, { nargs = "?", desc = "Run the specs behind this map's exercises claims, then re-check" })

@@ -110,6 +110,32 @@ function M.sync(root, map_, report)
   end
 end
 
+-- Claims a drafting pass put in the buffer, keyed by claim id.
+--
+-- The watcher below records `authored` for any claim that appears in the
+-- glass, because appearing under your edits IS the authoring gesture. A
+-- machine-drafted claim appears the same way and means the opposite — it is
+-- inventory nobody has read — so recover.lua registers what it drafted and
+-- the watcher declines to claim it for you.
+--
+-- Entries are never removed, because the id already handles that: a claim id
+-- is a hash of the claim's text, so EDITING a drafted claim produces an id
+-- nothing has registered, and the watcher records it as yours. Editing a
+-- draft is exactly how a draft becomes a belief. (Deleting a drafted claim
+-- and retyping it byte-identically will not count as authorship. That is a
+-- fair reading of the gesture, and a session-lifetime table is not worth
+-- more than that.)
+M.drafted = {}
+
+--- Register claim ids as machine-drafted, so the glass watcher does not
+--- record them as yours.
+---@param ids string[]
+function M.mark_drafted(ids)
+  for _, id in ipairs(ids) do
+    M.drafted[id] = true
+  end
+end
+
 --- Watch the glass buffer: claims that appear or change under the user's own
 --- edits are AUTHORED. scry's own writes never pass through here — the
 --- watcher compares against the snapshot the renderer keeps, and the
@@ -132,7 +158,8 @@ function M.watch(buf, root, snapshot)
       end
       local now = mapmod.parse(vim.api.nvim_buf_get_lines(buf, 0, -1, false))
       for _, c in ipairs(now.claims) do
-        if not before[mapmod.claim_id(c)] then
+        local id = mapmod.claim_id(c)
+        if not before[id] and not M.drafted[id] then
           M.record(root(), c, "authored")
         end
       end

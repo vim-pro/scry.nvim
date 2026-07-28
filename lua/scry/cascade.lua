@@ -45,7 +45,10 @@ function M.build(claim, intent)
   if claim.kind == "contains" then
     file, symbol = claim.target:match("^(.-):([%w_.]+)$")
     if not file then
-      error("[scry] malformed contains target (want path:symbol)", 0)
+      -- The file-level form names a path and no symbol, so there is nothing
+      -- to ask a generator for: "make this file exist" is not work. Name the
+      -- definition you actually want and conjure that.
+      error("[scry] nothing to conjure from `" .. claim.target .. "` — name a symbol (path:symbol)", 0)
     end
     -- The entry text becomes request.note in conjurer, so it says only what
     -- the claim says.
@@ -153,6 +156,14 @@ function M.start()
   if claim.kind ~= "contains" and claim.kind ~= "exercises" then
     vim.notify(
       "[scry] :Conjure works on contains and exercises claims (this is a " .. claim.kind .. " claim)",
+      vim.log.levels.WARN
+    )
+    return
+  end
+
+  if claim.kind == "contains" and not claim.target:match("^(.-):([%w_.]+)$") then
+    vim.notify(
+      "[scry] `" .. claim.target .. "` names a file, not a symbol — there is nothing to conjure from it",
       vim.log.levels.WARN
     )
     return

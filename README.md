@@ -58,6 +58,14 @@ is a decision: add a claim to the feature that owns it, or name the feature
 nobody wrote down. This is reflexion's third verdict — see
 `:h scry-divergence`.
 
+**And `:ScryDraft` fills that gap — but a draft is not a belief.** The
+scrying pass asks a conjurer to write features for the unclaimed files, into
+the glass, where you read them. Drafted claims carry no ownership trail, so
+they render *untouched* and the header counts them that way: a hundred
+machine-written claims nobody has read is inventory, not understanding. One
+becomes yours when you edit it. The machine types; you decide. See
+`:h scry-drafting`.
+
 **Features sit at sea level; claims are their evidence.** A feature is one
 thing a user can accomplish, named the way they'd name it — not "the auth
 system" (a grouping) and not "validate the token" (a subfunction, which is

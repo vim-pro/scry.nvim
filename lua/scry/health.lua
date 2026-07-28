@@ -77,8 +77,10 @@ function M.check()
   end
 
   -- Optional neighbours.
-  if pcall(require, "conjurer.quickfix") then
-    health.ok("conjurer.nvim found (scry conjures through it)")
+  -- Both directions of the arrow go through conjurer: :Conjure casts a claim
+  -- into code, and :ScryDraft casts the code back into claims.
+  if pcall(require, "conjurer.quickfix") and pcall(require, "conjurer.operator") then
+    health.ok("conjurer.nvim found (:Conjure casts claims, :ScryDraft drafts them)")
   else
     health.error("conjurer.nvim is REQUIRED — install vim-pro/conjurer.nvim")
   end

@@ -13,6 +13,7 @@ CONTENTS                                                       *scry-contents*
      Footprint ................................... |scry-footprint|
   4. Verdicts .................................... |scry-verdicts|
      Divergence .................................. |scry-divergence|
+     Drafting the gap ............................ |scry-drafting|
   5. Ownership ................................... |scry-ownership|
   6. Theory-debt ................................. |scry-debt|
   7. The holdout ................................. |scry-holdout|
@@ -295,6 +296,45 @@ and the opposite act in substance, and nothing here can tell the difference
 for you. If a path is arguably product, leave it in and claim it — the
 file-level `contains` form exists so that is always possible.
 
+                                                             *scry-drafting*
+DRAFTING THE GAP ~
+
+|:ScryDraft| takes the unclaimed files and asks a conjurer to write features
+for them, into the glass, where you read them.
+
+This is the scrying itself, and it is the one place a machine writes into the
+map, so it is worth being exact about why that is not a contradiction. The
+argument for an authored model is that recovered ones are about half right,
+and half right is worse than absent because you stop looking. That still
+stands. What it does not require is that authoring start from an empty
+buffer.
+
+The distinction that carries the weight: A DRAFT IS NOT A BELIEF. A drafted
+claim has no ownership trail, so it renders untouched and the header counts
+it as untouched — which is the honest reading of a hundred machine-written
+claims nobody has read. It is inventory. It becomes a belief when you edit
+it, and editing is what records the trail (|scry-ownership|). The machine
+does the typing; you do the deciding.
+
+The pass is scoped by divergence rather than by repository, so it drafts
+against the gap instead of re-describing the product. That is what keeps each
+pass short enough to actually read, and it means the report you ran to find
+the gap is the report that closes it.
+
+The glass is the review. A drafted feature wants to be read beside the rest
+of the map, with its claims checked and its untouched marker showing, and
+none of that survives a diff view — so the draft lands in the buffer, `u`
+discards it, and nothing reaches the map file until you |:write|.
+
+Two things a drafting pass will not do. It will not write a `never` block: a
+prohibition lands outside the repository, unversioned, and narrows every
+future cascade, so one nobody read is worse than none. And it does not
+involve the holdout at all — a prohibition is withheld from CODE requests
+because a rule the generator was shown proves nothing by being satisfied,
+and this request produces map text, so there is no result for a leaked rule
+to have been fitted to. Running the tripwire here would look like a
+guarantee while guaranteeing nothing, which is worse than saying so.
+
 ==============================================================================
 5. OWNERSHIP                                                  *scry-ownership*
 
@@ -492,6 +532,13 @@ every feature that exercises it.
                                                               *:ScryUnclaimed*
 :ScryUnclaimed          List the files no feature claims in the quickfix
                         list. See |scry-divergence|.
+
+                                                                  *:ScryDraft*
+:ScryDraft              Ask a conjurer to draft features for the files no
+                        feature claims, into the glass. Drafts land untouched
+                        — they are inventory until you edit them. Nothing
+                        reaches the map file until you |:write|.
+                        See |scry-drafting|.
 
                                                                     *:ScryExercise*
 :ScryExercise [{feature}]

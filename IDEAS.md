@@ -244,11 +244,15 @@ whose dependencies moved degrades to `– stale`.
 
 ## Open questions
 
-- **Divergence** (§2) needs object recovery. Largest gap. Dogfooding it did
-  surface one thing first: divergence is file-level while footprints are
-  symbol-derived, so a file that defines nothing could be accused with no
-  remedy available. `contains <path>` with no symbol closes that, at
-  `✓ present (file, no symbol named)` fidelity.
+- ~~**Divergence** (§2) needs object recovery.~~ Built: `:ScryDraft` sends the
+  unclaimed files to a conjurer and the features come back into the glass.
+  The resolution to the tension with §1 (recovered models are half right) is
+  that a **draft is not a belief** — no ownership trail, so it renders
+  untouched and the header counts it as untouched. Inventory until read.
+  Dogfooding surfaced one thing first: divergence is file-level while
+  footprints are symbol-derived, so a file that defines nothing could be
+  accused with no remedy available. `contains <path>` with no symbol closes
+  that, at `✓ present (file, no symbol named)` fidelity.
 - **Does the sea-level 2–20 minute test have any analogue** for a library or a
   plugin? The completeness test ("can I go to lunch") probably transfers;
   duration probably does not. The manual drops duration and keeps the other
@@ -268,8 +272,13 @@ whose dependencies moved degrades to `– stale`.
   knowing before it looks like a bug.
 - **Does `calls` earn its place** at `✓ referenced (text)` fidelity, or should it
   move up to tree-sitter identifiers before it is trustworthy?
-- **What a machine-drafted feature list does to ownership** — a hundred untouched
-  claims is inventory, not understanding.
+- ~~**What a machine-drafted feature list does to ownership**~~ — answered by
+  making it literal rather than by argument: drafted claim ids are registered,
+  the glass watcher declines to record them as authored, and they sit in the
+  untouched count until edited. A hundred untouched claims READS as inventory
+  because that is what the header says it is. What is still open is whether
+  the header should distinguish *drafted* from *never-engaged-with* — both are
+  untouched today, and they are not quite the same thing.
 
 ---
 
