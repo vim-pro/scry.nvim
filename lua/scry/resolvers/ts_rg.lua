@@ -143,7 +143,7 @@ function M.check_contains(ctx, claim, cb)
     if not stat or stat.type ~= "file" then
       cb({ status = "missing", fidelity = "file", label = "✗ absent (no such file)" })
     else
-      cb({ status = "backed", fidelity = "file", label = "✓ present (file, no symbol named)" })
+      cb({ status = "backed", fidelity = "file", label = "✓ present (file)" })
     end
     return
   end

@@ -187,7 +187,7 @@ full. In short:
   scry cannot tell the two apart for you.
 - **`contains path` with no symbol claims only that the file exists.** It is
   there for files that define nothing nameable, so an unclaimed file always
-  has a remedy. It renders `✓ present (file, no symbol named)` — a map of
+  has a remedy. It renders `✓ present (file)` — a map of
   bare paths is a list of files, which is what features exist to prevent.
 - **A feature's state is only as good as its claims.** `✓ done` means every
   claim under it holds and someone here has read it, not that the feature

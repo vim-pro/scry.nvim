@@ -166,7 +166,7 @@ with no way to claim it, and an accusation you cannot act on is a defect in
 the report rather than in your map.
 
 It is the weakest claim in the vocabulary and reads as one:
-`✓ present (file, no symbol named)`, never `✓ defined`. Reach for it when
+`✓ present (file)`, never `✓ defined`. Reach for it when
 there is no symbol to name — not to cover ground quickly. A map of bare
 paths is a list of files, which is the altitude mistake features exist to
 prevent.
@@ -639,18 +639,89 @@ it silently for a config file.
 ==============================================================================
 12. HIGHLIGHTS                                               *scry-highlights*
 
+Every group is a `default link`, so a colorscheme that defines any of them
+wins outright. Verdicts borrow the DIAGNOSTIC groups, because a verdict is
+the same kind of thing a diagnostic is and your scheme has already made
+those readable. The buffer's own text borrows SYNTAX groups, because the map
+is a language and reads best coloured like one.
+
+THE PAGE ~
+                                                              *hl-ScryHeader*
+ScryHeader              The glass header. Default: Title.
+                                                            *hl-ScryEvidence*
+ScryEvidence            Evidence lines under a violated prohibition.
+                        Default: Comment.
+                                                               *hl-ScryProse*
+ScryProse               Prose — everything the parser did not recognise as
+                        grammar, and therefore everything never checked.
+                        Default: Comment.
+                                                               *hl-ScryStamp*
+ScryStamp               Ratification-era stamps, which still parse and no
+                        longer mean anything. Default: NonText.
+
+THE GRAMMAR ~
+                                                             *hl-ScryKeyword*
+ScryKeyword             The word `feature`. Default: Statement.
+                                                         *hl-ScryFeatureName*
+ScryFeatureName         What the feature is called. Default: Title.
+                                                             *hl-ScrySection*
+ScrySection             `contains`, `calls`, `exercises`. Default: Type.
+                                                               *hl-ScryNever*
+ScryNever               The `never` header and its patterns — set apart from
+                        the other three, which say what the code contains
+                        where this says what it must not. Default: PreProc —
+                        Exception would read better but collapses into
+                        Statement in the stock scheme, which is where the
+                        `feature` keyword already lives.
+                                                                *hl-ScryPath*
+ScryPath                The path part of a claim. Default: Directory.
+                                                           *hl-ScrySeparator*
+ScrySeparator           The `:` between path and symbol. Default: Delimiter.
+                                                              *hl-ScrySymbol*
+ScrySymbol              The symbol being claimed. Default: Identifier.
+
+CLAIM VERDICTS ~
                                                               *hl-ScryBacked*
 ScryBacked              Backed and clean verdicts. Default: DiagnosticOk.
                                                             *hl-ScryDiverged*
 ScryDiverged            Missing and violated verdicts. Default:
                         DiagnosticError.
+                                                           *hl-ScryUnchecked*
+ScryUnchecked           Verdicts no engine answered. Default: DiagnosticHint.
+                                                           *hl-ScryUntouched*
+ScryUntouched           The ∅ marker. Default: NonText, and quiet on
+                        purpose: untouched is the state every claim starts
+                        in, so a freshly drafted map is nothing but ∅, and
+                        rendering it as a warning would paint the whole
+                        buffer with an alarm that only means "new".
                                                           *hl-ScryUnratified*
-ScryUnratified          The ∅ untouched marker. Default: DiagnosticWarn.
-                                                            *hl-ScryEvidence*
-ScryEvidence            Evidence lines and unchecked verdicts. Default:
-                        Comment.
-                                                              *hl-ScryHeader*
-ScryHeader              The glass header. Default: Title.
+ScryUnratified          Deprecated, named for ratification. Links to
+                        ScryUntouched so a config that styled it keeps
+                        working.
+
+FEATURE STATES ~
+
+The column a reader scans first, and there are seven states rather than
+four, so they get their own groups.
+                                                                *hl-ScryDone*
+ScryDone                ✓ done. Default: DiagnosticOk.
+                                                              *hl-ScryBroken*
+ScryBroken              ✗ broken. Default: DiagnosticError.
+                                                            *hl-ScryBuilding*
+ScryBuilding            ◐ some evidence holding. Default: DiagnosticWarn.
+                                                              *hl-ScryUnread*
+ScryUnread              Fully backed, but nobody has read it — the drafted
+                        state. Default: DiagnosticInfo.
+                                                                *hl-ScryTodo*
+ScryTodo                Named with nothing standing yet. Default:
+                        DiagnosticHint.
+
+                                                              *scry-alignment*
+Verdicts are a COLUMN. Every verdict on the page starts at the same screen
+cell, capped so that one long prohibition cannot push the rest off the right
+of the window; a line past the cap gets a two-space gap instead. Alignment
+is not decoration here — it is the difference between a strip of states you
+can run your eye down and annotations you have to go and find.
 
 ==============================================================================
 13. WHAT SCRY DOES NOT CLAIM                                    *scry-honesty*
@@ -663,7 +734,7 @@ Every line here is a limit scry intends to keep stating plainly.
 - **`contains ✓ defined`** asserts a definition with that name exists in
   that file. It says nothing about its body. The prose above it is
   unchecked.
-- **`contains ✓ present (file, no symbol named)`** asserts only that the
+- **`contains ✓ present (file)`** asserts only that the
   file is there. Not that it does anything, not that the feature is
   implemented in it — the claim never said more than "this file is part of
   this feature", and the label is where that thinness has to show, because

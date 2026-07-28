@@ -7,11 +7,60 @@ local M = {}
 
 local ns = vim.api.nvim_create_namespace("scry.glass")
 
-vim.api.nvim_set_hl(0, "ScryBacked", { link = "DiagnosticOk", default = true })
-vim.api.nvim_set_hl(0, "ScryDiverged", { link = "DiagnosticError", default = true })
-vim.api.nvim_set_hl(0, "ScryUnratified", { link = "DiagnosticWarn", default = true })
-vim.api.nvim_set_hl(0, "ScryEvidence", { link = "Comment", default = true })
-vim.api.nvim_set_hl(0, "ScryHeader", { link = "Title", default = true })
+-- The palette. Every group is a `default link`, so a colorscheme that
+-- defines any of them wins and nothing here has to know about colours.
+--
+-- Two principles decide the links. Verdicts borrow the DIAGNOSTIC groups,
+-- because a verdict is the same kind of thing a diagnostic is and every
+-- scheme has already made those legible against its own background. The
+-- buffer's own text borrows SYNTAX groups, because the map is a language
+-- and reads best when it is coloured like one.
+--
+-- `untouched` is deliberately the quietest thing on the page. It is the
+-- state every claim starts in — a freshly drafted map is nothing but
+-- untouched claims — so rendering it as a warning would paint the whole
+-- buffer with an alarm that means "new".
+local HL = {
+  -- the page
+  ScryHeader = "Title",
+  ScryEvidence = "Comment",
+  ScryProse = "Comment",
+  ScryStamp = "NonText",
+
+  -- the grammar
+  ScryKeyword = "Statement", -- the word `feature`
+  ScryFeatureName = "Title", -- what the feature is called
+  ScrySection = "Type", -- contains / calls / exercises
+  -- PreProc rather than the semantically tempting Exception: Exception
+  -- collapses into Statement in the stock scheme, which is exactly where
+  -- the `feature` keyword already lives, so a prohibition and a feature
+  -- would have rendered identically. Setting `never` apart is the whole
+  -- reason it has its own group.
+  ScryNever = "PreProc",
+  ScryPath = "Directory",
+  ScrySeparator = "Delimiter",
+  ScrySymbol = "Identifier",
+
+  -- claim verdicts
+  ScryBacked = "DiagnosticOk",
+  ScryDiverged = "DiagnosticError",
+  ScryUnchecked = "DiagnosticHint",
+  ScryUntouched = "NonText",
+
+  -- feature states, which get their own groups because a reader scans this
+  -- column first and the seven states are not four
+  ScryDone = "DiagnosticOk",
+  ScryBroken = "DiagnosticError",
+  ScryBuilding = "DiagnosticWarn",
+  ScryUnread = "DiagnosticInfo",
+  ScryTodo = "DiagnosticHint",
+}
+for group, target in pairs(HL) do
+  vim.api.nvim_set_hl(0, group, { link = target, default = true })
+end
+-- Named for ratification, which no longer exists. Kept linked so a config
+-- that styled it does not silently lose its colour.
+vim.api.nvim_set_hl(0, "ScryUnratified", { link = "ScryUntouched", default = true })
 
 -- Session state: one glass per project root.
 local state = {
@@ -195,17 +244,50 @@ function M.render()
     virt_lines_above = true,
   })
 
+  -- THE VERDICT COLUMN.
+  --
+  -- Verdicts used to begin three spaces after whatever the line happened to
+  -- say, which left the one thing a reader scans for scattered across the
+  -- width of the buffer. They are a column now — every verdict on the page
+  -- starts at the same screen cell, so the states read as a strip you can
+  -- run your eye down rather than as annotations you have to find.
+  --
+  -- This is quickfix-pro's argument about the display line, applied to the
+  -- glass: alignment is not decoration, it is what makes a list scannable.
+  local lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
+  local function width_of(lnum)
+    return vim.fn.strdisplaywidth(lines[lnum] or "")
+  end
+  local widest = 0
+  for _, feature in ipairs(state.map.features) do
+    widest = math.max(widest, width_of(feature.lnum))
+  end
+  for _, claim in ipairs(state.map.claims) do
+    widest = math.max(widest, width_of(claim.lnum))
+  end
+  -- Capped, so one long prohibition regex cannot push every verdict off the
+  -- right of the window. A line past the cap simply gets the minimum gap.
+  local COLUMN = math.min(widest + 3, 64)
+  local function pad(lnum)
+    local gap = COLUMN - width_of(lnum)
+    return (" "):rep(gap >= 2 and gap or 2)
+  end
+
   -- Each feature carries the state its evidence adds up to. This is the line
   -- a reader actually scans, so it gets the strongest rendering on the page.
+  local FEATURE_HL = {
+    done = "ScryDone",
+    broken = "ScryBroken",
+    partial = "ScryBuilding",
+    unread = "ScryUnread",
+    absent = "ScryTodo",
+    unevidenced = "ScryTodo",
+    unknown = "ScryUnchecked",
+  }
   for _, feature in ipairs(state.map.features) do
     local v = feat.verdict(feature, state.report, state.root)
-    local hl = (v.state == "done" and "ScryBacked")
-      or (v.state == "broken" and "ScryDiverged")
-      or (v.state == "partial" and "ScryUnratified")
-      or (v.state == "absent" and "ScryDiverged")
-      or "ScryEvidence"
     pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, feature.lnum - 1, 0, {
-      virt_text = { { "   " .. v.label, hl } },
+      virt_text = { { pad(feature.lnum) .. v.label, FEATURE_HL[v.state] or "ScryEvidence" } },
       virt_text_pos = "eol",
     })
   end
@@ -215,11 +297,11 @@ function M.render()
     local v = state.report and state.report.verdicts[mapmod.claim_id(claim)]
     if v then
       local hl = (v.status == "backed" or v.status == "clean") and "ScryBacked"
-        or (v.status == "unchecked" and "ScryEvidence" or "ScryDiverged")
-      parts[#parts + 1] = { "   " .. v.label, hl }
+        or (v.status == "unchecked" and "ScryUnchecked" or "ScryDiverged")
+      parts[#parts + 1] = { pad(claim.lnum) .. v.label, hl }
     end
     if not (state.root and prov.owned(state.root, claim)) then
-      parts[#parts + 1] = { " · ∅ untouched", "ScryUnratified" }
+      parts[#parts + 1] = { (#parts > 0 and " · ∅" or pad(claim.lnum) .. "∅"), "ScryUntouched" }
     end
     if #parts > 0 then
       local mark = { virt_text = parts, virt_text_pos = "eol" }
@@ -297,7 +379,22 @@ function M.open(root)
   local holdout_lines = require("scry.holdout").load(root, config).lines
   local composed = M.compose(map_lines, holdout_lines)
   if #composed == 0 then
-    composed = { "# my project", "  files lua/**/*.lua", "", "  contains", "    path/to/file.lua:symbol" }
+    -- The starter map. It has to be VALID grammar: whatever is here is the
+    -- first thing anyone sees, and a template the parser reads as prose
+    -- teaches a syntax that does not exist. (It did exactly that until the
+    -- feature layer landed and this line kept seeding `# my project` and a
+    -- `files` glob, neither of which has been grammar for some time.)
+    composed = {
+      "feature name one thing a user can accomplish",
+      "  Prose is never checked. Say what the feature is for, and why it is",
+      "  one feature rather than two.",
+      "",
+      "  contains",
+      "    path/to/file.lua:symbol",
+      "",
+      "-- :Scry checks this against the code every time you look.",
+      "-- :h scry-altitude for what belongs on a feature line.",
+    }
   end
 
   local buf = state.buf

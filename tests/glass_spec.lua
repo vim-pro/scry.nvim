@@ -96,7 +96,28 @@ local function row_of(needle)
   end
 end
 H.ok(virt[row_of("create_session")]:find("✓ defined", 1, true) ~= nil, "backed verdict rendered")
-H.ok(virt[row_of("create_session")]:find("∅ untouched", 1, true) ~= nil, "untouched marker rendered")
+-- The untouched marker is the glyph alone. It used to read "∅ untouched",
+-- which is twelve characters repeated down every line of a freshly drafted
+-- map — the state EVERY claim starts in. As a column it is a marker you
+-- scan past; as a word it was the loudest thing on a page about something
+-- else. The manual carries the meaning (|scry-ownership|).
+H.ok(virt[row_of("create_session")]:find("∅", 1, true) ~= nil, "untouched marker rendered")
+H.eq(virt[row_of("create_session")]:find("untouched", 1, true), nil, "as the glyph, not the word")
+
+-- Verdicts line up in a column rather than trailing whatever the line says.
+-- Two claims of very different lengths must start their verdict at the same
+-- screen cell, or the state column is not a column.
+local function verdict_col(needle)
+  local row = row_of(needle)
+  local line_w = vim.fn.strdisplaywidth(lines[row + 1])
+  local lead = virt[row]:match("^ *") or ""
+  return line_w + #lead
+end
+H.eq(
+  verdict_col("create_session"),
+  verdict_col("::put"),
+  "a 32-column claim and an 18-column one share a verdict column"
+)
 H.ok(virt[row_of("refresh_token")]:find("✗ absent", 1, true) ~= nil, "absent verdict rendered")
 H.ok(virt[row_of("logging\\.debug")]:find("VIOLATED", 1, true) ~= nil, "violation rendered")
 H.ok(virt[row_of("logging\\.debug")]:find("lua/auth.lua:9", 1, true) ~= nil, "evidence line rendered")
