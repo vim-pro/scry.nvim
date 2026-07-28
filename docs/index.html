@@ -173,13 +173,6 @@ h1 em { font-style: italic; color: var(--mercury); }
 .term-status .note { background: var(--inset); color: var(--faint); padding: 5px 14px; flex: 1; }
 .term-status .pos { background: var(--inset); color: var(--faint); padding: 5px 14px; }
 
-.acts { display: flex; justify-content: center; gap: 7px; margin-bottom: 14px; }
-.acts i {
-  width: 22px; height: 2px; border-radius: 1px; display: block;
-  background: rgba(226,232,234,.13); transition: background .4s ease;
-}
-.acts i.on { background: var(--mercury); }
-.acts i.done { background: rgba(143,179,189,.42); }
 .narrate {
   min-height: 3.1em; margin-bottom: 16px; text-align: center;
   display: flex; align-items: center; justify-content: center;
@@ -358,7 +351,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <span class="t">The glass</span>
     <span class="s">one change, from a sentence to signed work</span>
   </div>
-  <div class="acts" id="termActs" aria-hidden="true"></div>
   <div class="narrate"><span id="termNarrate">&nbsp;</span></div>
   <div class="terminal">
     <div class="term-bar">
@@ -582,15 +574,14 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   /* ---------- the glass demo ----------
      A narrated walkthrough of one whole change: open, describe, conjure the
      check, watch it fail, conjure the code, watch it pass, and it's yours.
-     Each act sets a line of narration and a terminal state; the acts array
-     is the script, so the story is readable in one place. */
+     Each act sets a line of narration and a terminal state, in order, so
+     the whole story is readable in one place. */
   var body = document.getElementById("termBody");
   var actEl = document.getElementById("termAct");
   var noteEl = document.getElementById("termNote");
   var posEl = document.getElementById("termPos");
   var modeEl = document.getElementById("termMode");
   var narEl = document.getElementById("termNarrate");
-  var actsEl = document.getElementById("termActs");
 
   var V = {
     def:  '<span class="vb">✓ defined</span>',
@@ -650,15 +641,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
              newE: E_TARGET, newEVd: V.abs + V.un });
     narEl.innerHTML = "A change you haven't made yet is <b>work to do</b>, written in the same place as everything the product already does.";
   } else {
-    var t = 0, steps = [], timers = [], NACTS = 6;
+    var t = 0, steps = [], timers = [];
     var at = function (d, fn) { t += d; steps.push([t, fn]); };
-    for (var a = 0; a < NACTS; a++) actsEl.appendChild(document.createElement("i"));
-    var dots = actsEl.querySelectorAll("i");
-    function act(n) {
-      for (var i = 0; i < dots.length; i++) {
-        dots[i].className = i < n ? "done" : (i === n ? "on" : "");
-      }
-    }
     function say(html) { narEl.innerHTML = html; }
     function type(target, field, cursorKey, base, per) {
       for (var i = 1; i <= target.length; i++) {
@@ -680,7 +664,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
       // ─── I. the glass opens ───
       at(0, function () {
-        act(0);
         say("Open the glass and the product describes itself — every line checked against the code as it renders.");
         window.__st = { hdr: H_OPEN + '<span class="spin">◴</span>', settled: false };
         render(window.__st);
@@ -695,7 +678,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
       // ─── II. describe the change ───
       at(2400, function () {
-        act(1);
         say("Adding a provider? <b>Say so here</b> — not in a file. The description is where the change starts.");
         actEl.innerHTML = "&nbsp;";
         modeEl.textContent = "INSERT"; modeEl.className = "mode ins";
@@ -715,7 +697,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
       // ─── III. name what "done" means ───
       at(2600, function () {
-        act(2);
         say("Before any code: name the proof. What would have to pass for this to be finished?");
         modeEl.textContent = "INSERT"; modeEl.className = "mode ins";
       });
@@ -731,7 +712,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
       // ─── IV. conjure the check ───
       at(2100, function () {
-        act(3);
         say("Conjure the <em>check</em> first. You read it — it's short, and it says what done means.");
         actEl.textContent = ":Conjure";
         window.__st.newEVd = V.work;
@@ -758,7 +738,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
       // ─── V. conjure the code, rules withheld ───
       at(2800, function () {
-        act(4);
         say("Now the code — written <b>without</b> sight of that test, or of the rules this concern must never break.");
         actEl.textContent = ":Conjure";
         window.__st.newCVd = V.work;
@@ -784,7 +763,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
       // ─── VI. and it's yours ───
       at(2600, function () {
-        act(5);
         say("You described it, read the proof, watched it come true. The glass saw all of that — so it knows the work is <b>yours</b>.");
         actEl.innerHTML = "&nbsp;";
         window.__st.newCVd = V.def;
