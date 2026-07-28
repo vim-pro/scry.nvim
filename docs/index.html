@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>scry.nvim — divine your next feature</title>
+<title>scry.nvim — features, foretold</title>
 <meta name="description" content="The surface you write software from. Describe the change alongside everything the product already does; a conjurer does the typing; the code is where you review.">
-<meta property="og:title" content="scry.nvim — divine your next feature">
+<meta property="og:title" content="scry.nvim — features, foretold">
 <meta property="og:description" content="Describe the change; a conjurer does the typing; the code is where you review.">
 <meta property="og:url" content="https://scry.vim.pro">
 <meta property="og:type" content="website">
@@ -146,7 +146,7 @@ h1 em { font-style: italic; color: var(--mercury); }
 .term-bar .mid { color: var(--muted); }
 .term-body {
   font-family: var(--mono); font-size: 13.5px; line-height: 1.85;
-  padding: 16px 0; text-align: left; overflow-x: auto; min-height: 400px;
+  padding: 16px 0; text-align: left; overflow-x: auto; min-height: 430px;
 }
 .gline { display: flex; padding: 0 24px; white-space: pre; }
 .gline .txt { flex: none; min-width: 58ch; }
@@ -172,6 +172,28 @@ h1 em { font-style: italic; color: var(--mercury); }
 .term-status .file { background: #17242a; color: var(--muted); padding: 5px 14px; }
 .term-status .note { background: var(--inset); color: var(--faint); padding: 5px 14px; flex: 1; }
 .term-status .pos { background: var(--inset); color: var(--faint); padding: 5px 14px; }
+
+.acts { display: flex; justify-content: center; gap: 7px; margin-bottom: 14px; }
+.acts i {
+  width: 22px; height: 2px; border-radius: 1px; display: block;
+  background: rgba(226,232,234,.13); transition: background .4s ease;
+}
+.acts i.on { background: var(--mercury); }
+.acts i.done { background: rgba(143,179,189,.42); }
+.narrate {
+  min-height: 3.1em; margin-bottom: 16px; text-align: center;
+  display: flex; align-items: center; justify-content: center;
+}
+.narrate span {
+  font-family: var(--serif); font-style: italic;
+  font-size: clamp(17px, 2.2vw, 21px); line-height: 1.45;
+  color: var(--text); max-width: 46ch;
+  animation: scfade .55s ease-out;
+}
+.narrate b { font-style: normal; font-weight: 600; color: var(--mercury); }
+.narrate em { font-style: italic; color: var(--seal); }
+@keyframes scfade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .narrate span { animation: none; } }
 
 /* ---------- section heads ---------- */
 .section-head { text-align: center; margin-bottom: 36px; }
@@ -315,7 +337,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   <div class="wisp" style="left:84%; top:62%; width:3px; height:3px; --t:16s; --d:1.5s; --o:.3;"></div>
   <div class="wisp" style="left:55%; top:72%; width:3px; height:3px; --t:14s; --d:8s; --o:.3;"></div>
   <div class="rel eyebrow">every change starts in the glass</div>
-  <h1 class="rel"><em>Divine</em> your<br>next feature.</h1>
+  <h1 class="rel">Features,<br><em>foretold</em>.</h1>
   <p class="rel sub">Add a feature, fix a bug, tighten a hot path — describe the
   change, alongside everything the product already does. A conjurer does the
   typing. The code is where you <em>review</em>, not where you start.</p>
@@ -334,8 +356,10 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <section class="glass-sect" id="glass">
   <div class="glass-caption">
     <span class="t">The glass</span>
-    <span class="s">name it · watch it come true · it's yours</span>
+    <span class="s">one change, from a sentence to signed work</span>
   </div>
+  <div class="acts" id="termActs" aria-hidden="true"></div>
+  <div class="narrate"><span id="termNarrate">&nbsp;</span></div>
   <div class="terminal">
     <div class="term-bar">
       <span>scry://glass</span>
@@ -556,100 +580,225 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   });
 
   /* ---------- the glass demo ----------
-     The arc is the workflow: a settled map, you type the claim for the change
-     you want, it surfaces absent, you conjure it, it comes true — yours. */
+     A narrated walkthrough of one whole change: open, describe, conjure the
+     check, watch it fail, conjure the code, watch it pass, and it's yours.
+     Each act sets a line of narration and a terminal state; the acts array
+     is the script, so the story is readable in one place. */
   var body = document.getElementById("termBody");
   var actEl = document.getElementById("termAct");
   var noteEl = document.getElementById("termNote");
   var posEl = document.getElementById("termPos");
   var modeEl = document.getElementById("termMode");
+  var narEl = document.getElementById("termNarrate");
+  var actsEl = document.getElementById("termActs");
 
-  var NEW_TARGET = "providers/ollama.lua:request";
-  var SETTLED = [
-    ['    <span class="tgt">providers/cli.lua:request</span>', '<span class="vb">✓ defined</span>'],
-    ['    <span class="tgt">providers/known.lua:resolve</span>', '<span class="vb">✓ defined</span>']
-  ];
+  var V = {
+    def:  '<span class="vb">✓ defined</span>',
+    pass: '<span class="vb">✓ passing (just now)</span>',
+    fail: '<span class="vd">✗ FAILING</span>',
+    abs:  '<span class="vd">✗ absent</span>',
+    clean:'<span class="vb">✓ no matches (rg)</span>',
+    work: '<span class="vn">◴ conjuring…</span>',
+    un:   ' · <span class="vu">∅ untouched</span>'
+  };
+  var STAMP = '<span class="stamp">-- @w0zro 2026-07-26 3f9a01</span>';
 
   function gline(txt, vd, cls) {
     return '<div class="gline' + (cls ? " " + cls : "") + '"><span class="txt">' + txt + "</span>" +
       (vd ? '<span class="vd-slot">' + vd + "</span>" : "") + "</div>";
   }
   function raw(txt) { return '<div class="gline"><span class="txt">' + txt + "</span></div>"; }
+  function tgt(t, stamp, cursor) {
+    return "    " + '<span class="tgt">' + t + "</span>" +
+      (stamp ? "  " + STAMP : "") + (cursor ? '<span class="cursor-b"></span>' : "");
+  }
 
-  // st: { typed, stamp, verdict, fresh, header, cursor }
-  function render(st) {
-    var h = raw('<span class="hdr">' + st.header + "</span>") + raw(" ");
+  // s = { hdr, newC, newCVd, newCFresh, newE, newEVd, newEFresh, cursor }
+  function render(s) {
+    var h = raw('<span class="hdr">' + s.hdr + "</span>") + raw(" ");
     h += raw('<span class="cn"># providers</span>');
     h += raw('<span class="kw">  files</span> lua/conjurer/providers/*.lua');
     h += raw(" ");
     h += raw('<span class="pr">  Transport only: turns a Request into text, calls back once.</span>');
-    h += raw('<span class="pr">  No UI, no lists, no buffer edits — that is the operator\'s job.</span>');
     h += raw(" ");
     h += raw('<span class="kw">  contains</span>');
-    SETTLED.forEach(function (r) { h += gline(r[0], r[1]); });
-    if (st.typed !== null) {
-      var txt = '    <span class="tgt">' + st.typed + "</span>";
-      if (st.stamp) txt += '  <span class="stamp">' + st.stamp + "</span>";
-      if (st.cursor) txt += '<span class="cursor-b"></span>';
-      h += gline(txt, st.verdict, st.fresh ? "fresh" : "");
+    h += gline(tgt("providers/cli.lua:request", true), s.settled ? V.def : "");
+    if (s.newC !== undefined) {
+      h += gline(tgt(s.newC, s.newCStamp, s.cursor === "c"), s.newCVd, s.newCFresh ? "fresh" : "");
     }
     h += raw('<span class="kw">  never</span>');
-    h += gline('    <span class="tgt">vim\\.ui\\.</span>', '<span class="vb">✓ no matches (rg)</span>');
+    h += gline(tgt("vim\\.ui\\."), s.settled ? V.clean : "");
     h += raw('<span class="kw">  exercises</span>');
-    h += gline('    <span class="tgt">tests/cli_spec.lua</span>', '<span class="vb">✓ passing (ran 4m ago)</span>');
+    if (s.newE !== undefined) {
+      h += gline(tgt(s.newE, s.newEStamp, s.cursor === "e"), s.newEVd, s.newEFresh ? "fresh" : "");
+    }
     body.innerHTML = h;
   }
 
-  var H_SETTLED = "scry · 4 claims · 4 backed · 0 untouched   checked 2m ago (files on disk)";
-  var H_ABSENT  = "scry · 5 claims · 4 backed · 1 missing · 1 untouched   just checked (files on disk)";
-  var H_DONE    = "scry · 5 claims · 5 backed · 1 untouched   just checked (files on disk)";
-  
+  var H_OPEN  = "scry · 2 claims — checking… ";
+  var H_2     = "scry · 2 claims · 2 backed · 0 untouched   just checked (files on disk)";
+  var H_TODO  = "scry · 4 claims · 2 backed · 2 missing · 2 untouched   just checked";
+  var H_SPEC  = "scry · 4 claims · 3 backed · 1 missing · 2 untouched   just checked";
+  var H_RED   = "scry · 4 claims · 2 backed · 1 missing · 1 failing · 2 untouched";
+  var H_DONE  = "scry · 4 claims · 4 backed · 0 untouched   just checked (files on disk)";
+
+  var C_TARGET = "providers/ollama.lua:request";
+  var E_TARGET = "tests/ollama_spec.lua";
 
   if (reduced) {
-    render({ typed: NEW_TARGET, verdict: '<span class="vd">✗ absent</span> · <span class="vu">∅ untouched</span>',
-             header: H_ABSENT, fresh: false, cursor: false });
+    render({ hdr: H_TODO, settled: true, newC: C_TARGET, newCVd: V.abs + V.un,
+             newE: E_TARGET, newEVd: V.abs + V.un });
+    narEl.innerHTML = "A change you haven't made yet is <b>work to do</b>, written in the same place as everything the product already does.";
   } else {
-    var t = 0, steps = [], timers = [];
+    var t = 0, steps = [], timers = [], NACTS = 6;
     var at = function (d, fn) { t += d; steps.push([t, fn]); };
-    var build = function () {
-      t = 0; steps.length = 0;
-      at(0, function () {
-        render({ typed: null, header: H_SETTLED, fresh: false, cursor: false });
-        actEl.innerHTML = "&nbsp;"; noteEl.innerHTML = "&nbsp;";
-        modeEl.textContent = "SCRY"; modeEl.className = "mode"; posEl.textContent = "9:1";
-      });
-      at(1400, function () { modeEl.textContent = "INSERT"; modeEl.className = "mode ins"; });
-      for (var i = 1; i <= NEW_TARGET.length; i++) {
+    for (var a = 0; a < NACTS; a++) actsEl.appendChild(document.createElement("i"));
+    var dots = actsEl.querySelectorAll("i");
+    function act(n) {
+      for (var i = 0; i < dots.length; i++) {
+        dots[i].className = i < n ? "done" : (i === n ? "on" : "");
+      }
+    }
+    function say(html) { narEl.innerHTML = html; }
+    function type(target, field, cursorKey, base, per) {
+      for (var i = 1; i <= target.length; i++) {
         (function (i) {
-          at(i === 1 ? 260 : 34, function () {
-            render({ typed: NEW_TARGET.slice(0, i), header: H_SETTLED, fresh: false, cursor: true });
-            posEl.textContent = "10:" + (4 + i);
+          at(i === 1 ? base : per, function () {
+            var s = Object.assign({}, window.__st);
+            s[field] = target.slice(0, i);
+            s.cursor = cursorKey;
+            window.__st = s;
+            render(s);
+            posEl.textContent = (field === "newC" ? 9 : 13) + ":" + (4 + i);
           });
         })(i);
       }
-      at(520, function () {
+    }
+
+    function build() {
+      t = 0; steps.length = 0;
+
+      // ─── I. the glass opens ───
+      at(0, function () {
+        act(0);
+        say("Open the glass and the product describes itself — every line checked against the code as it renders.");
+        window.__st = { hdr: H_OPEN + '<span class="spin">◴</span>', settled: false };
+        render(window.__st);
+        actEl.textContent = ":Scry"; noteEl.innerHTML = "&nbsp;";
+        modeEl.textContent = "SCRY"; modeEl.className = "mode"; posEl.textContent = "1:1";
+      });
+      at(1500, function () {
+        window.__st = { hdr: H_2, settled: true };
+        render(window.__st);
+        noteEl.textContent = "2 claims · everything backed";
+      });
+
+      // ─── II. describe the change ───
+      at(2400, function () {
+        act(1);
+        say("Adding a provider? <b>Say so here</b> — not in a file. The description is where the change starts.");
+        actEl.innerHTML = "&nbsp;";
+        modeEl.textContent = "INSERT"; modeEl.className = "mode ins";
+      });
+      window.__st = window.__st || {};
+      type(C_TARGET, "newC", "c", 900, 32);
+      at(500, function () {
+        window.__st.cursor = null;
+        window.__st.newCVd = V.abs + V.un;
+        window.__st.newCFresh = true;
+        window.__st.hdr = H_TODO;
+        render(window.__st);
         modeEl.textContent = "SCRY"; modeEl.className = "mode";
-        noteEl.textContent = "written · gazing";
+        noteEl.textContent = "1 claim describes something that isn't there";
+        say('It comes back <b>✗ absent</b> — and that is exactly right. Work you haven\'t done yet looks like this.');
       });
-      at(560, function () {
-        render({ typed: NEW_TARGET, verdict: '<span class="vd">✗ absent</span> · <span class="vu">∅ untouched</span>',
-                 header: H_ABSENT, fresh: true, cursor: false });
-        noteEl.textContent = "new work, named";
+
+      // ─── III. name what "done" means ───
+      at(2600, function () {
+        act(2);
+        say("Before any code: name the proof. What would have to pass for this to be finished?");
+        modeEl.textContent = "INSERT"; modeEl.className = "mode ins";
       });
-      at(2100, function () { actEl.textContent = ":Conjure"; });
-      at(650, function () {
-        render({ typed: NEW_TARGET, verdict: '<span class="vn">◴ conjuring…</span>',
-                 header: H_ABSENT, fresh: false, cursor: false });
-        noteEl.textContent = "conjurer typing · your rules withheld";
+      type(E_TARGET, "newE", "e", 700, 32);
+      at(500, function () {
+        window.__st.cursor = null;
+        window.__st.newEVd = V.abs + V.un;
+        window.__st.newEFresh = true;
+        render(window.__st);
+        modeEl.textContent = "SCRY"; modeEl.className = "mode";
+        noteEl.textContent = "2 to do";
       });
-      at(2300, function () {
-        render({ typed: NEW_TARGET, verdict: '<span class="vb">✓ defined</span>',
-                 header: H_DONE, fresh: true, cursor: false });
-        noteEl.textContent = "came true: providers/ollama.lua · and the rules held";
+
+      // ─── IV. conjure the check ───
+      at(2100, function () {
+        act(3);
+        say("Conjure the <em>check</em> first. You read it — it's short, and it says what done means.");
+        actEl.textContent = ":Conjure";
+        window.__st.newEVd = V.work;
+        window.__st.newEFresh = false;
+        render(window.__st);
+        noteEl.textContent = "conjurer writing the spec";
       });
-      at(2800, function () { actEl.innerHTML = "&nbsp;"; noteEl.innerHTML = "&nbsp;"; });
-      at(500, build);
-    };
+      at(2200, function () {
+        window.__st.newEVd = V.def + V.un;
+        window.__st.newEFresh = true;
+        window.__st.hdr = H_SPEC;
+        render(window.__st);
+        noteEl.textContent = "tests/ollama_spec.lua written";
+      });
+      at(2000, function () {
+        say("Now run it. It has to <b>fail</b> — nothing has been built. A check that passes here would be proving nothing.");
+        actEl.textContent = ":ScryExercise";
+        window.__st.newEVd = V.fail + V.un;
+        window.__st.newEFresh = true;
+        window.__st.hdr = H_RED;
+        render(window.__st);
+        noteEl.textContent = "red — as it should be";
+      });
+
+      // ─── V. conjure the code, rules withheld ───
+      at(2800, function () {
+        act(4);
+        say("Now the code — written <b>without</b> sight of that test, or of the rules this concern must never break.");
+        actEl.textContent = ":Conjure";
+        window.__st.newCVd = V.work;
+        window.__st.newCFresh = false;
+        render(window.__st);
+        noteEl.textContent = "conjuring · spec and never-rules withheld";
+      });
+      at(2400, function () {
+        window.__st.newCVd = V.def + V.un;
+        window.__st.newCFresh = true;
+        render(window.__st);
+        noteEl.textContent = "providers/ollama.lua written";
+      });
+      at(1900, function () {
+        say("It passes a test it never saw. <em>That</em> is evidence — and the rule it never saw still holds.");
+        actEl.textContent = ":ScryExercise";
+        window.__st.newEVd = V.pass + V.un;
+        window.__st.newEFresh = true;
+        window.__st.hdr = H_SPEC;
+        render(window.__st);
+        noteEl.textContent = "green · vim\\.ui\\. still clean";
+      });
+
+      // ─── VI. and it's yours ───
+      at(2600, function () {
+        act(5);
+        say("You described it, read the proof, watched it come true. The glass saw all of that — so it knows the work is <b>yours</b>.");
+        actEl.innerHTML = "&nbsp;";
+        window.__st.newCVd = V.def;
+        window.__st.newEVd = V.pass;
+        window.__st.newCStamp = false;
+        window.__st.newEFresh = false;
+        window.__st.newCFresh = false;
+        window.__st.hdr = H_DONE;
+        render(window.__st);
+        noteEl.textContent = "0 untouched";
+      });
+      at(4200, function () { noteEl.innerHTML = "&nbsp;"; });
+      at(600, build);
+    }
     var run = function () {
       timers.forEach(clearTimeout); timers.length = 0;
       build();
