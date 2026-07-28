@@ -21,7 +21,10 @@
 --                 relocate it into the repo is exactly how you would
 --                 defeat that — by sending someone a project that quietly
 --                 publishes its own prohibitions.
---   author        describes a person, not a repo.
+--   author        describes a person, not a repo. Not currently a config
+--                 key at all — provenance retired it — but refused rather
+--                 than merely unknown, so that if it ever returns a repo
+--                 still cannot sign your name.
 --
 -- JSON rather than Lua on purpose. Executing code from a checked-out
 -- repository is what Neovim gates behind 'exrc', and scry has no business

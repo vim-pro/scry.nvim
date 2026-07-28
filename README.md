@@ -172,6 +172,13 @@ full. In short:
 - **Divergence is file-level and blunt.** A file a feature uses but never
   names reads as unclaimed, and `sources` decides what counts as a file. It
   answers "is anything undescribed", not "is the description any good".
+  Narrowing `sources` is the one move that can make it lie — excluding a
+  test runner is honest, excluding product to drop the count is not, and
+  scry cannot tell the two apart for you.
+- **`contains path` with no symbol claims only that the file exists.** It is
+  there for files that define nothing nameable, so an unclaimed file always
+  has a remedy. It renders `✓ present (file, no symbol named)` — a map of
+  bare paths is a list of files, which is what features exist to prevent.
 - **A feature's state is only as good as its claims.** `✓ done` means every
   claim under it holds, not that the feature works.
 

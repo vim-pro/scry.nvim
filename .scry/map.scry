@@ -96,3 +96,40 @@ feature you can tell which parts nobody has engaged with
     lua/scry/provenance.lua:sync
   exercises
     tests/map_spec.lua
+
+feature the glass can check any language it has an engine for
+  Claims are decided by a resolver behind an interface: treesitter for lua
+  definitions, ripgrep for references and prohibitions. Fidelity travels with
+  every verdict, so the glass can never render a stronger word than the engine
+  that produced it — and a language with no engine reads unchecked, not passed.
+
+  contains
+    lua/scry/resolver.lua:check
+    lua/scry/resolver.lua:register
+    lua/scry/check.lua:run
+    lua/scry/resolvers/ts_rg.lua:check_contains
+    lua/scry/resolvers/ts_rg.lua:check_never
+  exercises
+    tests/resolver_spec.lua
+    tests/check_spec.lua
+
+feature a project carries its own settings
+  Which files count as product, and how to run one spec, are facts about a
+  repo rather than about you. A repo states them in .scry/config.json and
+  wins — except for the two keys it must never set, which are refused aloud.
+
+  contains
+    lua/scry/project.lua:load
+    lua/scry/project.lua:resolve
+  exercises
+    tests/project_spec.lua
+
+feature you can find out whether scry can actually see your project
+  :checkhealth scry reports the two legs the resolver stands on, where the map
+  and holdout live, and whether conjurer is installed — before a missing
+  dependency shows up as a wall of unchecked verdicts.
+
+  contains
+    lua/scry/health.lua:check
+    lua/scry/init.lua:setup
+    plugin/scry.lua

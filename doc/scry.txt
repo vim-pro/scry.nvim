@@ -137,10 +137,24 @@ and routes them into the repository on the next |:write|.)
 Claim targets differ by kind, because the claims differ in kind:
 
     contains   path:symbol            a definition exists at a location
+    contains   path                   that file is part of this feature
     calls      [hint::]symbol         target exists, and this feature
                                       references it
     never      a ripgrep regex        zero matches in the footprint
     exercises  path[:assertion]       that spec passes — see |scry-exercised|
+
+The second `contains` form — a path with no symbol — exists for files that
+define nothing a claim could name: a `plugin/` bootstrap, a table of
+settings, anything not lua. |scry-divergence| is file-level while footprints
+are symbol-derived, so without it such a file gets reported as unclaimed
+with no way to claim it, and an accusation you cannot act on is a defect in
+the report rather than in your map.
+
+It is the weakest claim in the vocabulary and reads as one:
+`✓ present (file, no symbol named)`, never `✓ defined`. Reach for it when
+there is no symbol to name — not to cover ground quickly. A map of bare
+paths is a list of files, which is the altitude mistake features exist to
+prevent.
 
 `never` patterns are raw ripgrep regexes — `vim\.ui\.`, not `vim.ui.*`. No
 sugar is applied, because silently mis-escaping a prohibition would be
@@ -190,9 +204,9 @@ not.
 FOOTPRINT — derived, never declared ~
 
 A feature's scope is the union of files its located claims name: `contains`
-and `exercises` contribute their paths, `calls` carries a hint rather than a
-path, and `never` is a pattern. Nothing declares it, so it cannot drift
-from the claims it describes.
+(both forms) and `exercises` contribute their paths, `calls` carries a hint
+rather than a path, and `never` is a pattern. Nothing declares it, so it
+cannot drift from the claims it describes.
 
 An empty footprint is meaningful, not a bug. A feature that locates nothing
 yet has nowhere for a prohibition to look, and `never` renders
@@ -272,6 +286,14 @@ product does and silence about a file is silence. And `sources` decides what
 counts as claimable at all; empty means everything ripgrep lists, which
 respects `.gitignore`. Narrowing it is expected, and having to narrow it a
 lot is itself information about the repo.
+
+Narrowing `sources` is also the one move that can make this report lie, so
+it is worth being deliberate about. Excluding a test runner or a file of
+assertion helpers is honest: they are how the product is built, not what it
+does. Excluding product to make the number drop is the same act mechanically
+and the opposite act in substance, and nothing here can tell the difference
+for you. If a path is arguably product, leave it in and claim it — the
+file-level `contains` form exists so that is always possible.
 
 ==============================================================================
 5. OWNERSHIP                                                  *scry-ownership*
@@ -519,7 +541,7 @@ Some of the above describes YOU and some describes THE REPO. A repo may carry
 whose right answer is a property of the project rather than of you:
 >
     {
-      "sources": ["lua/**/*.lua", "tests/*.lua"],
+      "sources": ["lua/**/*.lua", "plugin/*.lua", "tests/*_spec.lua"],
       "test": { "cmd": ["nvim", "--headless", "-u", "NONE", "-l"] },
       "resolver": ""
     }
@@ -536,7 +558,9 @@ back INTO the repo is exactly how you would defeat that: hand someone a
 project that quietly publishes its own prohibitions. Refused, and the refusal
 is announced rather than silent.
 
-`author` — describes a person, not a repo.
+`author` — describes a person, not a repo. Not a live config key today (the
+trail replaced stamping), but refused rather than merely unknown, so a repo
+still cannot sign your name if it ever returns.
 
 JSON rather than Lua deliberately. Executing code out of a checked-out
 repository is what Neovim gates behind |exrc|, and scry has no business doing
@@ -569,6 +593,11 @@ Every line here is a limit scry intends to keep stating plainly.
 - **`contains ✓ defined`** asserts a definition with that name exists in
   that file. It says nothing about its body. The prose above it is
   unchecked.
+- **`contains ✓ present (file, no symbol named)`** asserts only that the
+  file is there. Not that it does anything, not that the feature is
+  implemented in it — the claim never said more than "this file is part of
+  this feature", and the label is where that thinness has to show, because
+  the feature rollup counts it like any other satisfied claim.
 - **`calls ✓ referenced (text)`** asserts the token occurs in the feature's
   files and the target exists somewhere. It is NOT a resolved call: not
   reachability, not the same symbol, not proof the call happens. Rung:

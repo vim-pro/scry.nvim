@@ -2,6 +2,7 @@
 -- references and prohibitions. Every label states its fidelity — a claim
 -- backed here is ACCOUNTED FOR at text/parse level, not proven correct:
 --   contains ✓ defined          a named definition node exists in that file
+--   contains ✓ present (file)   the file is there; nothing about its contents
 --   calls    ✓ referenced (text) the token occurs; not a resolved call
 --   never    ✓ no matches (rg)   no textual match; not absence of behavior
 -- Scope for the text checks is the feature's derived footprint, never a
@@ -129,7 +130,21 @@ end
 function M.check_contains(ctx, claim, cb)
   local path, symbol = claim.target:match("^(.-):([%w_.]+)$")
   if not path then
-    cb({ status = "error", fidelity = "none", label = "– malformed target (want path:symbol)" })
+    -- FILE-LEVEL contains: the target names a file and no symbol. Checked
+    -- before the lua guard on purpose — a file with no definitions to name
+    -- is exactly the case this form exists for, and it is not lua-only.
+    --
+    -- `present` is a deliberately thinner word than `defined`, and the
+    -- feature rollup counts it the same, because the claim really is
+    -- satisfied: it only ever said the file is part of this feature. The
+    -- weakness lives in the claim, not in the checking, so the label is
+    -- where it has to show.
+    local stat = vim.uv.fs_stat(ctx.root .. "/" .. claim.target)
+    if not stat or stat.type ~= "file" then
+      cb({ status = "missing", fidelity = "file", label = "✗ absent (no such file)" })
+    else
+      cb({ status = "backed", fidelity = "file", label = "✓ present (file, no symbol named)" })
+    end
     return
   end
   if not path:match("%.lua$") then

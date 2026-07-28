@@ -119,11 +119,18 @@ end
 --- The file a claim names, if it names one. `contains path:symbol` and
 --- `exercises path[:label]` locate themselves; `calls` carries a hint, not
 --- a path, and `never` is a pattern — neither contributes a location.
+---
+--- A `contains` target with NO symbol names the file itself. That exists
+--- because divergence is file-level while footprints are symbol-derived, so
+--- a file that defines nothing — a plugin/ bootstrap, a table of settings,
+--- anything not lua — could be reported as unclaimed with no way to claim
+--- it. An accusation you cannot act on is a bug in the report. The claim it
+--- makes is correspondingly weak, and the verdict says which one it is.
 ---@param claim scry.Claim
 ---@return string?
 function M.claim_path(claim)
   if claim.kind == "contains" then
-    return (claim.target:match("^(.-):[%w_.]+$"))
+    return claim.target:match("^(.-):[%w_.]+$") or claim.target
   elseif claim.kind == "exercises" then
     return claim.target:match("^([^:]+):") or claim.target
   end

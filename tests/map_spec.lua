@@ -35,8 +35,12 @@ end
 -- 2) structure
 H.eq(#m.features, 2, "two features")
 H.eq(m.features[1].name, "providers", "feature name")
-H.eq(#m.features[1].globs, 2, "two file globs")
-H.eq(m.features[1].globs[2], "lua/extra/*.lua", "glob trimmed")
+-- A feature declares no globs. Its footprint is DERIVED from the files its
+-- claims name, so the map cannot claim ground it has said nothing about.
+local fp = map.footprint(m.features[1])
+H.eq(#fp, 2, "footprint is the two files the contains-claims name")
+H.eq(fp[1], "lua/conjurer/providers/cli.lua", "in order of first appearance")
+H.eq(#map.footprint(m.features[2]), 0, "a prose-only feature locates nothing")
 H.eq(#m.claims, 4, "four claims total")
 H.eq(#m.features[2].claims, 0, "prose-only feature has no claims")
 
@@ -53,7 +57,10 @@ H.eq(c4.kind, "never", "never section")
 H.eq(c4.target, "vim\\.ui\\.", "never target is the verbatim pattern")
 H.eq(c4.feature, "providers", "claims know their feature")
 
--- 4) blank line ends a section: prose after the never block is not a claim
+-- 4) a DEDENTED line ends a section, and a blank one does not. The blank
+-- line after the never-pattern reads like a terminator to a human; treating
+-- it as one would silently demote every claim after it to prose, and for a
+-- never-block route a prohibition into the repo. Indentation is the grammar.
 H.eq(m.claims[#m.claims].target, "vim\\.ui\\.", "stray prose never became a claim")
 
 -- 5) no parse errors on garbage — everything unrecognized is prose, and a
@@ -95,3 +102,23 @@ H.eq(legacy.claims[1].target, "x.lua:one", "legacy stamped claim still parses to
 H.eq(legacy.claims[1].stamp.user, "w0zro", "and keeps its stamp as data")
 
 H.done("map_spec PASS")
+
+-- A `contains` target with no symbol names the FILE. This exists because
+-- divergence is file-level while footprints are symbol-derived: a file that
+-- defines nothing could be reported unclaimed with no way to claim it, and an
+-- accusation you cannot act on is a bug in the report.
+local file_level = map.parse({
+  "feature bootstrap",
+  "  contains",
+  "    plugin/scry.lua",
+  "    lua/scry/init.lua:setup",
+})
+H.eq(#file_level.claims, 2, "a bare path is a claim, not prose")
+H.eq(map.claim_path(file_level.claims[1]), "plugin/scry.lua", "and it locates the file itself")
+H.eq(map.claim_path(file_level.claims[2]), "lua/scry/init.lua", "alongside the symbol form")
+H.eq(#map.footprint(file_level.features[1]), 2, "both reach the footprint")
+H.eq(
+  table.concat(map.serialize(file_level), "\n"),
+  "feature bootstrap\n  contains\n    plugin/scry.lua\n    lua/scry/init.lua:setup",
+  "and it round-trips"
+)
