@@ -484,7 +484,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <!-- ============================ reference ============================ -->
 <section class="ref" id="reference">
   <div class="section-head">
-    <h2>Four <em>commands</em></h2>
+    <h2>Five <em>commands</em></h2>
     <div class="s">zero config works · <code>:h scry</code> is the manual</div>
   </div>
   <div class="ref-grid">
@@ -496,6 +496,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
           <tr><td><span class="hg">:ScryCheck</span></td><td>Look again — fresh verdicts from what's on disk.</td></tr>
           <tr><td><span class="hg">:Conjure</span></td><td>Make the thing under the cursor real — the same verb that conjures over a motion in code.</td></tr>
           <tr><td><span class="hg">:ScryExercise</span></td><td>Run the proofs. The only command that executes your code.</td></tr>
+          <tr><td><span class="hg">:ScryUnclaimed</span></td><td>List the files no feature claims, in the quickfix list.</td></tr>
         </tbody>
       </table>
     </div>
@@ -506,6 +507,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   holdout_path = <span class="s">""</span>,   <span class="c">-- "" = outside the repo</span>
   resolver = <span class="s">""</span>,       <span class="c">-- "" = treesitter + rg</span>
   test = { cmd = {} },  <span class="c">-- one spec; path appended</span>
+  sources = {},         <span class="c">-- what counts as claimable</span>
 })</pre>
     </div>
   </div>
