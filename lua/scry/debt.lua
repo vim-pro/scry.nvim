@@ -99,7 +99,9 @@ function M.header(d, at)
   add(d.todo, "to do")
   add(d.unknown, "unknown")
   local unchecked = d.unchecked > 0 and (" · %d unchecked"):format(d.unchecked) or ""
-  return ("scry · %s   %s (files on disk)\n      %d claims · %d backed · %d missing · %d violated%s · %d untouched"):format(
+  local fmt = "scry · %s   %s (files on disk)"
+    .. "\n      %d claims · %d backed · %d missing · %d violated%s · %d untouched"
+  return fmt:format(
     table.concat(parts, " · "),
     when,
     d.claims,

@@ -9,6 +9,8 @@ CONTENTS                                                       *scry-contents*
   1. Introduction ................................ |scry-introduction|
   2. The glass ................................... |scry-glass|
   3. The map ..................................... |scry-map|
+     Altitude .................................... |scry-altitude|
+     Footprint ................................... |scry-footprint|
   4. Verdicts .................................... |scry-verdicts|
   5. Ownership ................................... |scry-ownership|
   6. Theory-debt ................................. |scry-debt|
@@ -35,7 +37,7 @@ product share one vocabulary.
 
 |scry-conjure| takes a claim from there: the check is conjured first — you
 read it, and it must fail — then the code, with the check and the
-concern's prohibitions withheld from the model that writes it. The code is
+feature's prohibitions withheld from the model that writes it. The code is
 where you review, not where you start.
 
 The work leaves a trail: typing a claim yourself, conjuring one and
@@ -67,8 +69,14 @@ Editing the model is the primary gesture. `:write` saves it — and routes
 never-claims to the holdout file (|scry-holdout|), announcing where they
 went. Every render carries a header:
 >
-    scry · 7 claims · 4 backed · 1 missing · 1 violated · 1 unchecked · 2 untouched   checked 40s ago (files on disk)
+    scry · 9 features · 5 done · 2 building · 1 broken · 1 to do   checked 40s ago (files on disk)
+          21 claims · 15 backed · 3 missing · 1 violated · 2 unchecked · 4 untouched
 <
+Features lead, because the question a reader arrives with is what the
+product does — not how many subfunctions resolved. Claim numbers are the
+evidence behind that first line, so they come second. Reading them first is
+the altitude mistake the whole map exists to avoid.
+
 "files on disk" is not decoration: scry reads saved files, so an unwritten
 buffer is invisible to it. A verdict is always presented with when it was
 computed and against what.
@@ -78,31 +86,40 @@ unchecked column appears only when it is non-zero, and it is there so that
 "0 missing · 0 violated" can never be read as a clean bill of health for
 claims no engine ever answered. See |scry-debt|.
 
+Each feature carries the state its own evidence adds up to — nothing here is
+authored:
+
+    ✓ done             every claim holds
+    ✗ broken (1 of 5)  a claim regressed; outranks everything else
+    ◐ 2 of 5           real progress: some evidence holds
+    ✗ not yet          nothing holds — the state you create on purpose
+    – unchecked (n)    nothing has answered yet; NOT progress
+    – no evidence yet  named, with nothing checkable under it
+
 ==============================================================================
 3. THE MAP                                                          *scry-map*
 
 The map is plain text, versioned with the code it describes (default
 `.scry/map.scry`). Line-oriented and deliberately dull:
 >
-    # providers
-      files lua/conjurer/providers/*.lua
-
-      The provider layer turns a Request into text and calls back once on
-      the main loop. Transport only: no UI, no lists.
+    feature a user can reset their password
+      Requests a link by email. The link expires in 15 minutes and burns
+      on use.
 
       contains
-        lua/conjurer/providers/cli.lua:request    -- @michael 2026-07-26 3f9a01
-        lua/conjurer/providers/known.lua:resolve_api
+        lua/auth/reset.lua:request_reset
+        lua/auth/reset.lua:consume_link
       calls
-        known.lua::resolve_api
+        mailer::send
       never
-        vim\.ui\.
+        token.*log
+      exercises
+        tests/reset_spec.lua:the link burns on use
 <
-- `# name` starts a concern.
-- `files` gives the concern's scope as |:grep|-style globs, comma-separated.
-  Reference and prohibition checks are scoped to these files.
+- `feature <statement>` starts a feature. See |scry-altitude| for what
+  belongs on that line — it is the one judgement the map asks of you.
 - `contains`, `calls`, `never`, `exercises` open a claim block; claims are
-  indented four spaces.
+  indented four spaces and are that feature's EVIDENCE, never its peers.
 - **Everything else is prose.** There are no parse errors: a line is a claim
   or it is prose, preserved verbatim, never checked, never marked. Write as
   much explanation as you like — the sentences carry the theory, the claims
@@ -118,14 +135,67 @@ and routes them into the repository on the next |:write|.)
 Claim targets differ by kind, because the claims differ in kind:
 
     contains   path:symbol            a definition exists at a location
-    calls      [hint::]symbol         target exists, and this concern
+    calls      [hint::]symbol         target exists, and this feature
                                       references it
-    never      a ripgrep regex        zero matches in the concern's files
+    never      a ripgrep regex        zero matches in the footprint
     exercises  path[:assertion]       that spec passes — see |scry-exercised|
 
 `never` patterns are raw ripgrep regexes — `vim\.ui\.`, not `vim.ui.*`. No
 sugar is applied, because silently mis-escaping a prohibition would be
 exactly the kind of quiet overclaim scry exists to avoid.
+
+                                                              *scry-altitude*
+ALTITUDE — what belongs on a feature line ~
+
+A feature is a SEA-LEVEL object in Cockburn's sense: one thing a user of
+this system can accomplish, named the way they would name it. His three
+tests, which transfer almost unchanged:
+
+- Is it one thing, done in one sitting?
+- Could you stop when it is finished?
+- Does it matter that you can do many of them?
+
+"Log on" fails the third — logging on forty-three times satisfies nothing.
+"A user can reset their password" passes all three. The shortest useful
+summary of what a system does is the list of its sea-level statements, and
+that is exactly what the map's feature lines are for.
+
+Two neighbouring altitudes ruin a map, and the grammar is built to keep
+them out:
+
+ABOVE — "the auth system", "billing". These are groupings, not work. They
+name a place in the code, and a map of them tells you nothing about what
+the product does. This is what the old `# concern` + `files <glob>` header
+was, and why it was replaced: a glob is a directory, and a feature is not
+a directory.
+
+BELOW — "validate the token", "parse the header". These are subfunctions,
+and they are exactly what claims already are. Cockburn's warning is the
+one worth memorising: a hundred pages of subfunctions "did not serve
+either its writers or readers", and six user-goal statements replaced
+them. Claims stay subordinate for that reason.
+
+For a library or a plugin the actor changes but the level does not: the
+user is the calling programmer, so `~ip conjures over a paragraph` is sea
+level and `parse_sse` is a subfunction. Cockburn calls this design scope.
+
+If you cannot tell which side of the line something falls on, write it
+deliberately too high, then deliberately too low, then judge the middle —
+Kent Beck's Three Bears. Calibration by contrast works where a rule does
+not.
+
+                                                             *scry-footprint*
+FOOTPRINT — derived, never declared ~
+
+A feature's scope is the union of files its located claims name: `contains`
+and `exercises` contribute their paths, `calls` carries a hint rather than a
+path, and `never` is a pattern. Nothing declares it, so it cannot drift
+from the claims it describes.
+
+An empty footprint is meaningful, not a bug. A feature that locates nothing
+yet has nowhere for a prohibition to look, and `never` renders
+`– unscoped` rather than quietly searching the whole project and reporting
+violations in files the feature does not own.
 
                                                               *scry-two-axes*
 The kinds sit on two axes, and it is worth seeing them that way rather than
@@ -149,19 +219,19 @@ bug often wants only the second, since nothing structural changed.
 The glyph never appears alone. The label states what was actually checked:
 
     ✓ defined              a definition node with that name exists (treesitter)
-    ✓ referenced (text)    the token occurs in the concern's files (ripgrep)
+    ✓ referenced (text)    the token occurs in the feature's files (ripgrep)
     ✓ no matches (rg)      the prohibition found nothing
     ✓ passing (ran 4m ago) that spec exited 0, and nothing it depends on has
                            changed since — the age is part of the verdict
     ✗ absent               the definition (or target) does not exist
-    ✗ unreferenced         the target exists, but this concern never mentions it
+    ✗ unreferenced         the target exists, but this feature never mentions it
     ✗ VIOLATED             a prohibition matched — with the evidence line
     ✗ FAILING              that spec exited non-zero — with its output
     ∅ untouched            no work has passed through this claim yet
     – unchecked            no resolver for this language; NOT a pass
     – unrun                nobody has run that spec yet; NOT a pass
     – stale                it passed, but the code has moved since; NOT a pass
-    – vacuous?             it passes, and nothing its concern claims exists
+    – vacuous?             it passes, and nothing its feature claims exists
                            yet — so it is asserting nothing. NOT a pass
 
 That vocabulary is the honesty mechanism, not decoration. The fidelity of
@@ -232,8 +302,8 @@ the project path. The glass still shows them inline; only storage differs.
 Two guarantees, deliberately not conflated:
 
 1. **Withheld from requests** — guaranteed and covered by tests. Everything
-   scry hands a conjurer is built from the concern name, the claim's own
-   target, and the intent you typed. Concern prose is excluded on purpose:
+   scry hands a conjurer is built from the feature name, the claim's own
+   target, and the intent you typed. Feature prose is excluded on purpose:
    prose can restate a prohibition in words no scrubber could catch, so the
    channel is closed rather than filtered.
 2. **Hidden from the filesystem** — true for a generator that reads your
@@ -295,8 +365,8 @@ code, their reading of the claim was an independent sample; remove that and
 So two things restore it, and both are enforced rather than advised:
 
 **The spec is withheld from the code request.** Conjuring a `contains` claim
-adds every spec path in that concern to the tripwire, exactly as it adds the
-concern's prohibitions. An intent that names the test is refused. Code written
+adds every spec path in that feature to the tripwire, exactly as it adds the
+feature's prohibitions. An intent that names the test is refused. Code written
 while looking at the test is code written to pass the test, which is the one
 thing an acceptance check must not be written to do.
 
@@ -309,8 +379,8 @@ distinction as |scry-holdout|, and it is kept sharp for the same reason.
 feature nobody has built is asserting nothing — the commonest way a conjured
 test is worthless, and invisible from inside the run, since the process exits
 0 either way. So a check downgrades a passing `exercises` claim to
-`– vacuous?` when every `contains` claim in its concern is still absent. It is
-deliberately conservative: a half-built concern has plenty for a spec to
+`– vacuous?` when every `contains` claim in its feature is still absent. It is
+deliberately conservative: a half-built feature has plenty for a spec to
 legitimately exercise, and a false alarm would teach you to ignore the real
 one.
 
@@ -343,7 +413,7 @@ The price is staleness, and staleness is the whole danger of this evidence
 class: `✓ passing` from before your last edit looks like the strongest thing
 scry renders and is the easiest one to be wrong. So a recorded run is
 reported as a pass only while nothing it depended on has moved. Each run
-fingerprints the concern's files and the spec as it starts; a later check
+fingerprints the feature's files and the spec as it starts; a later check
 compares. Any difference and the verdict degrades to `– stale`, which lands
 in the unchecked column, where an unanswered claim belongs.
 
@@ -352,7 +422,7 @@ and "edit, then run" finishes inside a single tick — a clock comparison would
 call every fresh run stale forever.
 
 Two claims on one spec are one execution, and its recorded dependencies cover
-every concern that exercises it.
+every feature that exercises it.
 
 ==============================================================================
 10. COMMANDS                                                   *scry-commands*
@@ -364,18 +434,18 @@ every concern that exercises it.
 :ScryCheck              Re-check every claim against the files on disk.
 
                                                                     *:ScryExercise*
-:ScryExercise [{concern}]
+:ScryExercise [{feature}]
                         Run the specs named by this map's `exercises` claims
                         and record the results, then re-check. The only
                         command in scry that executes your code. With a
-                        concern name, runs only that concern's specs.
+                        feature name, runs only that feature's specs.
                         See |scry-exercised|.
 
 :Conjure            Turn the absent claim under the cursor into quickfix
-                        work and hand it to conjurer, with the concern's
+                        work and hand it to conjurer, with the feature's
                         prohibitions withheld. On an `exercises` claim it
                         conjures the check; on a `contains` claim it conjures
-                        the code, additionally withholding the concern's spec
+                        the code, additionally withholding the feature's spec
                         paths. See |scry-conjure| and |scry-independence|.
 
 ==============================================================================
@@ -430,7 +500,7 @@ Every line here is a limit scry intends to keep stating plainly.
 - **`contains ✓ defined`** asserts a definition with that name exists in
   that file. It says nothing about its body. The prose above it is
   unchecked.
-- **`calls ✓ referenced (text)`** asserts the token occurs in the concern's
+- **`calls ✓ referenced (text)`** asserts the token occurs in the feature's
   files and the target exists somewhere. It is NOT a resolved call: not
   reachability, not the same symbol, not proof the call happens. Rung:
   referenced < resolved < exercised.

@@ -11,7 +11,7 @@ behaviour that doesn't hold yet. Your worklist and your product are the
 same document.
 
 `:Conjure` takes it from there: the check is conjured first (you read
-it, it must fail), then the code — with the check and the concern's
+it, it must fail), then the code — with the check and the feature's
 prohibitions withheld from the model that writes it. The code is where you
 review, not where you start.
 
@@ -20,36 +20,47 @@ come true, and its `∅ untouched` marker clears. Edit a claim and its trail
 resets — every event is keyed to a hash of the claim's text.
 
 ```
-scry · 8 claims · 5 backed · 1 missing · 1 violated · 1 unchecked · 2 untouched   checked 40s ago (files on disk)
+scry · 3 features · 1 building · 1 broken · 1 to do   checked 40s ago (files on disk)
+      6 claims · 3 backed · 1 missing · 1 violated · 1 unchecked · 4 untouched
 
-# providers
-  files lua/conjurer/providers/*.lua
-
-  The provider layer turns a Request into text and calls back once on the
-  main loop. Transport only: no UI, no lists.
+feature a user can reset their password                          ◐ 2 of 4
+  Requests a link by email. The link burns on use.
 
   contains
-    lua/conjurer/providers/cli.lua:request    -- @michael 2026-07-26 3f9a01   ✓ defined
-    lua/conjurer/providers/known.lua:resolve_api                              ✓ defined · ∅ untouched
-  calls
-    known.lua::resolve_api                    -- @michael 2026-07-26 b71e00   ✓ referenced (text)
-    stream.lua::parse_sse                                                     ✗ absent · ∅ untouched
+    lua/auth/reset.lua:request_reset                             ✓ defined
+    lua/auth/reset.lua:consume_link                              ✗ absent · ∅ untouched
   never
-    vim\.ui\.                                                                 ✓ no matches (rg)
-    vim\.fn\.setqflist                                                        ✗ VIOLATED
-        └ lua/conjurer/providers/cli.lua:88 → vim.fn.setqflist(...)
+    token.*log                                                   ✓ no matches (rg)
   exercises
-    tests/cli_spec.lua                                                        – unrun (:ScryExercise)
+    tests/reset_spec.lua:the link burns on use                   – unrun (:ScryExercise)
+
+feature an admin can revoke a session                            ✗ broken (1 of 2)
+  contains
+    lua/auth/admin.lua:revoke                                    ✓ defined
+  never
+    session.*delete_all                                          ✗ VIOLATED
+        └ lua/auth/admin.lua:22 → store.session_delete_all()
+
+feature sessions expire                                          – no evidence yet
+  Named, with nothing checkable under it yet.
 ```
 
-One editable buffer. The claims are your text; everything to the right is
-scry's answer, computed and never stored.
+One editable buffer. Features are the line you scan; claims are the evidence
+under them. Everything to the right is scry's answer, computed and never
+stored.
 
 ## The four ideas
 
+**Features sit at sea level; claims are their evidence.** A feature is one
+thing a user can accomplish, named the way they'd name it — not "the auth
+system" (a grouping) and not "validate the token" (a subfunction, which is
+what a claim already is). Cockburn's tests: one thing, one sitting, and it
+matters that you can do many. A feature's scope is *derived* from the files
+its claims name, never declared — see `:h scry-altitude`.
+
 **The map is prose plus claims.** Write as much explanation as you like —
 prose is preserved verbatim and never checked. The sentences carry the
-theory; the claims carry the check. That split is the whole trick.
+theory; the claims carry the check.
 
 **The work leaves a trail.** Authoring a claim, conjuring it, running its
 check red then green — each marks the claim it touched, and the trail is
@@ -64,7 +75,7 @@ are stored outside the repo by default.
 
 **Theory-debt is a number.** How much of your system has no one engaged
 with? Conjuring generates untouched claims at machine speed; working through
-them is the only thing that pays it down. `scry 14c ✓11 ✗2 ∅3`.
+them is the only thing that pays it down. `scry 9f ✓6 ◐2 ✗1 ∅3`.
 
 ## Two axes of evidence
 
@@ -79,7 +90,7 @@ each, and fixing a bug often wants only the second.
 **Checking never runs anything.** `:Scry` reads what the last `:ScryExercise`
 recorded; only `:ScryExercise` executes. A glass that shelled out to your test
 suite whenever you opened it is a glass you'd stop opening. The price is
-staleness, so a run fingerprints the concern's files as it starts — move any
+staleness, so a run fingerprints the feature's files as it starts — move any
 of them and `✓ passing` degrades to `– stale`, which is not a pass.
 
 Both `contains` and `exercises` can be conjured, and the order is the mechanism:
@@ -149,9 +160,10 @@ full. In short:
 - Verdicts describe **saved files** at a timestamp, which the header carries.
 - Holdout independence is against **leakage, not adversaries** — hidden from
   a generator that reads your repo, not from one told to hunt your disk.
-- Theory-debt is **coverage-blind** until scry can report unclaimed code, so
-  the claim count is rendered first: `0 diverged / 3 claims` means a thin
-  map, not a healthy repo.
+- Theory-debt is **coverage-blind** until scry can report code no feature
+  claims: a map showing every feature done may simply be a short map.
+- **A feature's state is only as good as its claims.** `✓ done` means every
+  claim under it holds, not that the feature works.
 
 ## Development
 
@@ -162,7 +174,7 @@ full. In short:
 ## Notes
 
 - The verb split: conjurer is the arrow, quickfix.pro is presentation, scry
-  is the glass. This plugin depends on neither.
+  is the glass. conjurer is required; quickfix.pro is optional.
 - v0 checks lua (treesitter definitions) and any language ripgrep can search
   (references, prohibitions). Other languages render `– unchecked`, never a
   pass.
