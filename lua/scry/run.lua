@@ -86,7 +86,7 @@ function M.start(opts)
     vim.notify("[scry] open the glass first (:Scry)", vim.log.levels.WARN)
     return
   end
-  local config = require("scry").config
+  local config = require("scry.project").resolve(state.root)
   local map_ = require("scry.map").parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false))
   local specs = M.specs(map_, opts.feature)
   if #specs == 0 then

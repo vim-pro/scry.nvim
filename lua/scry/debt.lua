@@ -62,7 +62,7 @@ function M.count(map_, report, root)
   -- down with it.
   if root then
     local ok, div = pcall(function()
-      return (require("scry.divergence").unclaimed(root, map_, require("scry").config))
+      return (require("scry.divergence").unclaimed(root, map_, require("scry.project").resolve(root)))
     end)
     if ok then
       d.unclaimed = #div

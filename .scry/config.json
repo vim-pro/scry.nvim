@@ -1,0 +1,4 @@
+{
+  "sources": ["lua/**/*.lua", "tests/*.lua", "plugin/*.lua", "scripts/*"],
+  "test": { "cmd": ["nvim", "--headless", "-u", "NONE", "-l"] }
+}

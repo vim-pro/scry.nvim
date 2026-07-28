@@ -1,0 +1,94 @@
+-- Project-local configuration.
+--
+-- Some of scry's config describes YOU and some describes THE REPO, and
+-- until now both lived in one global `setup()`. That is fine for one
+-- project and wrong for two: the right `sources` for this repo is not the
+-- right one for the next, and how to run one project's specs has nothing
+-- to do with how to run another's.
+--
+-- So the repo may carry `.scry/config.json`, and exactly three keys are
+-- honoured from it:
+--
+--   sources    which files count as claimable (divergence)
+--   test       how to run ONE spec
+--   resolver   which checking engine this project's languages need
+--
+-- Two keys are deliberately REFUSED, and the refusals matter more than the
+-- permissions:
+--
+--   holdout_path  the holdout lives outside the repo so a repo-reading
+--                 generator cannot see it. Letting a committed file
+--                 relocate it into the repo is exactly how you would
+--                 defeat that — by sending someone a project that quietly
+--                 publishes its own prohibitions.
+--   author        describes a person, not a repo.
+--
+-- JSON rather than Lua on purpose. Executing code from a checked-out
+-- repository is what Neovim gates behind 'exrc', and scry has no business
+-- doing it silently for a config file.
+local M = {}
+
+-- Only these may come from the repo. Anything else in the file is ignored
+-- rather than errored on: a newer scry writing a key this one does not know
+-- should not break the older one.
+local HONOURED = { sources = true, test = true, resolver = true }
+
+--- Read `.scry/config.json`, if any. Malformed JSON is reported once and
+--- treated as absent — a broken config file must not stop you opening the
+--- glass.
+---@param root string
+---@return table honoured, string? warning
+function M.load(root)
+  local path = root .. "/.scry/config.json"
+  local f = io.open(path, "r")
+  if not f then
+    return {}, nil
+  end
+  local content = f:read("*a")
+  f:close()
+
+  local ok, decoded = pcall(vim.json.decode, content)
+  if not ok or type(decoded) ~= "table" then
+    return {}, ("[scry] %s is not valid JSON — ignoring it"):format(path)
+  end
+
+  local out, refused = {}, {}
+  for key, value in pairs(decoded) do
+    if HONOURED[key] then
+      out[key] = value
+    elseif key == "holdout_path" or key == "author" then
+      refused[#refused + 1] = key
+    end
+  end
+  local warning
+  if #refused > 0 then
+    table.sort(refused)
+    warning = ("[scry] %s sets %s; ignored — the repo does not get to say"):format(
+      path,
+      table.concat(refused, " and ")
+    )
+  end
+  return out, warning
+end
+
+--- The config that applies to `root`: your setup() with the project's own
+--- keys layered on top. The project wins for the keys it owns, because it
+--- knows things your vimrc cannot.
+---@param root string?
+---@return table
+function M.resolve(root)
+  local base = require("scry").config
+  if not root then
+    return base
+  end
+  local project, warning = M.load(root)
+  if warning then
+    vim.notify(warning, vim.log.levels.WARN)
+  end
+  if not next(project) then
+    return base
+  end
+  return vim.tbl_deep_extend("force", base, project)
+end
+
+return M

@@ -81,8 +81,8 @@ local function recheck(reason)
     return
   end
   local glass = require("scry.glass")
-  local config = require("scry").config
   local root = active.root
+  local config = require("scry.project").resolve(root)
   local mapmod = require("scry.map")
   local holdout = require("scry.holdout")
 
@@ -180,7 +180,7 @@ end
 ---@param intent string
 ---@param handoff boolean Call conjurer's :ConjureAll after seeding?
 function M.seed(root, claim, intent, handoff)
-  local config = require("scry").config
+  local config = require("scry.project").resolve(root)
   local holdout = require("scry.holdout")
   local built = M.build(claim, intent)
 

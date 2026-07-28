@@ -20,6 +20,7 @@ CONTENTS                                                       *scry-contents*
   9. Exercised claims ............................ |scry-exercised|
  10. Commands .................................... |scry-commands|
  11. Configuration ............................... |scry-configuration|
+     Per-project ................................. |scry-project-config|
  12. Highlights .................................. |scry-highlights|
  13. What scry does NOT claim .................... |scry-honesty|
  14. Health ...................................... |scry-health|
@@ -510,6 +511,37 @@ setup({opts}) is optional. Defaults: >lua
       test = { cmd = {} },   -- e.g. { "nvim", "--headless", "-u", "NONE", "-l" }
     })
 <
+                                                        *scry-project-config*
+PER-PROJECT ~
+
+Some of the above describes YOU and some describes THE REPO. A repo may carry
+`.scry/config.json`, and exactly three keys are honoured from it — the ones
+whose right answer is a property of the project rather than of you:
+>
+    {
+      "sources": ["lua/**/*.lua", "tests/*.lua"],
+      "test": { "cmd": ["nvim", "--headless", "-u", "NONE", "-l"] },
+      "resolver": ""
+    }
+<
+The project wins for those keys, because it knows things your vimrc cannot.
+Unknown keys are ignored without complaint, so a newer scry writing a key
+this one has never heard of does not break it.
+
+Two keys are REFUSED, and the refusals matter more than the permissions:
+
+`holdout_path` — the holdout lives outside the repository so that a
+repo-reading generator cannot find it. A committed file able to relocate it
+back INTO the repo is exactly how you would defeat that: hand someone a
+project that quietly publishes its own prohibitions. Refused, and the refusal
+is announced rather than silent.
+
+`author` — describes a person, not a repo.
+
+JSON rather than Lua deliberately. Executing code out of a checked-out
+repository is what Neovim gates behind |exrc|, and scry has no business doing
+it silently for a config file.
+
 ==============================================================================
 12. HIGHLIGHTS                                               *scry-highlights*
 

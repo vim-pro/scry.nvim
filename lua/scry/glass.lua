@@ -260,7 +260,7 @@ end
 ---@param root string?
 function M.open(root)
   root = root or vim.fn.getcwd()
-  local config = require("scry").config
+  local config = require("scry.project").resolve(root or state.root)
 
   local function focus(buf)
     local win = vim.fn.bufwinid(buf)
@@ -347,7 +347,7 @@ end
 
 --- Write the glass: split and save both files, notify the routing, re-check.
 function M.write()
-  local config = require("scry").config
+  local config = require("scry.project").resolve(state.root)
   local lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
   local map_lines, holdout_lines, never_count = M.split(lines)
   vim.fn.mkdir(vim.fn.fnamemodify(state.root .. "/" .. config.map_path, ":h"), "p")
