@@ -1,36 +1,35 @@
--- The glass: compose interleaves holdout nevers into their concerns; :write
+-- The glass: compose interleaves holdout nevers into their features; :write
 -- splits blocks back to the right files with a notification; verdicts render
 -- as extmarks; ratify stamps the cursor line.
 local H = dofile(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .. "/helpers.lua")
 
 local glass = require("scry.glass")
 
--- 1) compose: nevers land inside their concern, before the next header.
+-- 1) compose: nevers land inside their feature, before the next header.
 local composed = glass.compose({
-  "# auth",
-  "  files lua/auth.lua",
+  "feature auth",
+  
   "  contains",
   "    lua/auth.lua:create_session",
   "",
-  "# billing",
-  "  files lua/billing.lua",
+  "feature billing",
 }, {
-  "# auth",
+  "feature auth",
   "  never",
   "    logging\\.debug",
 })
 local text = table.concat(composed, "\n")
-local auth_pos = text:find("# auth", 1, true)
+local auth_pos = text:find("feature auth", 1, true)
 local never_pos = text:find("  never", 1, true)
-local billing_pos = text:find("# billing", 1, true)
-H.ok(never_pos and auth_pos < never_pos and never_pos < billing_pos, "never block interleaved inside its concern")
+local billing_pos = text:find("feature billing", 1, true)
+H.ok(never_pos and auth_pos < never_pos and never_pos < billing_pos, "never block interleaved inside its feature")
 
 -- 2) split: the inverse routes blocks to the right files.
 local map_lines, holdout_lines, count = glass.split(composed)
 H.eq(count, 1, "one never claim routed")
 H.ok(table.concat(map_lines, "\n"):find("never", 1, true) == nil, "map side has no never block")
 H.ok(table.concat(holdout_lines, "\n"):find("logging\\.debug", 1, true) ~= nil, "holdout side has the pattern")
-H.ok(table.concat(holdout_lines, "\n"):find("# auth", 1, true) ~= nil, "holdout keeps the concern header")
+H.ok(table.concat(holdout_lines, "\n"):find("feature auth", 1, true) ~= nil, "holdout keeps the feature header")
 -- compose(split(x)) is stable
 local recomposed = glass.compose(map_lines, holdout_lines)
 H.eq(table.concat(recomposed, "\n"), text, "compose∘split is identity on composed input")
@@ -40,14 +39,13 @@ H.eq(table.concat(recomposed, "\n"), text, "compose∘split is identity on compo
 -- live prohibition committed where a repo-reading generator sees it, and
 -- demoted to prose so it stopped being checked. Both halves must survive.
 local paragraphed = {
-  "# sessions",
-  "  files lua/session.lua",
+  "feature sessions",
   "  never",
   "    print\\(",
   "",
   "    io\\.write",
   "",
-  "# billing",
+  "feature billing",
 }
 local pm, ph, pn = glass.split(paragraphed)
 H.eq(pn, 2, "both patterns counted across the paragraph break")
@@ -57,7 +55,7 @@ H.ok(pm_text:find("io\\.write", 1, true) == nil, "not even the one after the bla
 H.ok(ph_text:find("print\\(", 1, true) ~= nil, "first pattern held out")
 H.ok(ph_text:find("io\\.write", 1, true) ~= nil, "second pattern held out too")
 -- ...and the trailing blank is map layout, not holdout content
-H.eq(pm[#pm], "# billing", "the concern header still routes to the map")
+H.eq(pm[#pm], "feature billing", "the feature header still routes to the map")
 H.ok(ph[#ph]:find("io\\.write", 1, true) ~= nil, "the holdout ends at its last pattern")
 -- the parser agrees: both are claims, not prose
 local reparsed = require("scry.map").parse(ph)
@@ -144,7 +142,7 @@ local other = vim.fn.tempname()
 vim.fn.mkdir(other .. "/.scry", "p")
 vim.fn.mkdir(other .. "/lua", "p")
 vim.fn.writefile({ "local M = {}", "function M.only_here() end", "return M" }, other .. "/lua/other.lua")
-vim.fn.writefile({ "# other", "  files lua/*.lua", "", "  contains", "    lua/other.lua:only_here" }, other .. "/.scry/map.scry")
+vim.fn.writefile({ "feature other", "", "  contains", "    lua/other.lua:only_here" }, other .. "/.scry/map.scry")
 
 require("scry.glass").open(other)
 H.ok(H.wait(function()
@@ -162,7 +160,7 @@ H.ok(first_map:find("create_session", 1, true) ~= nil, "the FIRST project's map 
 H.ok(first_map:find("only_here", 1, true) == nil, "no cross-project overwrite")
 
 -- ...and unsaved work is never silently discarded to make room for another root
-vim.api.nvim_buf_set_lines(glass._state.buf, 0, 0, false, { "# scratch" })
+vim.api.nvim_buf_set_lines(glass._state.buf, 0, 0, false, { "feature scratch" })
 local warned_open
 local rn2 = vim.notify
 vim.notify = function(msg, level)

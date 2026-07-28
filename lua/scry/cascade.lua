@@ -3,7 +3,7 @@
 -- conjurer's aggregate driver, which owns casting and per-site review.
 --
 -- The holdout is the point. Everything the conjurer will ever see is built
--- from exactly three inputs — the concern name, the claim's own target, and
+-- from exactly three inputs — the feature name, the claim's own target, and
 -- an intent the user typed. Concern PROSE is deliberately excluded: prose
 -- can restate a prohibition in words no scrubber could catch, so the channel
 -- is closed rather than filtered. assert_clean is the tripwire on top.
@@ -13,7 +13,7 @@
 -- real until written — which is what the glass header already says.
 local M = {}
 
--- The open cascade: { concern, target, files[], augroup }
+-- The open cascade: { feature, target, files[], augroup }
 local active = nil
 
 --- Absolute, symlink-resolved path — the only form two spellings of the same
@@ -49,12 +49,12 @@ function M.build(claim, intent)
     end
     -- The entry text becomes request.note in conjurer, so it says only what
     -- the claim says.
-    text = ("scry: %s should define %s"):format(claim.concern, symbol)
+    text = ("scry: %s should define %s"):format(claim.feature, symbol)
   elseif claim.kind == "exercises" then
     file = claim.target:match("^([^:]+):") or claim.target
     symbol = claim.target:match("^[^:]+:(.+)$") -- the assertion label, if any
-    text = symbol and ("scry: %s needs a spec asserting: %s"):format(claim.concern, symbol)
-      or ("scry: %s needs a spec"):format(claim.concern)
+    text = symbol and ("scry: %s needs a spec asserting: %s"):format(claim.feature, symbol)
+      or ("scry: %s needs a spec"):format(claim.feature)
   else
     error("[scry] :Conjure works on contains and exercises claims (got " .. claim.kind .. ")", 0)
   end
@@ -69,13 +69,13 @@ function M.build(claim, intent)
         lnum = 1,
         col = 1,
         text = text,
-        user_data = { scry = { concern = claim.concern, target = claim.target } },
+        user_data = { scry = { feature = claim.feature, target = claim.target } },
       },
     },
   }
 end
 
--- Re-check this concern's never-claims plus the seeding claim, against disk.
+-- Re-check this feature's never-claims plus the seeding claim, against disk.
 local function recheck(reason)
   if not active then
     return
@@ -89,18 +89,18 @@ local function recheck(reason)
   local hold = holdout.load(root, config)
   local nevers = {}
   for _, c in ipairs(hold.claims) do
-    if c.kind == "never" and c.concern == active.concern then
+    if c.kind == "never" and c.feature == active.feature then
       nevers[#nevers + 1] = c
     end
   end
   if #nevers > 0 then
-    -- Scope matters: a concern's `files` globs live in the MAP, its
+    -- Scope matters: a feature's `files` globs live in the MAP, its
     -- prohibitions in the holdout. Checking the holdout alone would leave the
     -- claims unscoped and search the whole project — reporting a violation in
-    -- a file the concern doesn't own. Merge the map's concerns (for globs)
+    -- a file the feature doesn't own. Merge the map's features (for footprints)
     -- with the holdout's never claims.
     local m = mapmod.load(root .. "/" .. config.map_path)
-    local scoped = { lines = {}, concerns = m.concerns, claims = nevers }
+    local scoped = { lines = {}, features = m.features, claims = nevers }
     require("scry.check").run(scoped, {
       root = root,
       claims = nevers,
@@ -163,7 +163,7 @@ function M.start()
     default = "define " .. (claim.target:match(":([%w_.]+)$") or claim.target)
   else
     local label = claim.target:match("^[^:]+:(.+)$")
-    default = label and ("write a spec asserting " .. label) or "write a spec for this concern"
+    default = label and ("write a spec asserting " .. label) or "write a spec for this feature"
   end
 
   vim.ui.input({ prompt = "Conjure: ", default = default }, function(intent)
@@ -187,19 +187,19 @@ function M.seed(root, claim, intent, handoff)
   -- The tripwire: nothing that leaves here may contain the text of something
   -- that will be CHECKED against the result.
   --
-  -- That is this concern's nevers — scoped deliberately, and it mirrors
-  -- recheck() exactly. A different concern's prohibition is never evaluated
-  -- against this code (nevers are checked over their own concern's globs), so
+  -- That is this feature's nevers — scoped deliberately, and it mirrors
+  -- recheck() exactly. A different feature's prohibition is never evaluated
+  -- against this code (nevers are checked over their own feature's footprint), so
   -- treating it as a leak would block honest cascades: "session" is billing's
-  -- prohibition and the sessions concern's whole vocabulary.
+  -- prohibition and the sessions feature's whole vocabulary.
   local hold = holdout.load(root, config)
   local withheld = {}
   for _, c in ipairs(hold.claims) do
-    if c.kind == "never" and c.concern == claim.concern then
+    if c.kind == "never" and c.feature == claim.feature then
       withheld[#withheld + 1] = c.target
     end
   end
-  -- ...and, when conjuring CODE, this concern's spec paths. A code request
+  -- ...and, when conjuring CODE, this feature's spec paths. A code request
   -- that names the test is a request to satisfy the test, which is the one
   -- thing an acceptance check must not be written to do. Withholding the
   -- path is all scry can enforce — the spec itself lives in the tree and a
@@ -207,7 +207,7 @@ function M.seed(root, claim, intent, handoff)
   if claim.kind == "contains" then
     local m = require("scry.map").load(root .. "/" .. config.map_path)
     for _, c in ipairs(m.claims) do
-      if c.kind == "exercises" and c.concern == claim.concern then
+      if c.kind == "exercises" and c.feature == claim.feature then
         withheld[#withheld + 1] = c.target:match("^([^:]+):") or c.target
       end
     end
@@ -226,7 +226,7 @@ function M.seed(root, claim, intent, handoff)
   end
 
   vim.fn.setqflist({}, " ", {
-    title = "scry: " .. claim.concern,
+    title = "scry: " .. claim.feature,
     items = built.items,
   })
   -- the act of sending work is part of the ownership trail
@@ -238,7 +238,7 @@ function M.seed(root, claim, intent, handoff)
   local group = vim.api.nvim_create_augroup("scry.cascade", { clear = true })
   active = {
     root = root,
-    concern = claim.concern,
+    feature = claim.feature,
     target = claim.target,
     files = { built.file },
     augroup = group,

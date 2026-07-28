@@ -7,8 +7,7 @@ local check = require("scry.check")
 local debt = require("scry.debt")
 
 local SRC = {
-  "# a",
-  "  files lua/*.lua",
+  "feature a",
   "  contains",
   "    x.lua:one",
   "    x.lua:two",
@@ -38,7 +37,7 @@ check.run(m, { root = "/nowhere", resolver = fake }, function(r)
 end)
 H.eq(#calls, 3, "one resolver call per claim")
 H.eq(report, nil, "report not settled until every verdict arrives")
-H.eq(calls[1].globs[1], "lua/*.lua", "concern globs travel in ctx")
+H.eq(calls[1].globs[1], "x.lua", "the derived footprint travels in ctx")
 
 calls[1].cb({ status = "backed", fidelity = "ts-def", label = "✓ defined" })
 calls[2].cb({ status = "missing", fidelity = "ts-def", label = "✗ absent" })
@@ -58,7 +57,8 @@ H.eq(d.untouched, 3, "with no trail, every claim is untouched")
 
 -- header renders separate numbers with the claim count leading
 local header = debt.header(d, report.at)
-H.ok(header:find("3 claims", 1, true) ~= nil, "claim count leads")
+H.ok(header:find("1 features", 1, true) ~= nil, "features lead the header")
+H.ok(header:find("3 claims", 1, true) ~= nil, "claim evidence follows")
 H.ok(header:find("1 backed", 1, true) ~= nil, "backed shown")
 H.ok(header:find("1 violated", 1, true) ~= nil, "violated shown")
 H.ok(header:find("files on disk", 1, true) ~= nil, "the disk caveat travels with every render")
@@ -68,8 +68,7 @@ H.ok(header:find("files on disk", 1, true) ~= nil, "the disk caveat travels with
 -- claims are simply absent from it, "0 missing · 0 violated" reads as a clean
 -- bill of health for claims nothing ever looked at.
 local SRC2 = {
-  "# mixed",
-  "  files src/*",
+  "feature mixed",
   "  contains",
   "    src/app.lua:go",
   "    src/thing.py:handle", -- no lua resolver

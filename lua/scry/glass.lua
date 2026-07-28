@@ -32,15 +32,15 @@ end
 -- compose / split
 -- ---------------------------------------------------------------------------
 
--- Interleave holdout never-blocks into their concerns: after a concern's
--- last line in the map, before the next concern header.
+-- Interleave holdout never-blocks into their features: after a feature's
+-- last line in the map, before the next feature header.
 ---@param map_lines string[]
 ---@param holdout_lines string[]
 ---@return string[]
 function M.compose(map_lines, holdout_lines)
   local mapmod = require("scry.map")
 
-  -- Collect each holdout concern's never block lines (header excluded).
+  -- Collect each holdout feature's never block lines (header excluded).
   local never_blocks = {} -- name -> lines
   do
     local current, collecting = nil, false
@@ -50,7 +50,7 @@ function M.compose(map_lines, holdout_lines)
     -- on the way back in, and patterns would vanish from the glass.
     local held = {}
     for _, line in ipairs(holdout_lines) do
-      local name = line:match("^# (.+)$")
+      local name = line:match("^feature%s+(.+)$")
       if name then
         current = vim.trim(name)
         collecting = false
@@ -79,11 +79,11 @@ function M.compose(map_lines, holdout_lines)
   local m = mapmod.parse(map_lines)
   local emitted = {}
   for i, line in ipairs(map_lines) do
-    -- before the NEXT concern header (or EOF), flush the current concern's nevers
-    local name = line:match("^# (.+)$")
+    -- before the NEXT feature header (or EOF), flush the current feature's nevers
+    local name = line:match("^feature%s+(.+)$")
     if name then
-      -- find which concern (if any) we're leaving
-      for _, c in ipairs(m.concerns) do
+      -- find which feature (if any) we're leaving
+      for _, c in ipairs(m.features) do
         if c.lnum < i and not emitted[c.name] and never_blocks[vim.trim(c.name)] then
           vim.list_extend(out, never_blocks[c.name])
           emitted[c.name] = true
@@ -92,16 +92,16 @@ function M.compose(map_lines, holdout_lines)
     end
     out[#out + 1] = line
   end
-  for _, c in ipairs(m.concerns) do
+  for _, c in ipairs(m.features) do
     if not emitted[c.name] and never_blocks[c.name] then
       vim.list_extend(out, never_blocks[c.name])
       emitted[c.name] = true
     end
   end
-  -- holdout concerns with no map concern: append whole
+  -- holdout features with no map feature: append whole
   for name, block in pairs(never_blocks) do
-    if not emitted[name] and not mapmod.concern(m, name) then
-      out[#out + 1] = "# " .. name
+    if not emitted[name] and not mapmod.feature(m, name) then
+      out[#out + 1] = "feature " .. name
       vim.list_extend(out, block)
     end
   end
@@ -113,7 +113,7 @@ end
 ---@return string[] map_lines, string[] holdout_lines, integer never_count
 function M.split(lines)
   local map_lines, holdout_lines = {}, {}
-  local current_concern = nil
+  local current_feature = nil
   local emitted_holdout_header = {}
   local in_never = false
   local never_count = 0
@@ -130,18 +130,18 @@ function M.split(lines)
   end
 
   for _, line in ipairs(lines) do
-    local name = line:match("^# (.+)$")
+    local name = line:match("^feature%s+(.+)$")
     if name then
       flush_held(map_lines)
-      current_concern = vim.trim(name)
+      current_feature = vim.trim(name)
       in_never = false
       map_lines[#map_lines + 1] = line
     elseif line:match("^  never%s*$") then
       flush_held(map_lines)
       in_never = true
-      if current_concern and not emitted_holdout_header[current_concern] then
-        holdout_lines[#holdout_lines + 1] = "# " .. current_concern
-        emitted_holdout_header[current_concern] = true
+      if current_feature and not emitted_holdout_header[current_feature] then
+        holdout_lines[#holdout_lines + 1] = "feature " .. current_feature
+        emitted_holdout_header[current_feature] = true
       end
       holdout_lines[#holdout_lines + 1] = line
     elseif in_never and line:match("^%s*$") then
@@ -157,7 +157,7 @@ function M.split(lines)
     end
   end
   flush_held(map_lines)
-  -- A concern that exists ONLY in the holdout leaves a bare "# name" line in
+  -- A feature that exists ONLY in the holdout leaves a bare header line in
   -- map_lines with no content; keep it — harmless, and round-trip stable.
   return map_lines, holdout_lines, never_count
 end
@@ -178,16 +178,37 @@ function M.render()
   local mapmod = require("scry.map")
   local prov = require("scry.provenance")
   local debt = require("scry.debt")
+  local feat = require("scry.feature")
   vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
 
   state.map = combined_map()
   state.debt = debt.count(state.map, state.report, state.root)
 
-  -- header (virt_lines above line 1)
+  -- header (virt_lines above line 1); it is two lines now — features, then
+  -- the claim-level evidence behind them
+  local header = {}
+  for _, line in ipairs(vim.split(debt.header(state.debt, state.report and state.report.at), "\n", { plain = true })) do
+    header[#header + 1] = { { line, "ScryHeader" } }
+  end
   pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, 0, 0, {
-    virt_lines = { { { debt.header(state.debt, state.report and state.report.at), "ScryHeader" } } },
+    virt_lines = header,
     virt_lines_above = true,
   })
+
+  -- Each feature carries the state its evidence adds up to. This is the line
+  -- a reader actually scans, so it gets the strongest rendering on the page.
+  for _, feature in ipairs(state.map.features) do
+    local v = feat.verdict(feature, state.report)
+    local hl = (v.state == "done" and "ScryBacked")
+      or (v.state == "broken" and "ScryDiverged")
+      or (v.state == "partial" and "ScryUnratified")
+      or (v.state == "absent" and "ScryDiverged")
+      or "ScryEvidence"
+    pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, feature.lnum - 1, 0, {
+      virt_text = { { "   " .. v.label, hl } },
+      virt_text_pos = "eol",
+    })
+  end
 
   for _, claim in ipairs(state.map.claims) do
     local parts = {}

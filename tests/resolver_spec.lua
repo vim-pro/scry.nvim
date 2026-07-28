@@ -12,13 +12,21 @@ local map = require("scry.map")
 
 local m = map.load(H.fixture .. "/map.scry")
 local hold = map.load(H.fixture .. "/holdout.scry")
-local ctx = { root = H.fixture, globs = m.concerns[1].globs }
+local S1 = "a user can start a session"
+local S2 = "a session can be refreshed"
+
+-- Each feature scopes its own claims now, so the ctx is per-feature and
+-- derived — never a declared glob.
+local function ctx_for(feature_name)
+  local f = map.feature(m, feature_name) or map.feature(hold, feature_name)
+  return { root = H.fixture, globs = f and map.footprint(f) or {} }
+end
 
 -- Collect verdicts for a list of claims synchronously.
 local function decide(claims)
   local out, pending = {}, #claims
   for _, claim in ipairs(claims) do
-    resolver.check(ts_rg, ctx, claim, function(v)
+    resolver.check(ts_rg, ctx_for(claim.feature), claim, function(v)
       out[map.claim_id(claim)] = v
       pending = pending - 1
     end)
@@ -30,10 +38,20 @@ local function decide(claims)
 end
 
 local verdicts = decide(m.claims)
+-- The holdout carries only never-patterns, which locate nothing; their scope
+-- comes from the map feature of the same name.
 local hv = decide(hold.claims)
 
 local function v(kind, target)
-  return verdicts["auth\1" .. kind .. "\1" .. target] or hv["auth\1" .. kind .. "\1" .. target]
+  for _, feature in ipairs({ S1, S2 }) do
+    local id = feature .. "\1" .. kind .. "\1" .. target
+    if verdicts[id] then
+      return verdicts[id]
+    end
+    if hv[id] then
+      return hv[id]
+    end
+  end
 end
 
 -- contains
@@ -62,12 +80,12 @@ H.eq(viol.evidence[1].path, "lua/auth.lua", "evidence path")
 H.eq(viol.evidence[1].lnum, 9, "evidence line number")
 H.ok(viol.evidence[1].text:find("logging.debug", 1, true) ~= nil, "evidence text")
 local clean = v("never", "io\\.write")
-H.eq(clean.status, "clean", "io.write clean (logging.lua is outside the concern's files)")
+H.eq(clean.status, "clean", "io.write clean (logging.lua is outside the feature's files)")
 H.eq(clean.label, "✓ no matches (rg)", "clean label states rg fidelity")
 
 -- non-lua contains → unchecked, never ✓
 local unch = {}
-resolver.check(ts_rg, ctx, { kind = "contains", target = "src/main.rs:run", concern = "auth" }, function(x)
+resolver.check(ts_rg, ctx, { kind = "contains", target = "src/main.rs:run", feature = "a user can start a session" }, function(x)
   unch = x
 end)
 H.ok(H.wait(function()

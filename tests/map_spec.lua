@@ -5,8 +5,7 @@ local H = dofile(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .
 local map = require("scry.map")
 
 local SRC = {
-  "# providers",
-  "  files lua/conjurer/providers/*.lua, lua/extra/*.lua",
+  "feature providers",
   "",
   "  The provider layer turns a Request into text and calls back once",
   "  on the main loop. Transport only: no UI, no lists.",
@@ -19,9 +18,9 @@ local SRC = {
   "  never",
   "    vim\\.ui\\.",
   "",
-  "some stray prose at concern level",
+  "some stray prose at feature level",
   "",
-  "# empty concern",
+  "feature empty feature",
   "  just prose here, no claims",
 }
 
@@ -34,12 +33,12 @@ for i = 1, #SRC do
 end
 
 -- 2) structure
-H.eq(#m.concerns, 2, "two concerns")
-H.eq(m.concerns[1].name, "providers", "concern name")
-H.eq(#m.concerns[1].globs, 2, "two file globs")
-H.eq(m.concerns[1].globs[2], "lua/extra/*.lua", "glob trimmed")
+H.eq(#m.features, 2, "two features")
+H.eq(m.features[1].name, "providers", "feature name")
+H.eq(#m.features[1].globs, 2, "two file globs")
+H.eq(m.features[1].globs[2], "lua/extra/*.lua", "glob trimmed")
 H.eq(#m.claims, 4, "four claims total")
-H.eq(#m.concerns[2].claims, 0, "prose-only concern has no claims")
+H.eq(#m.features[2].claims, 0, "prose-only feature has no claims")
 
 -- 3) claim details
 local c1, c2, c3, c4 = m.claims[1], m.claims[2], m.claims[3], m.claims[4]
@@ -52,7 +51,7 @@ H.eq(c2.stamp, nil, "unstamped claim")
 H.eq(c3.kind, "calls", "calls section")
 H.eq(c4.kind, "never", "never section")
 H.eq(c4.target, "vim\\.ui\\.", "never target is the verbatim pattern")
-H.eq(c4.concern, "providers", "claims know their concern")
+H.eq(c4.feature, "providers", "claims know their feature")
 
 -- 4) blank line ends a section: prose after the never block is not a claim
 H.eq(m.claims[#m.claims].target, "vim\\.ui\\.", "stray prose never became a claim")
@@ -63,7 +62,7 @@ H.eq(m.claims[#m.claims].target, "vim\\.ui\\.", "stray prose never became a clai
 local weird = map.parse({
   "?????",
   "   ",
-  "# c",
+  "feature c",
   "  contains",
   "    real.lua:sym",
   "not-indented-enough",
@@ -78,12 +77,12 @@ H.eq(weird.claims[1].target, "real.lua:sym", "the real claim survived its weird 
 local prov = require("scry.provenance")
 local root = vim.fn.tempname()
 vim.fn.mkdir(root, "p")
-local m2 = map.parse({ "# a", "  contains", "    x.lua:one" })
+local m2 = map.parse({ "feature a", "  contains", "    x.lua:one" })
 local claim = m2.claims[1]
 H.eq(prov.owned(root, claim), false, "an untouched claim is not owned")
 prov.record(root, claim, "authored")
 H.eq(prov.owned(root, claim), true, "authoring is ownership")
-claim = { kind = claim.kind, target = "x.lua:two", concern = claim.concern, lnum = claim.lnum }
+claim = { kind = claim.kind, target = "x.lua:two", feature = claim.feature, lnum = claim.lnum }
 H.eq(prov.owned(root, claim), false, "an edited claim's trail is void")
 prov.record(root, claim, "conjured")
 H.eq(prov.owned(root, claim), false, "conjuring alone is not ownership")
@@ -91,7 +90,7 @@ prov.record(root, claim, "green")
 H.eq(prov.owned(root, claim), true, "conjured and came true is ownership")
 -- stamps from the ratification era still PARSE (legacy lines are claims with
 -- a stamp field), they just no longer mean anything
-local legacy = map.parse({ "# a", "  contains", "    x.lua:one  -- @w0zro 2026-07-26 abc123" })
+local legacy = map.parse({ "feature a", "  contains", "    x.lua:one  -- @w0zro 2026-07-26 abc123" })
 H.eq(legacy.claims[1].target, "x.lua:one", "legacy stamped claim still parses to its target")
 H.eq(legacy.claims[1].stamp.user, "w0zro", "and keeps its stamp as data")
 

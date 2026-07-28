@@ -16,9 +16,9 @@ local M = {}
 -- process exits 0 either way.
 --
 -- Individual verdicts can't see this, because each claim is checked alone. So
--- it is a pass over the settled report: within a concern, a passing spec is
+-- it is a pass over the settled report: within a feature, a passing spec is
 -- downgraded when EVERY structural claim there is still absent. Deliberately
--- conservative — a concern that is half-built has plenty for a spec to
+-- conservative — a feature that is half-built has plenty for a spec to
 -- legitimately exercise, and a false "vacuous" would train you to ignore it.
 ---@param map_ scry.Map
 ---@param report scry.Report
@@ -28,8 +28,8 @@ local function gate_vacuity(map_, report)
   for _, claim in ipairs(map_.claims) do
     local v = report.verdicts[mapmod.claim_id(claim)]
     if claim.kind == "contains" then
-      structural[claim.concern] = structural[claim.concern] or { total = 0, absent = 0 }
-      local s = structural[claim.concern]
+      structural[claim.feature] = structural[claim.feature] or { total = 0, absent = 0 }
+      local s = structural[claim.feature]
       s.total = s.total + 1
       if v and v.status == "missing" then
         s.absent = s.absent + 1
@@ -39,12 +39,12 @@ local function gate_vacuity(map_, report)
     end
   end
   for _, claim in ipairs(exercised) do
-    local s = structural[claim.concern]
+    local s = structural[claim.feature]
     if s and s.total > 0 and s.absent == s.total then
       report.verdicts[mapmod.claim_id(claim)] = {
         status = "unchecked",
         fidelity = "run",
-        label = "– vacuous? it passes, and nothing this concern claims exists yet",
+        label = "– vacuous? it passes, and nothing this feature claims exists yet",
       }
     end
   end
@@ -63,7 +63,7 @@ function M.run(map_, opts, cb)
   local function settle()
     report.at = os.time()
     -- Only meaningful over a whole map; a partial check (the cascade's
-    -- scoped re-check) has no view of the concern's other claims.
+    -- scoped re-check) has no view of the feature's other claims.
     if not opts.claims then
       gate_vacuity(map_, report)
     end
@@ -76,9 +76,18 @@ function M.run(map_, opts, cb)
     return
   end
 
+  -- A claim is checked in the scope of its own feature's footprint: the
+  -- files that feature's located claims name. Derived, so it cannot drift
+  -- from the claims it describes — and empty when a feature locates
+  -- nothing, which the resolver reports rather than papering over by
+  -- searching the whole project.
+  local scope = {}
+  for _, feature in ipairs(map_.features) do
+    scope[feature.name] = mapmod.footprint(feature)
+  end
+
   for _, claim in ipairs(claims) do
-    local concern = mapmod.concern(map_, claim.concern)
-    local ctx = { root = opts.root, globs = concern and concern.globs or {} }
+    local ctx = { root = opts.root, globs = scope[claim.feature] or {} }
     require("scry.resolver").check(resolver, ctx, claim, function(verdict)
       report.verdicts[mapmod.claim_id(claim)] = verdict
       pending = pending - 1

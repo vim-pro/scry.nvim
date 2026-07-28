@@ -46,7 +46,7 @@ vim.api.nvim_create_user_command("ScryCheck", function()
 end, { desc = "Re-check every claim against the files on disk" })
 
 vim.api.nvim_create_user_command("ScryExercise", function(a)
-  require("scry.run").start({ concern = a.args ~= "" and a.args or nil })
+  require("scry.run").start({ feature = a.args ~= "" and a.args or nil })
 end, { nargs = "?", desc = "Run the specs behind this map's exercises claims, then re-check" })
 
 return M

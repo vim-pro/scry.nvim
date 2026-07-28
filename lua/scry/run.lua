@@ -9,18 +9,18 @@
 local M = {}
 
 --- Every distinct spec named by the map's `exercises` claims, each carrying
---- the UNION of the globs of every concern that exercises it. Two claims on
---- one file are one execution, and its recorded dependencies cover both
---- concerns' scopes — otherwise each would keep invalidating the other's
---- result.
+--- the UNION of the footprints of every feature that exercises it. Two
+--- claims on one file are one execution, and its recorded dependencies
+--- cover both features' scopes — otherwise each would keep invalidating the
+--- other's result.
 ---@param map_ scry.Map
----@param only_concern string? Restrict to one concern.
+---@param only_feature string? Restrict to one feature.
 ---@return { spec: string, globs: string[] }[]
-function M.specs(map_, only_concern)
+function M.specs(map_, only_feature)
   local mapmod = require("scry.map")
   local out, index = {}, {}
   for _, claim in ipairs(map_.claims) do
-    if claim.kind == "exercises" and (not only_concern or claim.concern == only_concern) then
+    if claim.kind == "exercises" and (not only_feature or claim.feature == only_feature) then
       local spec = claim.target:match("^([^:]+):") or claim.target
       local entry = index[spec]
       if not entry then
@@ -28,8 +28,8 @@ function M.specs(map_, only_concern)
         index[spec] = entry
         out[#out + 1] = entry
       end
-      local concern = mapmod.concern(map_, claim.concern)
-      for _, g in ipairs(concern and concern.globs or {}) do
+      local feature = mapmod.feature(map_, claim.feature)
+      for _, g in ipairs(feature and mapmod.footprint(feature) or {}) do
         if not entry._seen[g] then
           entry._seen[g] = true
           entry.globs[#entry.globs + 1] = g
@@ -76,8 +76,8 @@ function M.one(root, spec, config, deps, cb)
   end)
 end
 
---- Run every spec the map exercises (or one concern's), then re-check.
----@param opts { concern: string? }?
+--- Run every spec the map exercises (or one feature's), then re-check.
+---@param opts { feature: string? }?
 function M.start(opts)
   opts = opts or {}
   local glass = require("scry.glass")
@@ -88,7 +88,7 @@ function M.start(opts)
   end
   local config = require("scry").config
   local map_ = require("scry.map").parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false))
-  local specs = M.specs(map_, opts.concern)
+  local specs = M.specs(map_, opts.feature)
   if #specs == 0 then
     vim.notify("[scry] no exercises claims to run")
     return

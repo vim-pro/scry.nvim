@@ -29,13 +29,14 @@ for _, c in ipairs(m.claims) do
   end
 end
 H.ok(absent ~= nil, "found the absent claim to cascade")
+local FEATURE = absent.feature
 
 -- 1) build() is pure and shaped right
 local built = cascade.build(absent, "define refresh_token using the session store")
 H.eq(built.file, "lua/auth.lua", "target file extracted")
 H.eq(built.symbol, "refresh_token", "target symbol extracted")
 H.eq(#built.items, 1, "one seeded entry")
-H.eq(built.items[1].user_data.scry.concern, "auth", "entry carries scry's own user_data")
+H.eq(built.items[1].user_data.scry.feature, "a session can be refreshed", "entry carries scry's own user_data")
 H.eq(built.items[1].user_data.scry.target, absent.target, "and the claim it came from")
 H.eq(#vim.fn.getqflist({ items = 1 }).items, 0, "build() wrote nothing to the list (pure)")
 
@@ -75,47 +76,47 @@ H.eq(pcall(cascade.build, never_claim, "x"), false, "cascade refuses a never cla
 
 -- 4a) an exercises claim cascades into a CHECK. The entry text asks for a
 -- spec and carries the assertion — nothing about how to implement anything.
-local ex = { kind = "exercises", target = "tests/auth_spec.lua:refresh reissues a session", concern = "auth" }
+local ex = { kind = "exercises", target = "tests/auth_spec.lua:refresh reissues a session", feature = "a session can be refreshed" }
 local ex_built = cascade.build(ex, "write a spec asserting refresh reissues a session")
 H.eq(ex_built.kind, "exercises", "the build knows which rung it is on")
 H.eq(ex_built.file, "tests/auth_spec.lua", "the spec path is the target file")
 H.eq(ex_built.symbol, "refresh reissues a session", "the assertion label survives")
 H.ok(ex_built.items[1].text:find("needs a spec", 1, true) ~= nil, "asks for a check: " .. ex_built.items[1].text)
 H.eq(
-  cascade.build({ kind = "exercises", target = "tests/x_spec.lua", concern = "auth" }, "i").file,
+  cascade.build({ kind = "exercises", target = "tests/x_spec.lua", feature = "a session can be refreshed" }, "i").file,
   "tests/x_spec.lua",
   "a claim naming only a file still builds"
 )
 
--- 4b) the tripwire is SCOPED to the concern being cascaded. A different
--- concern's prohibition is never checked against this code (nevers run over
--- their own concern's globs), so treating it as a leak would block honest
--- work — a word one concern forbids is often another's whole vocabulary.
+-- 4b) the tripwire is SCOPED to the feature being cascaded. A different
+-- feature's prohibition is never checked against this code (nevers run over
+-- their own feature's footprint), so treating it as a leak would block honest
+-- work — a word one feature forbids is often another's whole vocabulary.
 vim.fn.writefile({
-  "# auth",
+  "feature " .. FEATURE,
   "  never",
   "    logging\\.debug",
   "",
-  "# billing",
+  "feature billing",
   "  never",
-  "    token", -- 'token' is auth's vocabulary, billing's prohibition
+  "    token", -- 'token' is this feature's vocabulary, billing's prohibition
 }, work .. "/holdout.scry")
 H.eq(
   pcall(cascade.seed, work, absent, "define refresh_token from the stored token", false),
   true,
-  "a foreign concern's prohibition does not block this cascade"
+  "a foreign feature's prohibition does not block this cascade"
 )
--- ...while this concern's own prohibition still does
-vim.fn.writefile({ "# auth", "  never", "    refresh_token" }, work .. "/holdout.scry")
+-- ...while this feature's own prohibition still does
+vim.fn.writefile({ "feature " .. FEATURE, "  never", "    refresh_token" }, work .. "/holdout.scry")
 H.eq(
   pcall(cascade.seed, work, absent, "define refresh_token", false),
   false,
-  "the concern's own prohibition still trips the tripwire"
+  "the feature's own prohibition still trips the tripwire"
 )
 -- restore the fixture holdout for the rest of the spec
 vim.fn.writefile(vim.fn.readfile(H.fixture .. "/holdout.scry"), work .. "/holdout.scry")
 
--- 4c) INDEPENDENCE OF THE CHECK. When conjuring code, the concern's spec
+-- 4c) INDEPENDENCE OF THE CHECK. When conjuring code, the feature's spec
 -- paths are withheld too. A code request that names the test is a request to
 -- satisfy the test — which is the one thing an acceptance check must not be
 -- written to do, and the reason a conjured test is worth anything at all.
@@ -125,7 +126,7 @@ vim.fn.writefile(vim.list_extend(vim.deepcopy(base), { "  exercises", "    tests
 H.eq(
   pcall(cascade.seed, work, absent, "make tests/auth_spec.lua pass", false),
   false,
-  "an intent naming the concern's spec trips the tripwire"
+  "an intent naming the feature's spec trips the tripwire"
 )
 H.eq(
   pcall(cascade.seed, work, absent, "define refresh_token from the stored session", false),
@@ -137,7 +138,7 @@ H.eq(
   pcall(cascade.seed, work, {
     kind = "exercises",
     target = "tests/auth_spec.lua",
-    concern = "auth",
+    feature = "a session can be refreshed",
   }, "write a spec for tests/auth_spec.lua", false),
   true,
   "the spec's own cascade is not blocked by its own path"
@@ -203,11 +204,11 @@ H.ok(joined:find("VIOLATED", 1, true) ~= nil, "the withheld prohibition caught t
 H.ok(joined:find("logging", 1, true) ~= nil, "the violated pattern is named")
 H.ok(joined:find("lua/auth.lua:", 1, true) ~= nil, "with evidence: file and line")
 
--- 5b) the re-check is SCOPED to the concern's files. The concern's globs live
+-- 5b) the re-check is SCOPED to the feature's files. The feature's globs live
 -- in the map and its prohibitions in the holdout, so checking the holdout
 -- alone would leave claims unscoped and report violations in files the
--- concern doesn't own — a false violation costs more trust than a missed one.
-local outsider = work .. "/lua/logging.lua" -- outside `files lua/auth.lua`
+-- feature doesn't own — a false violation costs more trust than a missed one.
+local outsider = work .. "/lua/logging.lua" -- outside the feature's footprint
 local ol = vim.fn.readfile(outsider)
 table.insert(ol, #ol, 'local _unused = "logging.debug appears here too"')
 vim.fn.writefile(ol, outsider)
@@ -225,7 +226,7 @@ H.wait(function()
 end, 1500)
 vim.notify = rn
 for _, w in ipairs(warned2) do
-  H.ok(w:find("logging.lua", 1, true) == nil, "no violation reported outside the concern's files")
+  H.ok(w:find("logging.lua", 1, true) == nil, "no violation reported outside the feature's files")
 end
 
 -- 6) the settle path: the seeding claim flips absent → defined on disk

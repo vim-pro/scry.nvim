@@ -33,7 +33,7 @@ function M.check()
   local map_path = root .. "/" .. config.map_path
   if vim.fn.filereadable(map_path) == 1 then
     local m = require("scry.map").load(map_path)
-    health.ok(("map: %s (%d concerns, %d claims)"):format(config.map_path, #m.concerns, #m.claims))
+    health.ok(("map: %s (%d features, %d claims)"):format(config.map_path, #m.features, #m.claims))
   else
     health.info(("map: %s (not created yet — :Scry starts one)"):format(config.map_path))
   end

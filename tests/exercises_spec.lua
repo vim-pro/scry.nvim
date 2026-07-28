@@ -20,8 +20,7 @@ vim.fn.writefile({ "os.exit(0)" }, work .. "/tests/green_spec.lua")
 vim.fn.writefile({ 'io.stderr:write("FAIL: add is wrong\\n")', "os.exit(1)" }, work .. "/tests/red_spec.lua")
 
 local SRC = {
-  "# calc",
-  "  files lua/*.lua",
+  "feature calc",
   "",
   "  exercises",
   "    tests/green_spec.lua",
@@ -38,7 +37,7 @@ H.eq(m.claims[1].target, "tests/green_spec.lua", "target is the spec path")
 local ctx = { root = work, globs = { "lua/*.lua" } }
 local function verdict_for(target)
   local v
-  resolver.check_exercises(ctx, { kind = "exercises", target = target, concern = "calc" }, function(res)
+  resolver.check_exercises(ctx, { kind = "exercises", target = target, feature = "calc" }, function(res)
     v = res
   end)
   H.ok(H.wait(function()
@@ -104,7 +103,7 @@ H.ok(
   "the reason travels with the verdict"
 )
 
--- 6) STALENESS. Touch a file in the concern's scope and the pass stops being
+-- 6) STALENESS. Touch a file in the feature's scope and the pass stops being
 -- reported as a pass. This is the failure mode that matters: a green verdict
 -- from before your last edit looks like the strongest thing scry renders.
 vim.fn.writefile({ "local M = {}", "-- edited", "return M" }, work .. "/lua/calc.lua")
@@ -113,8 +112,8 @@ H.eq(v.status, "unchecked", "a pass from before the edit is no longer a pass")
 H.ok(v.label:find("stale", 1, true) ~= nil, "and names the reason: " .. v.label)
 
 -- ...and it lands in the unchecked column rather than vanishing from the count
-local d = require("scry.debt").count(map.parse({ "# calc", "  files lua/*.lua", "  exercises", "    tests/green_spec.lua" }), nil)
-H.eq(d.unchecked, 1, "unrun/stale claims are counted, not omitted")
+local d = require("scry.debt").count(map.parse({ "feature calc", "  contains", "    lua/calc.lua:add", "  exercises", "    tests/green_spec.lua" }), nil)
+H.eq(d.unchecked, 2, "unrun/stale claims are counted, not omitted")
 H.eq(d.backed + d.missing + d.violated + d.unchecked, d.claims, "the columns still account for everything")
 
 -- 7) a labelled assertion must exist in the spec's source
@@ -137,14 +136,14 @@ H.ok(v.label:find("no assertion", 1, true) ~= nil, "named precisely: " .. v.labe
 
 -- 8) run.specs dedupes: two claims on one file are one execution
 local m2 = map.parse({
-  "# calc",
+  "feature calc",
   "  exercises",
   "    tests/green_spec.lua:one",
   "    tests/green_spec.lua:two",
   "    tests/red_spec.lua",
 })
 H.eq(#run.specs(m2), 2, "two distinct spec files, not three runs")
-H.eq(#run.specs(m2, "nope"), 0, "and a concern filter narrows it")
+H.eq(#run.specs(m2, "nope"), 0, "and a feature filter narrows it")
 
 -- 9) THE VACUITY GATE. A spec written before the code must fail; one that
 -- passes while nothing it should exercise exists is asserting nothing. The
@@ -156,8 +155,7 @@ vim.fn.mkdir(vac .. "/tests", "p")
 vim.fn.writefile({ "os.exit(0)" }, vac .. "/tests/eager_spec.lua")
 vim.fn.writefile({ "local M = {}", "return M" }, vac .. "/lua/thing.lua")
 local mv = map.parse({
-  "# unbuilt",
-  "  files lua/*.lua",
+  "feature unbuilt",
   "  contains",
   "    lua/thing.lua:not_written_yet",
   "  exercises",
@@ -187,11 +185,11 @@ H.ok(H.wait(function()
   return rv ~= nil
 end, 10000), "checked")
 local gated = rv.verdicts[map.claim_id(mv.claims[2])]
-H.eq(gated.status, "unchecked", "a green spec over an unbuilt concern is not a pass")
+H.eq(gated.status, "unchecked", "a green spec over an unbuilt feature is not a pass")
 H.ok(gated.label:find("vacuous", 1, true) ~= nil, "and is named as such: " .. gated.label)
 
--- ...and the gate stays quiet once the concern is actually built. A
--- half-finished concern has plenty for a spec to legitimately exercise; a
+-- ...and the gate stays quiet once the feature is actually built. A
+-- half-finished feature has plenty for a spec to legitimately exercise; a
 -- false "vacuous" would teach you to ignore the real one.
 vim.fn.writefile({ "local M = {}", "function M.not_written_yet() end", "return M" }, vac .. "/lua/thing.lua")
 run.one(vac, "tests/eager_spec.lua", require("scry").config, vac_deps(), function() end)

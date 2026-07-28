@@ -22,7 +22,7 @@ local M = {}
 
 ---@class scry.Ctx
 ---@field root string Absolute project root.
----@field globs string[] The concern's files globs (rg -g syntax).
+---@field globs string[] The feature's derived footprint (file paths).
 
 ---@class scry.Resolver
 ---@field name string

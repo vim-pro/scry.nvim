@@ -108,7 +108,7 @@ end
 --- Every dependency the CALLER names must match what the run recorded. A path
 --- the run never saw counts as changed — the run didn't account for it, so it
 --- can't vouch for it. Paths the run recorded but the caller doesn't ask about
---- are ignored, which is what lets two concerns with different scopes share
+--- are ignored, which is what lets two features with different scopes share
 --- one spec without permanently invalidating each other.
 ---@param run scry.Run
 ---@param root string
@@ -127,9 +127,9 @@ function M.stale(run, root, deps)
   return false
 end
 
---- Expand a concern's globs to repo-relative files (via rg, which already
+--- Expand a feature's globs to repo-relative files (via rg, which already
 --- speaks the glob syntax the map documents). Synchronous and small: this
---- runs at check time over one concern.
+--- runs at check time over one feature.
 ---@param root string
 ---@param globs string[]
 ---@return string[]

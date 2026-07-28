@@ -1,14 +1,33 @@
 -- The map: plain text in, structure out, plain text back — byte-identical.
 --
 -- The model keeps the ORIGINAL lines and parses an overlay of references
--- into them (concerns, sections, claims, each carrying its line number).
+-- into them (features, sections, claims, each carrying its line number).
 -- Serialization returns the lines array, so a parse→serialize round trip
--- cannot lose anything: operations that change the map (stamping a claim)
--- edit the line in place and re-parse.
+-- cannot lose anything: operations that change the map edit the line in
+-- place and re-parse.
 --
--- There are no parse errors. A line is a concern header, a files line, a
--- section header, a claim (when inside a section), or prose. Prose is
--- preserved verbatim, never checked, never marked.
+-- There are no parse errors. A line is a feature header, a section header,
+-- a claim (when inside a section), or prose. Prose is preserved verbatim,
+-- never checked, never marked.
+--
+-- ALTITUDE. A feature is a SEA-LEVEL object in Cockburn's sense: one thing
+-- a user of this system can accomplish, named the way they would name it.
+-- His tests — one person, one place, one sitting; can you go to lunch when
+-- it is done; does your standing depend on how many you do — separate it
+-- from the two neighbouring altitudes that ruin a map. Above are summaries
+-- ("the auth system"), which are groupings, not work. Below are
+-- subfunctions ("validate the token"), and those are exactly what claims
+-- already are. Cockburn's warning is the one this grammar is built to
+-- avoid: a hundred pages of subfunctions "did not serve either its writers
+-- or readers", and six user-goal statements replaced them. Claims are
+-- therefore SUBORDINATE to a feature, never promoted alongside it.
+--
+-- FOOTPRINT. A feature's scope is DERIVED — the union of the files its
+-- located claims name — never declared. A glob is a directory, and a
+-- feature is not a directory; it is a hand-picked set of elements
+-- scattered across files (Robillard & Murphy's concern graph). Deriving it
+-- also means the scope cannot drift from the claims it is supposed to
+-- describe.
 --
 -- Claim kinds sit on TWO axes, and the split is not cosmetic:
 --
@@ -29,53 +48,45 @@ local M = {}
 
 ---@class scry.Claim
 ---@field kind "contains"|"calls"|"never"|"exercises"
----@field target string Trimmed claim text, stamp excluded. The canonical
----  form hashed by ratification.
+---@field target string Trimmed claim text, stamp excluded.
 ---@field stamp scry.Stamp?
 ---@field lnum integer 1-based line in the parsed lines array.
----@field concern string
+---@field feature string Name of the feature this claim is evidence for.
 
----@class scry.Concern
----@field name string
+---@class scry.Feature
+---@field name string The sea-level statement, verbatim.
 ---@field lnum integer
----@field globs string[] From the "files" line ({} if none).
 ---@field claims scry.Claim[]
 
 ---@class scry.Map
 ---@field lines string[] The source of truth; serialize() returns these.
----@field concerns scry.Concern[]
----@field claims scry.Claim[] All claims across concerns, in order.
+---@field features scry.Feature[]
+---@field claims scry.Claim[] All claims across features, in order.
 
--- A claim line's optional ratification suffix. The "  -- @" separator is
--- reserved: a never-pattern that needs a literal "-- @user date hex"
--- tail would collide, and the docs say so.
+-- A claim line's optional trail suffix. The "  -- @" separator is
+-- reserved: a never-pattern needing a literal "-- @user date hex" tail
+-- would collide, and the docs say so.
 local STAMP_PAT = "^(.-)%s+%-%- (@%S+) (%d%d%d%d%-%d%d%-%d%d) (%x%x%x%x%x%x)%s*$"
 
 ---@param lines string[]
 ---@return scry.Map
 function M.parse(lines)
-  local map = { lines = lines, concerns = {}, claims = {} }
-  local concern = nil
+  local map = { lines = lines, features = {}, claims = {} }
+  local feature = nil
   local section = nil -- current claim kind, or nil
 
   for lnum, line in ipairs(lines) do
-    local name = line:match("^# (.+)$")
+    local name = line:match("^feature%s+(.+)$")
     if name then
-      concern = { name = vim.trim(name), lnum = lnum, globs = {}, claims = {} }
-      table.insert(map.concerns, concern)
+      feature = { name = vim.trim(name), lnum = lnum, claims = {} }
+      table.insert(map.features, feature)
       section = nil
-    elseif concern then
-      local globs = line:match("^  files%s+(.+)$")
+    elseif feature then
       local sec = line:match("^  (contains)%s*$")
         or line:match("^  (calls)%s*$")
         or line:match("^  (never)%s*$")
         or line:match("^  (exercises)%s*$")
-      if globs then
-        for g in globs:gmatch("[^,]+") do
-          table.insert(concern.globs, vim.trim(g))
-        end
-        section = nil
-      elseif sec then
+      if sec then
         section = sec
       elseif section and line:match("^    %S") then
         local body = line:match("^    (.-)%s*$")
@@ -85,9 +96,9 @@ function M.parse(lines)
           target = target and vim.trim(target) or body,
           stamp = user and { user = user:sub(2), date = date, hash = hash } or nil,
           lnum = lnum,
-          concern = concern.name,
+          feature = feature.name,
         }
-        table.insert(concern.claims, claim)
+        table.insert(feature.claims, claim)
         table.insert(map.claims, claim)
       elseif not line:match("^%s*$") and not line:match("^    ") then
         -- A DEDENTED non-blank line ends the section; the line is prose.
@@ -103,6 +114,38 @@ function M.parse(lines)
     end
   end
   return map
+end
+
+--- The file a claim names, if it names one. `contains path:symbol` and
+--- `exercises path[:label]` locate themselves; `calls` carries a hint, not
+--- a path, and `never` is a pattern — neither contributes a location.
+---@param claim scry.Claim
+---@return string?
+function M.claim_path(claim)
+  if claim.kind == "contains" then
+    return (claim.target:match("^(.-):[%w_.]+$"))
+  elseif claim.kind == "exercises" then
+    return claim.target:match("^([^:]+):") or claim.target
+  end
+  return nil
+end
+
+--- A feature's footprint: the files its located claims name, in order of
+--- first appearance and deduplicated. Empty is meaningful — a feature that
+--- locates nothing cannot scope a prohibition, and the resolver says so
+--- rather than searching the whole project.
+---@param feature scry.Feature
+---@return string[]
+function M.footprint(feature)
+  local out, seen = {}, {}
+  for _, claim in ipairs(feature.claims) do
+    local path = M.claim_path(claim)
+    if path and not seen[path] then
+      seen[path] = true
+      out[#out + 1] = path
+    end
+  end
+  return out
 end
 
 --- The stored text is the truth; serialization is identity.
@@ -129,14 +172,14 @@ function M.load(path)
   return M.parse(lines)
 end
 
---- Find a concern by name.
+--- Find a feature by name.
 ---@param map scry.Map
 ---@param name string
----@return scry.Concern?
-function M.concern(map, name)
-  for _, c in ipairs(map.concerns) do
-    if c.name == name then
-      return c
+---@return scry.Feature?
+function M.feature(map, name)
+  for _, f in ipairs(map.features) do
+    if f.name == name then
+      return f
     end
   end
 end
@@ -145,7 +188,7 @@ end
 ---@param claim scry.Claim
 ---@return string
 function M.claim_id(claim)
-  return claim.concern .. "\1" .. claim.kind .. "\1" .. claim.target
+  return claim.feature .. "\1" .. claim.kind .. "\1" .. claim.target
 end
 
 return M

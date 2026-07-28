@@ -4,6 +4,8 @@
 --   contains ✓ defined          a named definition node exists in that file
 --   calls    ✓ referenced (text) the token occurs; not a resolved call
 --   never    ✓ no matches (rg)   no textual match; not absence of behavior
+-- Scope for the text checks is the feature's derived footprint, never a
+-- declared glob — see scry.map.footprint.
 -- Violations carry evidence lines and ARE certain; clean is evidence only.
 local M = {
   name = "ts_rg",
@@ -112,7 +114,9 @@ local function to_evidence(lines, limit)
   return ev
 end
 
--- Glob args for a concern's files.
+-- Scope args for a feature's footprint. The entries are file paths derived
+-- from the feature's own claims, and rg -g accepts a literal path as a
+-- glob, so no translation is needed.
 local function glob_args(globs)
   local args = {}
   for _, g in ipairs(globs) do
@@ -150,7 +154,7 @@ function M.check_contains(ctx, claim, cb)
 end
 
 --- calls: `[hint::]symbol` — symbol defined in files matching hint, AND
---- referenced (textually) from the concern's files.
+--- referenced (textually) from the feature's own files.
 function M.check_calls(ctx, claim, cb)
   local hint, symbol = claim.target:match("^(.-)::([%w_.]+)$")
   if not hint then
@@ -180,7 +184,15 @@ function M.check_calls(ctx, claim, cb)
         cb({ status = "missing", fidelity = "ts-def", label = "✗ absent" })
         return
       end
-      -- Reference side: the concern's files mention the symbol at all.
+      -- Reference side: the feature's own files mention the symbol at all.
+      if #ctx.globs == 0 then
+        cb({
+          status = "unchecked",
+          fidelity = "none",
+          label = "– unscoped (this feature locates nothing yet)",
+        })
+        return
+      end
       local args = vim.list_extend({ "--word-regexp", "-F", symbol }, glob_args(ctx.globs))
       rg(args, ctx.root, function(lines, code)
         if code == 2 then
@@ -200,10 +212,21 @@ function M.check_calls(ctx, claim, cb)
   end)
 end
 
---- never: a verbatim rg regex with zero matches in the concern's files.
+--- never: a verbatim rg regex with zero matches in the feature's footprint.
 --- A violation is CERTAIN (evidence attached); a clean result is evidence
 --- of textual absence, not proof of behavioral absence.
 function M.check_never(ctx, claim, cb)
+  -- No footprint means this feature locates nothing, so there is nowhere to
+  -- look. Searching the whole project instead would answer a question
+  -- nobody asked and report violations in files the feature does not own.
+  if #ctx.globs == 0 then
+    cb({
+      status = "unchecked",
+      fidelity = "none",
+      label = "– unscoped (this feature locates nothing yet)",
+    })
+    return
+  end
   local args = vim.list_extend({ "-e", claim.target }, glob_args(ctx.globs))
   rg(args, ctx.root, function(lines, code)
     if code == 2 then
