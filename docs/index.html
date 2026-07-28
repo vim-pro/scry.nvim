@@ -940,9 +940,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  col += ether * glow2 * 0.24;",
     "  col += mix(ether, vec3(1.0), 0.35) * glow2 * glow2 * 0.15;",
     "  col += irid * spec * 0.26;",
-    "  float cell = fract(sin(dot(floor(luv * vec2(760.0, 480.0)), vec2(12.9898, 78.233))) * 43758.5453);",
-    "  float flick = sin(uTime * 2.6 + cell * 44.0) * 0.5 + 0.5;",
-    "  col += vec3(0.95, 0.88, 0.62) * step(0.9965, cell) * flick * (spec + h * 0.5 + 0.06) * 0.5;",             // mercury glint on slopes
     "  col += vec3(0.56, 0.70, 0.74) * max(-n.y, 0.0) * 0.02;",   // soft sheen
     "  col += vec3(0.79, 0.66, 0.31) * max(h, 0.0) * 0.025;",      // gold in the crests
     "  for (int i = 0; i < 3; i++) {",
