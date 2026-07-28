@@ -244,7 +244,11 @@ whose dependencies moved degrades to `– stale`.
 
 ## Open questions
 
-- **Divergence** (§2) needs object recovery. Largest gap.
+- **Divergence** (§2) needs object recovery. Largest gap. Dogfooding it did
+  surface one thing first: divergence is file-level while footprints are
+  symbol-derived, so a file that defines nothing could be accused with no
+  remedy available. `contains <path>` with no symbol closes that, at
+  `✓ present (file, no symbol named)` fidelity.
 - **Does the sea-level 2–20 minute test have any analogue** for a library or a
   plugin? The completeness test ("can I go to lunch") probably transfers;
   duration probably does not. The manual drops duration and keeps the other
@@ -253,10 +257,11 @@ whose dependencies moved degrades to `– stale`.
   grouping level; the question reopens when a real map gets long.
 - **Is `– unscoped` right** for a feature carrying prose and prohibitions but
   no located claims, or should that be refused at write time?
-- **`sources` and `map_path` are project-scoped but live in a global
-  `setup()`.** Fine for one repo, wrong for several. Dogfooding scry on
-  itself surfaced this: the right `sources` for scry is not the right one for
-  the next project, and there is nowhere to say so per-project.
+- ~~**`sources` and `map_path` are project-scoped but live in a global
+  `setup()`.**~~ Answered: `.scry/config.json` honours `sources`, `test`,
+  `resolver`, and `map_path`, and refuses `holdout_path`. The refusal is the
+  interesting half — a committed file that could relocate the holdout back
+  into the repo is exactly how you would defeat it.
 - **An unrun `exercises` claim keeps its whole feature out of `done`.** That
   is correct — unrun is not a pass — but it means a map leaning on exercised
   evidence reads as all-building until `:ScryExercise` has run once. Worth

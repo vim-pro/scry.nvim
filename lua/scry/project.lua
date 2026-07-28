@@ -6,12 +6,13 @@
 -- right one for the next, and how to run one project's specs has nothing
 -- to do with how to run another's.
 --
--- So the repo may carry `.scry/config.json`, and exactly three keys are
+-- So the repo may carry `.scry/config.json`, and exactly four keys are
 -- honoured from it:
 --
 --   sources    which files count as claimable (divergence)
 --   test       how to run ONE spec
 --   resolver   which checking engine this project's languages need
+--   map_path   where in the repo the map lives
 --
 -- Two keys are deliberately REFUSED, and the refusals matter more than the
 -- permissions:
@@ -20,7 +21,10 @@
 --                 generator cannot see it. Letting a committed file
 --                 relocate it into the repo is exactly how you would
 --                 defeat that — by sending someone a project that quietly
---                 publishes its own prohibitions.
+--                 publishes its own prohibitions. Note that `map_path` IS
+--                 honoured, and the asymmetry is the whole point: moving a
+--                 file that is already committed changes nothing about who
+--                 can read it.
 --   author        describes a person, not a repo. Not currently a config
 --                 key at all — provenance retired it — but refused rather
 --                 than merely unknown, so that if it ever returns a repo
@@ -34,7 +38,7 @@ local M = {}
 -- Only these may come from the repo. Anything else in the file is ignored
 -- rather than errored on: a newer scry writing a key this one does not know
 -- should not break the older one.
-local HONOURED = { sources = true, test = true, resolver = true }
+local HONOURED = { sources = true, test = true, resolver = true, map_path = true }
 
 --- Read `.scry/config.json`, if any. Malformed JSON is reported once and
 --- treated as absent — a broken config file must not stop you opening the

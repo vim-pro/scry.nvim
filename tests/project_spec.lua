@@ -32,12 +32,18 @@ config_json({
   sources = { "lua/**/*.lua" },
   test = { cmd = { "./scripts/test" } },
   resolver = "ts_rg",
+  map_path = "docs/product.scry",
 })
 local resolved = project.resolve(work)
 H.eq(resolved.sources[1], "lua/**/*.lua", "the project's sources win")
 H.eq(resolved.test.cmd[1], "./scripts/test", "and its test command")
 H.eq(resolved.resolver, "ts_rg", "and its resolver")
+-- map_path is honoured while holdout_path is refused, and the asymmetry is
+-- the point: the map is already committed, so moving it changes nothing
+-- about who can read it. The holdout's whole value is being unreadable.
+H.eq(resolved.map_path, "docs/product.scry", "and where its map lives")
 H.eq(resolved.author, "me", "while keys the repo does not own are untouched")
+H.eq(resolved.holdout_path, "", "the holdout's location above all")
 
 -- 3) THE REFUSALS. holdout_path is why the holdout works: prohibitions live
 -- outside the repo so a repo-reading generator cannot find them. A committed

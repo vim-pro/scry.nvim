@@ -2,8 +2,12 @@ local M = {}
 
 function M.check()
   local health = vim.health
-  local scry = require("scry")
-  local config = scry.config
+  local root = vim.fn.getcwd()
+  -- The config IN EFFECT here, not the global one. checkhealth is where you
+  -- go to find out what scry thinks, so reporting a `sources` or `map_path`
+  -- that .scry/config.json has already overridden is worse than saying
+  -- nothing — you would go and change the wrong setting.
+  local config = require("scry.project").resolve(root)
 
   health.start("scry")
 
@@ -29,7 +33,6 @@ function M.check()
   end
 
   -- Where the map and the holdout live.
-  local root = vim.fn.getcwd()
   local map_path = root .. "/" .. config.map_path
   if vim.fn.filereadable(map_path) == 1 then
     local m = require("scry.map").load(map_path)

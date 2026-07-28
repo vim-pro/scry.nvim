@@ -537,18 +537,27 @@ setup({opts}) is optional. Defaults: >lua
 PER-PROJECT ~
 
 Some of the above describes YOU and some describes THE REPO. A repo may carry
-`.scry/config.json`, and exactly three keys are honoured from it — the ones
+`.scry/config.json`, and exactly four keys are honoured from it — the ones
 whose right answer is a property of the project rather than of you:
 >
     {
       "sources": ["lua/**/*.lua", "plugin/*.lua", "tests/*_spec.lua"],
       "test": { "cmd": ["nvim", "--headless", "-u", "NONE", "-l"] },
-      "resolver": ""
+      "resolver": "",
+      "map_path": ".scry/map.scry"
     }
 <
 The project wins for those keys, because it knows things your vimrc cannot.
 Unknown keys are ignored without complaint, so a newer scry writing a key
 this one has never heard of does not break it.
+
+`map_path` is honoured while `holdout_path` is refused, and that asymmetry is
+deliberate: moving a file that is already committed changes nothing about who
+can read it, whereas the holdout's entire value is being unreadable.
+
+|:checkhealth| reports the config in effect here, project keys included — it
+is where you go to find out what scry thinks, so a `sources` the project has
+already overridden would send you to change the wrong setting.
 
 Two keys are REFUSED, and the refusals matter more than the permissions:
 
