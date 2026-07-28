@@ -800,11 +800,17 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  float h = sim.r;",
     "  float lum = sim.b;",
     "  vec3 col = deep;",
+    "  vec3 etherA = vec3(0.45, 0.70, 1.00);",   // pale blue
+    "  vec3 etherB = vec3(0.70, 0.55, 0.98);",   // violet
+    "  vec3 etherC = vec3(0.45, 0.95, 0.85);",   // aqua
+    "  float em1 = sin(dot(luv, vec2(3.0, 2.0)) + uTime * 0.10) * 0.5 + 0.5;",
+    "  float em2 = sin(dot(luv, vec2(-2.0, 3.5)) + uTime * 0.083) * 0.5 + 0.5;",
+    "  vec3 ether = mix(mix(etherA, etherB, em1), etherC, em2 * 0.5);",
     "  vec3 irid = mix(vec3(0.56, 0.70, 0.74), vec3(0.66, 0.55, 0.95), clamp(n.x * 5.0 + 0.5, 0.0, 1.0));",
     "  irid = mix(irid, vec3(0.92, 0.82, 0.55), clamp(n.y * 5.0, 0.0, 1.0) * 0.45);",
     "  float glow2 = lum * lum;",
-    "  col += vec3(0.42, 0.72, 1.00) * glow2 * 0.22;",
-    "  col += vec3(0.66, 0.88, 1.00) * glow2 * glow2 * 0.16;",
+    "  col += ether * glow2 * 0.24;",
+    "  col += mix(ether, vec3(1.0), 0.35) * glow2 * glow2 * 0.15;",
     "  col += irid * spec * 0.26;",
     "  float cell = fract(sin(dot(floor(luv * vec2(760.0, 480.0)), vec2(12.9898, 78.233))) * 43758.5453);",
     "  float flick = sin(uTime * 2.6 + cell * 44.0) * 0.5 + 0.5;",
@@ -817,8 +823,10 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "    float d2 = dot(lp, lp);",
     "    float body = exp(-d2 / 0.012);",                 // the thing itself
     "    float halo = exp(-d2 / 0.10);",                  // its light in the water
-    "    col += vec3(0.32, 0.55, 0.85) * halo * 0.055;",
-    "    col += vec3(0.58, 0.80, 1.00) * body * 0.10;",
+    "    vec3 lc = i == 0 ? etherA : (i == 1 ? etherB : etherC);",
+    "    lc = mix(lc, ether, 0.35);",
+    "    col += lc * halo * 0.060;",
+    "    col += mix(lc, vec3(1.0), 0.30) * body * 0.10;",
     "  }",
     "  float mist = sin(dot(luv, vec2(6.0, 4.5)) + uTime * 0.11)",
     "             * sin(dot(luv, vec2(-3.5, 7.0)) - uTime * 0.077);",
