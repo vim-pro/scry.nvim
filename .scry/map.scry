@@ -133,3 +133,17 @@ feature you can find out whether scry can actually see your project
     lua/scry/health.lua:check
     lua/scry/init.lua:setup
     plugin/scry.lua
+
+feature you can have the features drafted for you
+  :ScryDraft sends the files no feature claims to a conjurer and the features
+  come back into the glass. A draft carries no ownership trail, so it reads
+  unread rather than done — inventory until you have been through it. The
+  machine types; you decide.
+
+  contains
+    lua/scry/recover.lua:build
+    lua/scry/recover.lua:draft
+    lua/scry/feature.lua:engaged
+    lua/scry/provenance.lua:mark_drafted
+  exercises
+    tests/recover_spec.lua
