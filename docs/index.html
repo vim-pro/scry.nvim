@@ -372,12 +372,13 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <section class="waters-sect" id="waters">
   <div class="section-head">
     <h2>What the glass <em>shows</em></h2>
-    <div class="s">your work, at a glance</div>
+    <div class="s">features are the line you scan · claims are the evidence under them</div>
   </div>
   <div class="waters">
     <div class="water clear">
       <div class="depth">Done</div>
       <div class="gloss">the product does what you said it does</div>
+      <div class="v"><span class="g vb">✓ done</span><span class="d">every piece of evidence under this feature holds</span></div>
       <div class="v"><span class="g vb">✓ defined</span><span class="d">the thing exists, where you said</span></div>
       <div class="v"><span class="g vb">✓ referenced (text)</span><span class="d">the connection you described is there</span></div>
       <div class="v"><span class="g vb">✓ no matches (rg)</span><span class="d">the rule holds</span></div>
@@ -386,7 +387,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <div class="water fore">
       <div class="depth">To do</div>
       <div class="gloss">what you've named and not yet made</div>
-      <div class="v"><span class="g vd">✗ absent</span><span class="d">named, not yet real</span></div>
+      <div class="v"><span class="g vd">✗ not yet</span><span class="d">a feature with nothing holding under it</span></div>
+      <div class="v"><span class="g vu">◐ 2 of 5</span><span class="d">real progress — some evidence holds</span></div>
+      <div class="v"><span class="g vd">✗ absent</span><span class="d">one claim: named, not yet real</span></div>
       <p class="b" style="margin-top:10px">The state you create <strong>on purpose</strong>.
       A new feature is part of the product that isn't real yet; a bug fix is a
       behaviour that doesn't hold yet. Your worklist and your product are the
@@ -395,6 +398,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <div class="water omen">
       <div class="depth">Broken</div>
       <div class="gloss">the product stopped doing what you said — with proof</div>
+      <div class="v"><span class="g vd">✗ broken (1 of 4)</span><span class="d">a feature that regressed; outranks everything else</span></div>
       <div class="v"><span class="g vd">✗ VIOLATED</span><span class="d">a rule was broken — with the line that broke it</span></div>
       <div class="v"><span class="g vd">✗ FAILING</span><span class="d">a behaviour regressed — with the failure in hand</span></div>
       <div class="v"><span class="g vd">✗ unreferenced</span><span class="d">a connection you described no longer exists</span></div>
@@ -408,7 +412,18 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <div class="v"><span class="g vn">– unrun</span><span class="d">nobody has asked for proof yet</span></div>
       <div class="v"><span class="g vn">– stale</span><span class="d">the proof predates your latest change</span></div>
       <div class="v"><span class="g vn">– vacuous?</span><span class="d">it passes while proving nothing</span></div>
+      <div class="v"><span class="g vn">– unscoped</span><span class="d">a rule on a feature that locates nothing yet</span></div>
     </div>
+  </div>
+
+  <div class="note" style="max-width:820px;margin:22px auto 0">
+    <strong>And one number that isn't about any feature.</strong> A map whose
+    features all read <code>✓ done</code> can still describe a fraction of the
+    product, so the header counts the files <em>no feature claims</em> —
+    <code>12 unclaimed files</code> — and <code>:ScryUnclaimed</code> lists them.
+    Each one is a decision: give it to the feature that owns it, or name the
+    feature nobody wrote down. Without this, "everything done" would be
+    unfalsifiable.
   </div>
 </section>
 
@@ -590,7 +605,12 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     abs:  '<span class="vd">✗ absent</span>',
     clean:'<span class="vb">✓ no matches (rg)</span>',
     work: '<span class="vn">◴ conjuring…</span>',
-    un:   ' · <span class="vu">∅ untouched</span>'
+    un:   ' · <span class="vu">∅ untouched</span>',
+    // feature-level states, rolled up from the claims below them
+    fDone: '<span class="vb">✓ done</span>',
+    fPart: '<span class="vu">◐ 2 of 4</span>',
+    fPart3:'<span class="vu">◐ 3 of 4</span>',
+    fBrok: '<span class="vd">✗ broken (1 of 4)</span>'
   };
   var STAMP = '<span class="stamp">-- @w0zro 2026-07-26 3f9a01</span>';
 
@@ -607,10 +627,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   // s = { hdr, newC, newCVd, newCFresh, newE, newEVd, newEFresh, cursor }
   function render(s) {
     var h = raw('<span class="hdr">' + s.hdr + "</span>") + raw(" ");
-    h += raw('<span class="cn"># providers</span>');
-    h += raw('<span class="kw">  files</span> lua/conjurer/providers/*.lua');
+    h += gline('<span class="cn">feature the model can be a local ollama</span>', s.featVd || "");
     h += raw(" ");
-    h += raw('<span class="pr">  Transport only: turns a Request into text, calls back once.</span>');
+    h += raw('<span class="pr">  A provider turns a Request into text and calls back once.</span>');
     h += raw(" ");
     h += raw('<span class="kw">  contains</span>');
     h += gline(tgt("providers/cli.lua:request", true), s.settled ? V.def : "");
@@ -626,19 +645,20 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     body.innerHTML = h;
   }
 
-  var H_OPEN  = "scry · 2 claims — checking… ";
-  var H_2     = "scry · 2 claims · 2 backed · 0 untouched   just checked (files on disk)";
-  var H_TODO  = "scry · 4 claims · 2 backed · 2 missing · 2 untouched   just checked";
-  var H_SPEC  = "scry · 4 claims · 3 backed · 1 missing · 2 untouched   just checked";
-  var H_RED   = "scry · 4 claims · 2 backed · 1 missing · 1 failing · 2 untouched";
-  var H_DONE  = "scry · 4 claims · 4 backed · 0 untouched   just checked (files on disk)";
+  // Features lead every header; claim counts are the evidence behind them.
+  var H_OPEN  = "scry · 1 feature — checking… ";
+  var H_2     = "scry · 1 feature · 1 done   just checked (files on disk)";
+  var H_TODO  = "scry · 1 feature · 1 building   just checked · 2 claims to go";
+  var H_SPEC  = "scry · 1 feature · 1 building   just checked · 1 claim to go";
+  var H_RED   = "scry · 1 feature · 1 broken   just checked · the spec is red";
+  var H_DONE  = "scry · 1 feature · 1 done   just checked (files on disk)";
 
   var C_TARGET = "providers/ollama.lua:request";
   var E_TARGET = "tests/ollama_spec.lua";
 
   if (reduced) {
-    render({ hdr: H_TODO, settled: true, newC: C_TARGET, newCVd: V.abs + V.un,
-             newE: E_TARGET, newEVd: V.abs + V.un });
+    render({ hdr: H_TODO, settled: true, featVd: V.fPart, newC: C_TARGET,
+             newCVd: V.abs + V.un, newE: E_TARGET, newEVd: V.abs + V.un });
     narEl.innerHTML = "A change you haven't made yet is <b>work to do</b>, written in the same place as everything the product already does.";
   } else {
     var t = 0, steps = [], timers = [];
@@ -671,9 +691,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         modeEl.textContent = "SCRY"; modeEl.className = "mode"; posEl.textContent = "1:1";
       });
       at(1500, function () {
-        window.__st = { hdr: H_2, settled: true };
+        window.__st = { hdr: H_2, settled: true, featVd: V.fDone };
         render(window.__st);
-        noteEl.textContent = "2 claims · everything backed";
+        noteEl.textContent = "the feature holds · 2 claims backing it";
       });
 
       // ─── II. describe the change ───
@@ -689,10 +709,11 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         window.__st.newCVd = V.abs + V.un;
         window.__st.newCFresh = true;
         window.__st.hdr = H_TODO;
+        window.__st.featVd = V.fPart;
         render(window.__st);
         modeEl.textContent = "SCRY"; modeEl.className = "mode";
-        noteEl.textContent = "1 claim describes something that isn't there";
-        say('It comes back <b>✗ absent</b> — and that is exactly right. Work you haven\'t done yet looks like this.');
+        noteEl.textContent = "the feature slipped back to building";
+        say('It comes back <b>✗ absent</b> — and the feature above it drops to <b>◐ building</b>. Work you haven\'t done yet looks like this.');
       });
 
       // ─── III. name what "done" means ───
@@ -707,7 +728,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         window.__st.newEFresh = true;
         render(window.__st);
         modeEl.textContent = "SCRY"; modeEl.className = "mode";
-        noteEl.textContent = "2 to do";
+        noteEl.textContent = "2 pieces of evidence still missing";
       });
 
       // ─── IV. conjure the check ───
@@ -723,6 +744,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         window.__st.newEVd = V.def + V.un;
         window.__st.newEFresh = true;
         window.__st.hdr = H_SPEC;
+        window.__st.featVd = V.fPart3;
         render(window.__st);
         noteEl.textContent = "tests/ollama_spec.lua written";
       });
@@ -732,13 +754,14 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         window.__st.newEVd = V.fail + V.un;
         window.__st.newEFresh = true;
         window.__st.hdr = H_RED;
+        window.__st.featVd = V.fBrok;
         render(window.__st);
         noteEl.textContent = "red — as it should be";
       });
 
       // ─── V. conjure the code, rules withheld ───
       at(2800, function () {
-        say("Now the code — written <b>without</b> sight of that test, or of the rules this concern must never break.");
+        say("Now the code — written <b>without</b> sight of that test, or of the rules this feature must never break.");
         actEl.textContent = ":Conjure";
         window.__st.newCVd = V.work;
         window.__st.newCFresh = false;
@@ -757,6 +780,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         window.__st.newEVd = V.pass + V.un;
         window.__st.newEFresh = true;
         window.__st.hdr = H_SPEC;
+        window.__st.featVd = V.fDone;
         render(window.__st);
         noteEl.textContent = "green · vim\\.ui\\. still clean";
       });
@@ -771,8 +795,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         window.__st.newEFresh = false;
         window.__st.newCFresh = false;
         window.__st.hdr = H_DONE;
+        window.__st.featVd = V.fDone;
         render(window.__st);
-        noteEl.textContent = "0 untouched";
+        noteEl.textContent = "the feature is done, and it is yours";
       });
       at(4200, function () { noteEl.innerHTML = "&nbsp;"; });
       at(600, build);
