@@ -62,6 +62,12 @@ nav, .hero, .glass-sect, .waters-sect, .loop-sect, .seal-sect, .ref, .flatter, .
 @keyframes scland { from { opacity: 0; transform: translateY(3px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes scspin { to { transform: rotate(360deg); } }
 @keyframes scnew { from { background: rgba(201,169,78,.12); } to { background: transparent; } }
+@keyframes scrise {
+  0%   { transform: translateY(14px); opacity: 0; }
+  20%  { opacity: var(--o, .5); }
+  80%  { opacity: var(--o, .5); }
+  100% { transform: translateY(-46px); opacity: 0; }
+}
 
 /* ---------- nav ---------- */
 nav {
@@ -89,6 +95,11 @@ nav {
 }
 #waterFx { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; }
 .hero > .rel { position: relative; }
+.wisp {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(230,205,140,.9), rgba(230,205,140,0) 70%);
+  animation: scrise var(--t, 11s) ease-in-out var(--d, 0s) infinite;
+}
 .eyebrow {
   font-family: var(--mono); font-size: 12.5px; letter-spacing: .24em;
   color: var(--muted); text-transform: uppercase; margin-bottom: 26px;
@@ -275,6 +286,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 @media (max-width: 520px) { .gaze-pill { display: none; } .nav-links { gap: 16px; } }
 @media (prefers-reduced-motion: reduce) {
   .cursor-b, .spin, .gline .vd-slot, .gline.fresh { animation: none; }
+  .wisp { animation: none; opacity: .25; }
 }
 </style>
 </head>
@@ -297,6 +309,11 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
 <header class="hero">
   <div class="hero-glow"></div>
+  <div class="wisp" style="left:16%; top:58%; width:5px; height:5px; --t:12s; --o:.5;"></div>
+  <div class="wisp" style="left:29%; top:34%; width:3px; height:3px; --t:15s; --d:3s; --o:.35;"></div>
+  <div class="wisp" style="left:71%; top:44%; width:4px; height:4px; --t:13s; --d:6s; --o:.45;"></div>
+  <div class="wisp" style="left:84%; top:62%; width:3px; height:3px; --t:16s; --d:1.5s; --o:.3;"></div>
+  <div class="wisp" style="left:55%; top:72%; width:3px; height:3px; --t:14s; --d:8s; --o:.3;"></div>
   <div class="rel eyebrow">every change starts in the glass</div>
   <h1 class="rel">This is where<br>you <em>work</em> now.</h1>
   <p class="rel sub">Add a feature, fix a bug, tighten a hot path — describe the
@@ -774,18 +791,24 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     "  vec3 n = normalize(vec3(g * 14.0, 1.0));",
     "  vec2 ruv = clamp(luv + n.xy * 0.05, 0.0, 1.0);",           // refraction
     "  vec3 deep = mix(vec3(0.022, 0.033, 0.041), vec3(0.038, 0.058, 0.070), ruv.y);",
+    "  float aur = sin(uTime * 0.05) * 0.5 + 0.5;",
     "  float glow = smoothstep(0.45, 1.0, ruv.y) * max(1.0 - abs(ruv.x - 0.5) * 1.6, 0.0);",
-    "  deep += vec3(0.31, 0.44, 0.50) * glow * 0.10;",            // sunken mercury glow
+    "  deep += mix(vec3(0.31, 0.44, 0.50), vec3(0.42, 0.38, 0.60), aur) * glow * 0.10;",            // sunken mercury glow
     "  vec3 L = normalize(vec3(-0.25, 0.4, 0.85));",
     "  float spec = pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), 110.0);",
     "  vec4 sim = texture2D(uSim, luv);",
     "  float h = sim.r;",
     "  float lum = sim.b;",
     "  vec3 col = deep;",
+    "  vec3 irid = mix(vec3(0.56, 0.70, 0.74), vec3(0.66, 0.55, 0.95), clamp(n.x * 5.0 + 0.5, 0.0, 1.0));",
+    "  irid = mix(irid, vec3(0.92, 0.82, 0.55), clamp(n.y * 5.0, 0.0, 1.0) * 0.45);",
     "  float glow2 = lum * lum;",
     "  col += vec3(0.42, 0.72, 1.00) * glow2 * 0.22;",
     "  col += vec3(0.66, 0.88, 1.00) * glow2 * glow2 * 0.16;",
-    "  col += vec3(0.56, 0.70, 0.74) * spec * 0.24;",             // mercury glint on slopes
+    "  col += irid * spec * 0.26;",
+    "  float cell = fract(sin(dot(floor(luv * vec2(760.0, 480.0)), vec2(12.9898, 78.233))) * 43758.5453);",
+    "  float flick = sin(uTime * 2.6 + cell * 44.0) * 0.5 + 0.5;",
+    "  col += vec3(0.95, 0.88, 0.62) * step(0.9965, cell) * flick * (spec + h * 0.5 + 0.06) * 0.5;",             // mercury glint on slopes
     "  col += vec3(0.56, 0.70, 0.74) * max(-n.y, 0.0) * 0.02;",   // soft sheen
     "  col += vec3(0.79, 0.66, 0.31) * max(h, 0.0) * 0.025;",      // gold in the crests
     "  for (int i = 0; i < 3; i++) {",
