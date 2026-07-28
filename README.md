@@ -1,6 +1,7 @@
 # scry.nvim
 
-**The surface you write software from.**
+**Scry your software.** Look into your codebase and see the product it
+describes. Then conjure the changes you want.
 
 **[scry.vim.pro](https://scry.vim.pro)** · `:h scry`
 
