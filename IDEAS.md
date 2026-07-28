@@ -54,11 +54,13 @@ claim count leads every render — a clean map may simply be an empty one.
 elements scattered across files**, which the tool keeps consistent as the code
 changes, detecting members that no longer resolve.
 
-**Decision, and a correction.** scry borrowed the word and implemented a
-directory glob (`files lua/x/*.lua`). A glob is the one thing a concern
-specifically is not — "a user can reset their password" is not a directory. The
-fix is that a feature's footprint is **derived** from the union of its claims'
-locations, never declared.
+**Decision, and a correction — now implemented.** scry borrowed the word and
+implemented a directory glob (`files lua/x/*.lua`). A glob is the one thing a
+concern specifically is not — "a user can reset their password" is not a
+directory. As of the feature layer, a footprint is **derived** from the union
+of its claims' locations and `files` is gone. An empty footprint is
+meaningful: a prohibition with nowhere to look reports `– unscoped` rather
+than searching the whole project.
 
 ---
 
@@ -106,8 +108,8 @@ top and became the product.
 
 | altitude | in scry | status |
 |---|---|---|
-| kite / cloud | optional grouping, for navigation only | not the primary list |
-| **sea level** | **the feature: one thing a user can accomplish** | **missing** |
+| kite / cloud | optional grouping, for navigation only | not built, not needed yet |
+| **sea level** | **the feature: one thing a user can accomplish** | **built** |
 | fish / clam | `contains` · `calls` · `never` · `exercises` | built |
 
 Claims are not promoted to product altitude; they are **subordinated** to a
@@ -120,9 +122,18 @@ the calling programmer. For conjurer, `~ip` conjuring over a paragraph is sea
 level; `parse_sse` is a subfunction.
 
 **Kent Beck's Three Bears** [14] ✓. Cockburn teaches sea level by having you
-write the same goal too high, then too low, then judge the middle — calibration
-by contrast rather than by rule. A natural fit for the drafting pass: offer the
-kite and fish framings alongside each proposed feature.
+write the same goal too high, then too low, then judge the middle —
+calibration by contrast rather than by rule. Recorded in `:h scry-altitude`
+as the fallback when the three tests don't settle it; still a natural fit for
+the drafting pass, which could offer the kite and fish framings alongside
+each proposed feature.
+
+**What implementing it taught us.** A feature's state must be *derived*,
+never authored, or the map gains a second thing that can drift from the
+code. And "partial" has to require real progress — at least one claim
+actually holding. A feature whose claims were merely never answered is
+`unknown`, and since that is every feature before the first check settles,
+calling it partial would be a lie told at the least useful moment.
 
 ---
 
@@ -228,8 +239,12 @@ whose dependencies moved degrades to `– stale`.
 - **Divergence** (§2) needs object recovery. Largest gap.
 - **Does the sea-level 2–20 minute test have any analogue** for a library or a
   plugin? The completeness test ("can I go to lunch") probably transfers;
-  duration probably does not.
-- **Do features nest at all?** One optional grouping level, or none.
+  duration probably does not. The manual drops duration and keeps the other
+  two.
+- **Do features nest at all?** Still one flat list. Nothing has needed a
+  grouping level; the question reopens when a real map gets long.
+- **Is `– unscoped` right** for a feature carrying prose and prohibitions but
+  no located claims, or should that be refused at write time?
 - **Does `calls` earn its place** at `✓ referenced (text)` fidelity, or should it
   move up to tree-sitter identifiers before it is trustworthy?
 - **What a machine-drafted feature list does to ownership** — a hundred untouched
