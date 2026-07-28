@@ -142,7 +142,7 @@ vim.pack.add({ "https://github.com/vim-pro/scry.nvim" })
 
 Requires Neovim 0.10+, **ripgrep**, and the lua treesitter parser (bundled).
 **Requires [conjurer.nvim](https://github.com/vim-pro/conjurer.nvim)** —
-scry conjures through it. quickfix.pro is optional polish for the list.
+scry conjures through it. quickfix-pro is optional polish for the list.
 
 `:Scry` to start. `:checkhealth scry` to verify.
 
@@ -200,8 +200,8 @@ full. In short:
 
 ## Notes
 
-- The verb split: conjurer is the arrow, quickfix.pro is presentation, scry
-  is the glass. conjurer is required; quickfix.pro is optional.
+- The verb split: conjurer is the arrow, quickfix-pro is presentation, scry
+  is the glass. conjurer is required; quickfix-pro is optional.
 - v0 checks lua (treesitter definitions) and any language ripgrep can search
   (references, prohibitions). Other languages render `– unchecked`, never a
   pass.

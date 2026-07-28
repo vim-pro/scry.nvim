@@ -85,9 +85,9 @@ function M.check()
     health.error("conjurer.nvim is REQUIRED — install vim-pro/conjurer.nvim")
   end
   if pcall(require, "quickfix-pro") then
-    health.ok("quickfix.pro found (seeded entries get decorated)")
+    health.ok("quickfix-pro found (seeded entries get decorated)")
   else
-    health.info("quickfix.pro not found (optional)")
+    health.info("quickfix-pro not found (optional)")
   end
 end
 

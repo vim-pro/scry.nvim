@@ -51,7 +51,7 @@ because every event is keyed to a hash of the claim's text. See
 
 Three tools, three jobs: the glass is where you work (scry.nvim), the
 conjurer types (conjurer.nvim), and the list is where changes get reviewed
-(quickfix.pro).
+(quickfix-pro).
 
 The checks are a means, not the point. They keep the description honest
 while you write it — you find out you meant something slightly different
@@ -712,7 +712,7 @@ Every line here is a limit scry intends to keep stating plainly.
 parser (the resolver's two legs), where your map is and how many claims it
 holds, where the holdout lives — warning if it sits inside the repo — whether
 conjurer.nvim is installed (an ERROR when missing — it is required), and
-whether quickfix.pro is present.
+whether quickfix-pro is present.
 
 ==============================================================================
 15. LICENSE                                                     *scry-license*
