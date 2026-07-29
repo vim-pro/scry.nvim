@@ -262,7 +262,7 @@ whose dependencies moved degrades to `– stale`.
 - **Is `– unscoped` right** for a feature carrying prose and prohibitions but
   no located claims, or should that be refused at write time?
 - ~~**`sources` and `map_path` are project-scoped but live in a global
-  `setup()`.**~~ Answered: `.scry/config.json` honours `sources`, `test`,
+  `setup()`.**~~ Answered: `.scry/config.json` honors `sources`, `test`,
   `resolver`, and `map_path`, and refuses `holdout_path`. The refusal is the
   interesting half — a committed file that could relocate the holdout back
   into the repo is exactly how you would defeat it.

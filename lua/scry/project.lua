@@ -7,7 +7,7 @@
 -- to do with how to run another's.
 --
 -- So the repo may carry `.scry/config.json`, and exactly four keys are
--- honoured from it:
+-- honored from it:
 --
 --   sources    which files count as claimable (divergence)
 --   test       how to run ONE spec
@@ -22,7 +22,7 @@
 --                 relocate it into the repo is exactly how you would
 --                 defeat that — by sending someone a project that quietly
 --                 publishes its own prohibitions. Note that `map_path` IS
---                 honoured, and the asymmetry is the whole point: moving a
+--                 honored, and the asymmetry is the whole point: moving a
 --                 file that is already committed changes nothing about who
 --                 can read it.
 --   author        describes a person, not a repo. Not currently a config
@@ -38,13 +38,13 @@ local M = {}
 -- Only these may come from the repo. Anything else in the file is ignored
 -- rather than errored on: a newer scry writing a key this one does not know
 -- should not break the older one.
-local HONOURED = { sources = true, test = true, resolver = true, map_path = true }
+local HONORED = { sources = true, test = true, resolver = true, map_path = true }
 
 --- Read `.scry/config.json`, if any. Malformed JSON is reported once and
 --- treated as absent — a broken config file must not stop you opening the
 --- glass.
 ---@param root string
----@return table honoured, string? warning
+---@return table honored, string? warning
 function M.load(root)
   local path = root .. "/.scry/config.json"
   local f = io.open(path, "r")
@@ -61,7 +61,7 @@ function M.load(root)
 
   local out, refused = {}, {}
   for key, value in pairs(decoded) do
-    if HONOURED[key] then
+    if HONORED[key] then
       out[key] = value
     elseif key == "holdout_path" or key == "author" then
       refused[#refused + 1] = key

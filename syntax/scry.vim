@@ -1,9 +1,9 @@
-" The map is a language, so it is coloured like one.
+" The map is a language, so it is colored like one.
 "
 " Until this file existed the glass set `filetype=scry` and then rendered
 " every line in Normal: the feature you were looking for, the prose you were
 " meant to skim, and the claim you were about to conjure all looked alike,
-" and the only colour on the page came from the verdicts hanging off the
+" and the only color on the page came from the verdicts hanging off the
 " right. The text carries as much of the meaning as the verdicts do.
 "
 " Indentation is the grammar (see |scry-map|), so it is also the syntax:
@@ -11,7 +11,7 @@
 "   2 spaces  contains / calls / never / exercises
 "   4 spaces  a claim
 "
-" THE RULE THIS FILE KEEPS: it may never colour something as grammar that
+" THE RULE THIS FILE KEEPS: it may never color something as grammar that
 " the parser reads as prose. A syntax file that disagrees with the parser
 " is worse than none, because it tells you a line is checked when nothing
 " will ever check it.
@@ -21,7 +21,7 @@ endif
 
 " Prose first, deliberately: later items win at the same start position in
 " Vim's syntax engine, so everything specific below overrides this. Prose is
-" whatever the parser did not recognise, and it is never checked — dimming it
+" whatever the parser did not recognize, and it is never checked — dimming it
 " is honest rather than merely calm.
 syn match scryProse "^.*$"
 

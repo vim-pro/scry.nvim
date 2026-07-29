@@ -8,13 +8,13 @@ local M = {}
 local ns = vim.api.nvim_create_namespace("scry.glass")
 
 -- The palette. Every group is a `default link`, so a colorscheme that
--- defines any of them wins and nothing here has to know about colours.
+-- defines any of them wins and nothing here has to know about colors.
 --
 -- Two principles decide the links. Verdicts borrow the DIAGNOSTIC groups,
 -- because a verdict is the same kind of thing a diagnostic is and every
 -- scheme has already made those legible against its own background. The
 -- buffer's own text borrows SYNTAX groups, because the map is a language
--- and reads best when it is coloured like one.
+-- and reads best when it is colored like one.
 --
 -- `untouched` is deliberately the quietest thing on the page. It is the
 -- state every claim starts in — a freshly drafted map is nothing but
@@ -59,7 +59,7 @@ for group, target in pairs(HL) do
   vim.api.nvim_set_hl(0, group, { link = target, default = true })
 end
 -- Named for ratification, which no longer exists. Kept linked so a config
--- that styled it does not silently lose its colour.
+-- that styled it does not silently lose its color.
 vim.api.nvim_set_hl(0, "ScryUnratified", { link = "ScryUntouched", default = true })
 
 -- Session state: one glass per project root.

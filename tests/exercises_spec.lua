@@ -116,7 +116,7 @@ local d = require("scry.debt").count(map.parse({ "feature calc", "  contains", "
 H.eq(d.unchecked, 2, "unrun/stale claims are counted, not omitted")
 H.eq(d.backed + d.missing + d.violated + d.unchecked, d.claims, "the columns still account for everything")
 
--- 7) a labelled assertion must exist in the spec's source
+-- 7) a labeled assertion must exist in the spec's source
 vim.fn.writefile({ 'local x = "adds two numbers"', "os.exit(0)" }, work .. "/tests/green_spec.lua")
 local relabelled = false
 run.one(work, "tests/green_spec.lua", require("scry").config, deps_for("tests/green_spec.lua"), function()
@@ -128,7 +128,7 @@ end, 20000), "re-ran the relabelled spec")
 
 v = verdict_for("tests/green_spec.lua:adds two numbers")
 H.eq(v.status, "backed", "a label present in the spec is accepted")
-H.ok(v.label:find("assertion present", 1, true) ~= nil, "and is labelled weakly, on purpose: " .. v.label)
+H.ok(v.label:find("assertion present", 1, true) ~= nil, "and is labeled weakly, on purpose: " .. v.label)
 
 v = verdict_for("tests/green_spec.lua:handles negative numbers")
 H.eq(v.status, "missing", "a label the spec never mentions is absent")

@@ -38,7 +38,7 @@ local resolved = project.resolve(work)
 H.eq(resolved.sources[1], "lua/**/*.lua", "the project's sources win")
 H.eq(resolved.test.cmd[1], "./scripts/test", "and its test command")
 H.eq(resolved.resolver, "ts_rg", "and its resolver")
--- map_path is honoured while holdout_path is refused, and the asymmetry is
+-- map_path is honored while holdout_path is refused, and the asymmetry is
 -- the point: the map is already committed, so moving it changes nothing
 -- about who can read it. The holdout's whole value is being unreadable.
 H.eq(resolved.map_path, "docs/product.scry", "and where its map lives")
@@ -50,9 +50,9 @@ H.eq(resolved.holdout_path, "", "the holdout's location above all")
 -- file that could relocate them back INTO the repo is precisely how you would
 -- defeat that — hand someone a project that quietly publishes its own rules.
 config_json({ holdout_path = "PUBLISHED.scry", sources = { "lua/**" } })
-local honoured, warning = project.load(work)
-H.eq(honoured.holdout_path, nil, "the repo may NOT relocate the holdout")
-H.eq(honoured.sources[1], "lua/**", "the rest of the same file is still honoured")
+local honored, warning = project.load(work)
+H.eq(honored.holdout_path, nil, "the repo may NOT relocate the holdout")
+H.eq(honored.sources[1], "lua/**", "the rest of the same file is still honored")
 H.ok(warning ~= nil, "and the refusal is announced, not silent")
 H.ok(warning:find("holdout_path", 1, true) ~= nil, "naming what was ignored: " .. warning)
 

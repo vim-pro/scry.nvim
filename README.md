@@ -8,7 +8,7 @@ describes. Then conjure the changes you want.
 Features, fixes, and refactors start in the glass, not in the code. One
 buffer describes the product, and you work by changing the description: a
 new feature is a part of the product that isn't real yet, a bug fix is a
-behaviour that doesn't hold yet. Your worklist and your product are the
+behavior that doesn't hold yet. Your worklist and your product are the
 same document.
 
 `:Conjure` takes it from there: the check is conjured first (you read
@@ -173,7 +173,7 @@ full. In short:
   its body.
 - `calls ✓ referenced (text)` — the token occurs and the target exists. Not
   a resolved call, not reachability.
-- `never ✓ no matches (rg)` — no textual match, **not** absence of behaviour.
+- `never ✓ no matches (rg)` — no textual match, **not** absence of behavior.
   The asymmetry is the useful part: a violation is proof (with its line); a
   clean result is evidence.
 - Verdicts describe **saved files** at a timestamp, which the header carries.

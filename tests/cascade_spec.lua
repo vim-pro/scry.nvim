@@ -131,7 +131,7 @@ H.eq(
 H.eq(
   pcall(cascade.seed, work, absent, "define refresh_token from the stored session", false),
   true,
-  "an intent that describes the behaviour instead passes"
+  "an intent that describes the behavior instead passes"
 )
 -- ...but conjuring the SPEC may of course name the spec
 H.eq(

@@ -272,10 +272,10 @@ function M.check_exercises(ctx, claim, cb)
   end
 
   -- If the claim names an assertion, that name must actually appear in the
-  -- spec's source. It is a weak check and it is labelled as one: a passing
-  -- file that contains the label is NOT proof the labelled assertion ran, only
+  -- spec's source. It is a weak check and it is labeled as one: a passing
+  -- file that contains the label is NOT proof the labeled assertion ran, only
   -- that it is written down and nothing in the file failed.
-  local labelled = ""
+  local labeled = ""
   if label then
     local src = read(ctx.root .. "/" .. spec)
     if not (src and src:find(label, 1, true)) then
@@ -286,7 +286,7 @@ function M.check_exercises(ctx, claim, cb)
       })
       return
     end
-    labelled = "; assertion present"
+    labeled = "; assertion present"
   end
 
   local run = runs.load(ctx.root)[spec]
@@ -310,7 +310,7 @@ function M.check_exercises(ctx, claim, cb)
     cb({
       status = "backed",
       fidelity = "run",
-      label = ("✓ passing (ran %s%s)"):format(ago(run.at), labelled),
+      label = ("✓ passing (ran %s%s)"):format(ago(run.at), labeled),
     })
   else
     cb({

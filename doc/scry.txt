@@ -134,7 +134,7 @@ The map is plain text, versioned with the code it describes (default
         tests/reset_spec.lua:the link burns on use
 <
 - `feature <statement>` starts a feature. See |scry-altitude| for what
-  belongs on that line — it is the one judgement the map asks of you.
+  belongs on that line — it is the one judgment the map asks of you.
 - `contains`, `calls`, `never`, `exercises` open a claim block; claims are
   indented four spaces and are that feature's EVIDENCE, never its peers.
 - **Everything else is prose.** There are no parse errors: a line is a claim
@@ -598,7 +598,7 @@ setup({opts}) is optional. Defaults: >lua
 PER-PROJECT ~
 
 Some of the above describes YOU and some describes THE REPO. A repo may carry
-`.scry/config.json`, and exactly four keys are honoured from it — the ones
+`.scry/config.json`, and exactly four keys are honored from it — the ones
 whose right answer is a property of the project rather than of you:
 >
     {
@@ -612,7 +612,7 @@ The project wins for those keys, because it knows things your vimrc cannot.
 Unknown keys are ignored without complaint, so a newer scry writing a key
 this one has never heard of does not break it.
 
-`map_path` is honoured while `holdout_path` is refused, and that asymmetry is
+`map_path` is honored while `holdout_path` is refused, and that asymmetry is
 deliberate: moving a file that is already committed changes nothing about who
 can read it, whereas the holdout's entire value is being unreadable.
 
@@ -639,7 +639,7 @@ it silently for a config file.
 ==============================================================================
 12. HIGHLIGHTS                                               *scry-highlights*
 
-Highlighting never claims more than the parser does. Grammar is coloured
+Highlighting never claims more than the parser does. Grammar is colored
 only inside a feature, because |scry-map|'s parser skips every line before
 the first `feature` — a `contains` above it opens no section and the line
 under that is not a claim. Both render as prose, which is what they are. A
@@ -650,7 +650,7 @@ Every group is a `default link`, so a colorscheme that defines any of them
 wins outright. Verdicts borrow the DIAGNOSTIC groups, because a verdict is
 the same kind of thing a diagnostic is and your scheme has already made
 those readable. The buffer's own text borrows SYNTAX groups, because the map
-is a language and reads best coloured like one.
+is a language and reads best colored like one.
 
 THE PAGE ~
                                                               *hl-ScryHeader*
@@ -659,7 +659,7 @@ ScryHeader              The glass header. Default: Title.
 ScryEvidence            Evidence lines under a violated prohibition.
                         Default: Comment.
                                                                *hl-ScryProse*
-ScryProse               Prose — everything the parser did not recognise as
+ScryProse               Prose — everything the parser did not recognize as
                         grammar, and therefore everything never checked.
                         Default: Comment.
                                                                *hl-ScryStamp*
@@ -751,7 +751,7 @@ Every line here is a limit scry intends to keep stating plainly.
   reachability, not the same symbol, not proof the call happens. Rung:
   referenced < resolved < exercised.
 - **`never ✓ no matches (rg)`** asserts no textual match. It is not absence
-  of behaviour — `local ui = vim.ui; ui.input(...)` defeats it. The
+  of behavior — `local ui = vim.ui; ui.input(...)` defeats it. The
   asymmetry matters: a VIOLATED prohibition is proof, and carries the line
   that proves it; a clean prohibition is evidence.
 - **`exercises ✓ passing`** asserts a spec process exited 0, at a stated
