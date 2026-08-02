@@ -431,9 +431,15 @@ function M.render()
   -- anything:
   --
   --   A lone member is never uniform with anything, so it always shows.
-  --   A violation always shows, because it carries evidence and evidence is
-  --   proof — the same asymmetry the honesty ledger draws between a violated
-  --   prohibition and a clean one (|scry-honesty|).
+  --
+  --   ONLY A HEALTHY VERDICT IS EVER WITHHELD. Silence has to mean one thing,
+  --   and the thing it means is "fine". Suppressing whatever the members
+  --   agreed on meant a feature whose every file was MISSING also rendered
+  --   blank — the reader saw an unannotated list and had no way to know
+  --   which reading it was. And when a member is named by a kind rather than
+  --   a path (`route [slug]`), the row does not even say which file it is
+  --   quiet about.
+  local HEALTHY = { backed = true, clean = true }
   local agreed, unowned_throughout = {}, {}
   for _, f in ipairs(state.map.features) do
     local shared, same, owned_any = nil, true, false
@@ -449,7 +455,7 @@ function M.render()
         owned_any = true
       end
     end
-    if same and #f.claims > 1 and shared ~= "violated" then
+    if same and #f.claims > 1 and HEALTHY[shared] then
       agreed[f.name] = true
     end
     unowned_throughout[f.name] = #f.claims > 1 and not owned_any
@@ -518,13 +524,38 @@ function M.render()
   for _, claim in ipairs(state.map.claims) do
     local parts = {}
     local v = state.report and state.report.verdicts[mapmod.claim_id(claim)]
+
+    -- WHERE THIS MEMBER LANDS, when the row does not already say. A kind
+    -- names a thing and its probe knows the file — `route [slug]` IS
+    -- src/pages/[slug].astro — and without that the reader cannot check the
+    -- address at all: they are being asked to agree that a capability is made
+    -- of four files while looking at two of them.
+    --
+    -- Shown only where it differs from what is written. `def
+    -- src/layouts/Layout.astro` already names its file, and printing the
+    -- path beside a row that IS the path is the texture this whole rule
+    -- exists to remove.
+    -- The first thing to say gets the column; anything after it joins on.
+    local function say(text, hl)
+      parts[#parts + 1] = { (#parts > 0 and " · " or pad(claim.lnum)) .. text, hl }
+    end
+
+    local path = mapmod.claim_path(claim, state.kinds)
+    -- Not merely "different from the target" — `def lua/auth.lua:create_session`
+    -- resolves to `lua/auth.lua`, which the row already opens with. Only a
+    -- target that does not START with its own path is hiding where it lands,
+    -- and that is exactly the kind-probed case this is for.
+    if path and claim.target:find(path, 1, true) ~= 1 then
+      say(path, "ScryPath")
+    end
+
     if v and not agreed[claim.feature] then
       local hl = (v.status == "backed" or v.status == "clean") and "ScryBacked"
         or (v.status == "unchecked" and "ScryUnchecked" or "ScryDiverged")
-      parts[#parts + 1] = { pad(claim.lnum) .. v.label, hl }
+      say(v.label, hl)
     end
     if not (state.root and prov.owned(state.root, claim)) and not unowned_throughout[claim.feature] then
-      parts[#parts + 1] = { (#parts > 0 and " · ∅" or pad(claim.lnum) .. "∅"), "ScryUntouched" }
+      say("∅", "ScryUntouched")
     end
     if #parts > 0 then
       local mark = { virt_text = parts, virt_text_pos = "eol" }

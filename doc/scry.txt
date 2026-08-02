@@ -878,9 +878,25 @@ withheld:
     a lone member, which is not uniform with anything — suppressing a
     column of one removes the only copy rather than the repetition
 
-    a VIOLATION, which carries evidence, and evidence is proof — the same
-    asymmetry |scry-honesty| draws between a violated prohibition and a
-    clean one
+    anything that is NOT healthy. Silence has to mean one thing and the
+    thing it means is "fine". Withholding whatever the members happened to
+    agree on meant a feature whose every file was MISSING rendered exactly
+    as blank as one where every file was there, and nothing on the row said
+    which of the two you were looking at.
+
+WHERE A MEMBER LANDS, when the row does not already say it. A kind names a
+thing and its probe knows the file — `route [slug]` IS
+src/pages/[slug].astro — so the path is rendered beside it:
+>
+      route [slug]                    src/pages/[slug].astro
+      route c/[slug]                  src/pages/c/[slug].astro
+      def src/layouts/Layout.astro
+<
+Without it you are being asked to agree that a capability is made of four
+files while looking at two of them. It appears only where the target does not
+already OPEN with its own path: `def lua/auth.lua:create_session` resolves to
+`lua/auth.lua`, which the row already begins with, and printing that beside
+itself is the texture this rule exists to remove.
 
 WHY THOSE TWO KEYS. `~` is conjurer's operator, at a coarser noun. `+` is
 only a synonym for <CR>'s motion, which the glass has already taken, so

@@ -137,6 +137,30 @@ H.eq(
   "a 32-column claim and an 18-column one share a verdict column"
 )
 H.ok(virt[row_of("refresh_token")]:find("✗ absent", 1, true) ~= nil, "absent verdict rendered")
+
+-- WHERE A MEMBER LANDS, when the row does not already say. A kind names a
+-- thing and its probe knows the file — `route [slug]` IS
+-- src/pages/[slug].astro — and without that the reader is being asked to
+-- agree that a capability is made of four files while looking at two of them.
+local probed = require("scry.map").parse({
+  "feature f",
+  "  route [slug]",
+  "  def lua/auth.lua:create_session",
+  "  module lua/store.lua",
+}, require("scry.kinds").all({ kinds = { route = { path = "src/pages/{name}.astro" } } }))
+local shown = {}
+for _, c in ipairs(probed.claims) do
+  local p = require("scry.map").claim_path(c, require("scry.kinds").all({
+    kinds = { route = { path = "src/pages/{name}.astro" } },
+  }))
+  shown[c.target] = p and c.target:find(p, 1, true) ~= 1
+end
+H.eq(shown["[slug]"], true, "a kind-named member says which file it is")
+-- Not merely "different from the target". `def lua/auth.lua:create_session`
+-- resolves to `lua/auth.lua`, which the row already opens with — printing it
+-- beside itself is the texture this whole rule exists to remove.
+H.eq(shown["lua/auth.lua:create_session"], false, "a target that already opens with its path does not repeat it")
+H.eq(shown["lua/store.lua"], false, "nor does one that IS its path")
 H.ok(virt[row_of("logging\\.debug")]:find("VIOLATED", 1, true) ~= nil, "violation rendered")
 H.ok(virt[row_of("logging\\.debug")]:find("lua/auth.lua:9", 1, true) ~= nil, "evidence line rendered")
 -- NOTHING VIRTUAL ABOVE LINE 1. Neovim has no room to draw there, so a mark
@@ -483,6 +507,22 @@ H.eq(mvirt[1], nil, "two members that agree are annotated on neither")
 H.eq(mvirt[2], nil, "not the second one either")
 H.ok(mvirt[4] and mvirt[4]:find("x", 1, true) ~= nil, "but a member that differs from its neighbor is")
 H.ok(mvirt[5] and mvirt[5]:find("x", 1, true) ~= nil, "and so is the one it differs from")
+
+-- ONLY A HEALTHY VERDICT IS EVER WITHHELD, because silence has to mean one
+-- thing and the thing it means is "fine". Suppressing whatever the members
+-- happened to AGREE on meant a feature whose every file was missing rendered
+-- exactly as blank as one where every file was there — and the reader had no
+-- way to tell which of the two they were looking at.
+staged({
+  "feature nothing here exists",
+  "  module a.lua",
+  "  module b.lua",
+}, function()
+  return "missing"
+end)
+local gone = H.virt_by_row(glass._state.buf, ns2)
+H.ok(gone[1] and gone[1]:find("x", 1, true) ~= nil, "members that agree they are MISSING all say so")
+H.ok(gone[2] and gone[2]:find("x", 1, true) ~= nil, "every one of them, not none of them")
 
 -- A LONE MEMBER IS NEVER UNIFORM WITH ANYTHING, so it always says what it is.
 -- Suppressing a column of one is not removing repetition, it is removing the
