@@ -338,6 +338,12 @@ function M.draft(root, buf, map_, unclaimed)
     -- it: from anywhere else the model got nine paths that resolve to
     -- nothing and handed the placeholder straight back.
     cwd = root,
+    -- The status line shows the intent's first line unless told otherwise,
+    -- and the drafting request opens by telling the model to discard the
+    -- placeholder — which read, on screen, as scry conjuring a sentence
+    -- about a placeholder. What a person wants to know is which files and
+    -- how far along the pass is.
+    label = ("drafting %d of %d undescribed files (batch %d)"):format(#batch, #batch + remaining, pass.batches),
     note = ("scry: drafting features for %d file(s) no feature claims"):format(#unclaimed),
     -- Passing on_done is what keeps conjurer's review tab shut (see the
     -- header) and is also the only moment scry can tell a drafted claim from
