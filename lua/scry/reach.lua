@@ -429,9 +429,10 @@ function M.reaches(root, path, cb)
         cb({}, false)
         return
       end
-      local files, out = {}, {}
+      local files, out, any_resolved = {}, {}, false
       for _, ds in pairs(M.parse_query(q.stdout or "", root, real)) do
         for _, d in ipairs(ds) do
+          any_resolved = true
           if d.path ~= path and not files[d.path] then
             files[d.path] = true
             out[#out + 1] = d.path
@@ -439,7 +440,20 @@ function M.reaches(root, path, cb)
         end
       end
       table.sort(out)
-      cb(out, true)
+      -- ZERO IS TWO DIFFERENT ANSWERS and they must not look alike.
+      --
+      -- A file with no imports reaches nothing, and that is a fact. A file
+      -- whose imports the engine cannot see also reaches nothing, and that
+      -- is a blind spot. Measured on a real Astro project: a .ts page
+      -- importing ../lib/db.js resolves to nothing at all, because
+      -- stack-graphs indexes per language and the TypeScript engine has no
+      -- .js in its graph — indexing both into one database does not join
+      -- them either. Reporting that as a confident "reaches 0" would tell
+      -- someone their page has no dependencies.
+      --
+      -- So: hundreds of identifiers and not one resolution means the engine
+      -- did not cover this file, and the answer is not resolved.
+      cb(out, any_resolved or n == 0)
     end)
   end)
 end
@@ -481,7 +495,11 @@ function M.of_feature(root, feature, cb)
     local next_, left = {}, #current
     for _, path in ipairs(current) do
       M.reaches(root, path, function(files, ok)
-        if not ok then
+        -- Only the FIRST hop decides whether an engine saw this feature.
+        -- Deeper files are found BY resolution, so a leaf among them with
+        -- nothing left to resolve is the normal end of a chain, not a blind
+        -- spot — counting it would mark every complete walk unresolved.
+        if not ok and depth == 1 then
           all_resolved = false
         end
         for _, f in ipairs(files) do

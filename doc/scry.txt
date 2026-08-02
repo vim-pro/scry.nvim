@@ -206,6 +206,21 @@ javascript, typescript, tsx, python and java have engines. Lua does not —
 scry's own map is checked by treesitter and answered textually here, and
 says so.
 
+                                                        *scry-reach-limits*
+STACK GRAPHS INDEX PER LANGUAGE, and they do not join. A TypeScript file
+importing a JavaScript module resolves to nothing, and indexing both into
+one database does not fix it — measured on a real Astro project, where
+every page is `.ts` and every library is `.js`, so reach there sees almost
+nothing. That is the engine's boundary, not a wiring fault, and there is no
+workaround from here.
+
+It is reported rather than hidden. A file with no imports reaches nothing
+and that is a fact; a file whose imports the engine cannot see also reaches
+nothing and that is a blind spot. When a file offers hundreds of
+identifiers and NOT ONE resolves, reach is marked unresolved — so it is
+never recorded, never shrinks |scry-divergence|, and never tells you a page
+has no dependencies when it has four.
+
 Indexing is the slowest thing scry does, which is why reach is a command
 and never part of a check. |:Scry| stays cheap; only a command may be
 expensive, the same rule |:ScryExercise| and |:ScryDraft| follow.

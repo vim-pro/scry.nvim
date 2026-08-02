@@ -202,4 +202,37 @@ else
   print("  (no typescript engine — divergence-shrink NOT exercised)")
 end
 
+-- 8) ZERO IS TWO ANSWERS. A file with no imports reaches nothing, and that
+-- is a fact. A file whose imports the engine cannot see also reaches
+-- nothing, and that is a blind spot — measured on a real Astro project,
+-- where a .ts page importing ../lib/db.js resolves to nothing because
+-- stack-graphs index per language and do not join. Reporting that as a
+-- confident zero would tell someone their page has no dependencies.
+if reach.engine("typescript") then
+  local mixed = vim.fn.tempname()
+  vim.fn.mkdir(mixed .. "/src", "p")
+  vim.fn.writefile({ "export function lib(x) { return x; }" }, mixed .. "/src/lib.js")
+  vim.fn.writefile(
+    { "import { lib } from './lib.js';", "export function page() { return lib(1); }" },
+    mixed .. "/src/page.ts"
+  )
+  local idx
+  reach.index(mixed, "typescript", { "src/page.ts" }, function(ok)
+    idx = ok
+  end)
+  H.ok(H.wait(function()
+    return idx ~= nil
+  end, 180000), "indexed the .ts side only, as the engine would")
+
+  local seen
+  reach.reaches(mixed, "src/page.ts", function(files, resolved)
+    seen = { files = files, resolved = resolved }
+  end)
+  H.ok(H.wait(function()
+    return seen ~= nil
+  end, 180000), "reach answered")
+  H.eq(#seen.files, 0, "it sees nothing across the language boundary")
+  H.eq(seen.resolved, false, "and does NOT call that a resolved zero")
+end
+
 H.done("reach_spec PASS")
