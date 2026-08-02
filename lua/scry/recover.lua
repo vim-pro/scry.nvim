@@ -198,6 +198,24 @@ function M.draft(root, buf, map_, unclaimed)
   -- so the instructions go — they were telling you to run the thing you
   -- just ran, and they sat above every drafted feature until deleted by
   -- hand.
+  -- A FAILED DRAFT LEAVES ITS BLOCK, by design: the notification says `u`
+  -- clears it. Re-running instead of undoing then stacked a second block on
+  -- the first, and a third on that — inert prose, so nothing broke, but the
+  -- top of the map filled with the wreckage of attempts. Drafting clears any
+  -- previous block first, since there is no reading of two of them that
+  -- means anything.
+  local buflines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  for i = #buflines, 1, -1 do
+    if buflines[i]:match("^%-%- scry: drafting features for ") then
+      local last = i
+      while last < #buflines and buflines[last + 1]:match("^%-%- Reject to discard") do
+        last = last + 1
+      end
+      vim.api.nvim_buf_set_lines(buf, i - 1, last, false, {})
+      buflines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    end
+  end
+
   local glass = require("scry.glass")
   local starter = glass.starter()
   local head = vim.api.nvim_buf_get_lines(buf, 0, #starter, false)

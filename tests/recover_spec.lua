@@ -168,4 +168,32 @@ H.eq(
 )
 H.eq(#map.parse(vim.api.nvim_buf_get_lines(buf2, 0, -1, false)).features, 1, "and adds no feature")
 
+
+-- A FAILED DRAFT LEAVES ITS BLOCK — the notification says `u` clears it —
+-- and re-running instead of undoing stacked a second on the first. Inert
+-- prose, so nothing broke, but the top of the map filled with the wreckage
+-- of attempts and there is no reading of two of them that means anything.
+local stacked = vim.api.nvim_create_buf(false, true)
+vim.api.nvim_buf_set_lines(stacked, 0, -1, false, {
+  "-- scry: drafting features for 72 undescribed file(s)…",
+  "-- Reject to discard. Nothing below is a belief until you edit it.",
+  "",
+  "feature something real someone kept",
+  "  def lua/a.lua:x",
+})
+require("scry").setup({ provider = function() end })
+pcall(recover.draft, vim.fn.tempname(), stacked, map.parse({}), { "lua/z.lua" })
+local after = vim.api.nvim_buf_get_lines(stacked, 0, -1, false)
+local blocks = 0
+for _, l in ipairs(after) do
+  if l:match("^%-%- scry: drafting features for ") then
+    blocks = blocks + 1
+  end
+end
+H.eq(blocks, 1, "one drafting block, never two")
+H.ok(
+  table.concat(after, "\n"):find("feature something real someone kept", 1, true) ~= nil,
+  "and the map around it is untouched"
+)
+
 H.done("recover_spec PASS")
