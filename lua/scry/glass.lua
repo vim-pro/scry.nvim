@@ -22,7 +22,14 @@ local ns = vim.api.nvim_create_namespace("scry.glass")
 -- buffer with an alarm that means "new".
 local HL = {
   -- the page
-  ScryHeader = "Title",
+  --
+  -- The header is the frame around the counts, not a heading. As Title it
+  -- was a band of the loudest color the scheme has, spent on the words
+  -- "scry", "features" and "checked" — none of which is news. The counts
+  -- inside it are states and carry the state colors; everything else here
+  -- recedes.
+  ScryHeader = "Normal",
+  ScryHeaderDim = "Comment",
   ScryEvidence = "Comment",
   ScryProse = "Comment",
   -- The feature's own description is the one piece of writing a reader most
@@ -38,7 +45,12 @@ local HL = {
 
   -- the grammar
   ScryKeyword = "Statement", -- the word `feature`
-  ScryFeatureName = "Title", -- what the feature is called
+  -- NOT Title. A feature's name is the sentence you read, and there are as
+  -- many of them as there are features — a closed map is nothing but names,
+  -- so coloring them as headings painted the entire page one color. Bold and
+  -- otherwise untouched: structure without a hue, and the only colors left on
+  -- a folded map are the ones that mean something.
+  ScryFeatureName = false,
   ScrySection = "Type", -- contains / calls / exercises
   -- PreProc rather than the semantically tempting Exception: Exception
   -- collapses into Statement in the stock scheme, which is exactly where
@@ -65,7 +77,11 @@ local HL = {
   ScryTodo = "DiagnosticHint",
 }
 for group, target in pairs(HL) do
-  vim.api.nvim_set_hl(0, group, { link = target, default = true })
+  if target == false then
+    vim.api.nvim_set_hl(0, group, { bold = true, default = true })
+  else
+    vim.api.nvim_set_hl(0, group, { link = target, default = true })
+  end
 end
 -- Named for ratification, which no longer exists. Kept linked so a config
 -- that styled it does not silently lose its color.

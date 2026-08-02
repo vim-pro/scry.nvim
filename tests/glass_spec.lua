@@ -136,6 +136,17 @@ H.eq(above, 0, "no virtual header above line 1, where Neovim could not draw it")
 -- spec's window width is the features half. That it is populated at all is
 -- the property under test; debt.winbar owns which half.
 H.ok(glass.winbar():find("features", 1, true) ~= nil, "the counts are in the winbar: " .. glass.winbar())
+
+-- A FEATURE'S NAME IS NOT A HEADING. There are as many names as features and
+-- a closed map is nothing but names, so coloring them Title painted the
+-- whole page the scheme's loudest color — nine lines of yellow, saying only
+-- that each line is a line. Bold and otherwise untouched: structure without
+-- a hue, so the only colors left on a folded map are ones that mean
+-- something.
+local fname = vim.api.nvim_get_hl(0, { name = "ScryFeatureName", link = false })
+H.eq(fname.link, nil, "the name borrows no color group")
+H.eq(fname.fg, nil, "and no color of its own")
+H.eq(fname.bold, true, "it is bold, which is structure rather than hue")
 -- The caveat travels with the counts, at whatever width the line was fitted
 -- to; debt.winbar's own spec pins what a narrow window drops.
 H.ok(

@@ -105,39 +105,70 @@ end
 ---@param at integer? report timestamp
 ---@return string
 function M.header(d, at)
+  local line1, line2 = M.parts(d, at)
+  local function join(parts)
+    local out = {}
+    for _, seg in ipairs(parts) do
+      out[#out + 1] = seg[1]
+    end
+    return table.concat(out)
+  end
+  return join(line1) .. "\n      " .. join(line2)
+end
+
+--- The header's words, each with the group that colors it.
+---
+--- ONE LIST, so the plain string and the winbar can never come to say
+--- different things — and so color can mean something. The bar used to be a
+--- single band of Title, which in a normal scheme is the loudest color it
+--- has: eight columns of yellow saying "scry", "features", "checked", none
+--- of which is news. The counts ARE states, and they are the only thing on
+--- the line worth a color, so they get the same groups the state column
+--- uses and everything around them recedes.
+---@param d scry.Debt
+---@param at integer?
+---@return table[] line1 {text, group} pairs
+---@return table[] line2
+function M.parts(d, at)
   local age = at and (os.time() - at) or nil
   local when = age == nil and "unchecked" or (age < 5 and "just checked" or ("checked " .. age .. "s ago"))
+
+  local line1 = { { "scry", "ScryHeaderDim" }, { " · ", "ScryHeaderDim" }, { ("%d features"):format(d.features), "ScryHeader" } }
+  local function add(n, word, group)
+    if n > 0 then
+      line1[#line1 + 1] = { " · ", "ScryHeaderDim" }
+      line1[#line1 + 1] = { ("%d %s"):format(n, word), group }
+    end
+  end
+  add(d.done, "done", "ScryDone")
+  -- Immediately after done, and before anything else: this is the number that
+  -- keeps "N done" from being read as "N finished".
+  add(d.unread, "unread", "ScryUnread")
+  add(d.building, "building", "ScryBuilding")
+  add(d.broken, "broken", "ScryBroken")
+  add(d.todo, "to do", "ScryTodo")
+  add(d.unknown, "unknown", "ScryUnchecked")
+  add(d.unclaimed, "unclaimed files", "ScryTodo")
+  line1[#line1 + 1] = { "   " .. when .. " (files on disk)", "ScryHeaderDim" }
+
   -- The unchecked column is shown whenever it is non-zero, between violated
   -- and unratified: nothing an engine declined to answer may be omitted from
   -- the one line the reader actually glances at.
-  local parts = { ("%d features"):format(d.features) }
-  local function add(n, word)
-    if n > 0 then
-      parts[#parts + 1] = ("%d %s"):format(n, word)
-    end
-  end
-  add(d.done, "done")
-  -- Immediately after done, and before anything else: this is the number that
-  -- keeps "N done" from being read as "N finished".
-  add(d.unread, "unread")
-  add(d.building, "building")
-  add(d.broken, "broken")
-  add(d.todo, "to do")
-  add(d.unknown, "unknown")
-  add(d.unclaimed, "unclaimed files")
   local unchecked = d.unchecked > 0 and (" · %d unchecked"):format(d.unchecked) or ""
-  local fmt = "scry · %s   %s (files on disk)"
-    .. "\n      %d claims · %d backed · %d missing · %d violated%s · %d untouched"
-  return fmt:format(
-    table.concat(parts, " · "),
-    when,
-    d.claims,
-    d.backed,
-    d.missing,
-    d.violated,
-    unchecked,
-    d.untouched
-  )
+  local line2 = {
+    {
+      ("%d claims · %d backed · %d missing · %d violated%s · %d untouched"):format(
+        d.claims,
+        d.backed,
+        d.missing,
+        d.violated,
+        unchecked,
+        d.untouched
+      ),
+      "ScryHeaderDim",
+    },
+  }
+  return line1, line2
 end
 
 --- The header, formatted for a window bar.
@@ -166,20 +197,50 @@ end
 ---@param width integer? columns available; unlimited when nil
 ---@return string
 function M.winbar(d, at, width)
-  local lines = vim.split(M.header(d, at), "\n", { plain = true })
-  local head, tail = vim.trim(lines[1] or ""), vim.trim(lines[2] or "")
-  local function esc(s)
-    return (s:gsub("%%", "%%%%"))
+  local line1, line2 = M.parts(d, at)
+  local function esc(t)
+    return (t:gsub("%%", "%%%%"))
   end
-  local joined = head .. "  ·  " .. tail
-  if width and width > 2 and vim.fn.strdisplaywidth(joined) > width then
-    if vim.fn.strdisplaywidth(head) > width then
-      joined = vim.fn.strcharpart(head, 0, width - 1) .. "…"
+  local function render(segs)
+    local out = {}
+    for _, seg in ipairs(segs) do
+      out[#out + 1] = "%#" .. seg[2] .. "#" .. esc(seg[1])
+    end
+    return table.concat(out) .. "%*"
+  end
+  local function measure(segs)
+    local n = 0
+    for _, seg in ipairs(segs) do
+      n = n + vim.fn.strdisplaywidth(seg[1])
+    end
+    return n
+  end
+
+  local full = vim.list_extend({ { "  ·  ", "ScryHeaderDim" } }, line2)
+  full = vim.list_extend(vim.list_slice(line1), full)
+  if not (width and width > 2) or measure(full) <= width then
+    return render(full)
+  end
+  -- The claim counts are the evidence beneath the feature counts, so they
+  -- are what a narrow window gives up first.
+  if measure(line1) <= width then
+    return render(vim.list_extend(vim.list_slice(line1), { { " …", "ScryHeaderDim" } }))
+  end
+  -- Narrower than the counts themselves: cut inside the segments, keeping
+  -- each surviving word its own color rather than flattening the line.
+  local kept, used = {}, 0
+  for _, seg in ipairs(line1) do
+    local w = vim.fn.strdisplaywidth(seg[1])
+    if used + w <= width - 1 then
+      kept[#kept + 1] = seg
+      used = used + w
     else
-      joined = head .. " …"
+      kept[#kept + 1] = { vim.fn.strcharpart(seg[1], 0, width - 1 - used), seg[2] }
+      break
     end
   end
-  return "%#ScryHeader#" .. esc(joined) .. "%*"
+  kept[#kept + 1] = { "…", "ScryHeaderDim" }
+  return render(kept)
 end
 
 --- Compact string for the user's own statusline. Plain function, no

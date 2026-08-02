@@ -922,7 +922,18 @@ is a language and reads best colored like one.
 
 THE PAGE ~
                                                               *hl-ScryHeader*
-ScryHeader              The glass header. Default: Title.
+ScryHeader              The glass header's counts. Default: Normal.
+
+                                                           *hl-ScryHeaderDim*
+ScryHeaderDim           Everything around them — the tool's name, the
+                        separators, the timestamp. Default: Comment.
+
+                        The bar is deliberately almost colorless: the counts
+                        it holds are STATES, and they carry the same groups
+                        the state column does, so a glance at the color says
+                        what a glance at the words would. Painting the whole
+                        line one color spent the scheme's loudest hue on the
+                        words "scry" and "checked".
                                                             *hl-ScryEvidence*
 ScryEvidence            Evidence lines under a violated prohibition.
                         Default: Comment.
@@ -938,7 +949,14 @@ THE GRAMMAR ~
                                                              *hl-ScryKeyword*
 ScryKeyword             The word `feature`. Default: Statement.
                                                          *hl-ScryFeatureName*
-ScryFeatureName         What the feature is called. Default: Title.
+ScryFeatureName         What the feature is called. Default: bold, with no
+                        color of its own.
+
+                        Not a heading: there are as many names as there are
+                        features, and a closed map is nothing but names, so a
+                        heading color painted the entire page. Bold is
+                        structure without a hue, which leaves the only colors
+                        on a folded map to the ones that mean something.
                                                              *hl-ScrySection*
 ScrySection             `contains`, `calls`, `exercises`. Default: Type.
                                                                *hl-ScryNever*

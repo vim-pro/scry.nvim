@@ -112,6 +112,29 @@ local narrow = debt.winbar(d, report.at, 40)
 H.ok(vim.fn.strdisplaywidth(narrow:gsub("%%#%w+#", ""):gsub("%%%*", "")) <= 40, "a narrow window gets a line that fits: " .. narrow)
 H.ok(narrow:find("features", 1, true) ~= nil, "and keeps the features")
 H.eq(narrow:find("3 claims", 1, true), nil, "dropping the claim counts, which are the evidence beneath them")
+-- COLOR MEANS STATE, and nothing else. The bar was one band of ScryHeader,
+-- which linked to Title — in a normal scheme the loudest color it has —
+-- spent on the words "scry", "features" and "checked", none of which is
+-- news. The counts are the only thing on the line that says anything, so
+-- they carry the same groups the state column does and the frame recedes.
+local seg1 = select(1, debt.parts(d, report.at))
+local by_text = {}
+for _, seg in ipairs(seg1) do
+  by_text[seg[1]] = seg[2]
+end
+H.eq(by_text["scry"], "ScryHeaderDim", "the name of the tool is not the news")
+for text, group in pairs(by_text) do
+  if text:find("unread") then
+    H.eq(group, "ScryUnread", "an unread count reads as unread")
+  elseif text:find("done") then
+    H.eq(group, "ScryDone", "a done count reads as done")
+  elseif text:find("broken") then
+    H.eq(group, "ScryBroken", "and broken as broken")
+  end
+end
+H.ok(wb:find("%%#ScryHeaderDim#") ~= nil, "the winbar carries the frame group")
+H.eq(wb:find("%%#ScryHeader#[^%%]*checked"), nil, "and does not paint the whole line one color")
+
 -- Literal percent signs in the text would be read as statusline items.
 H.ok(select(2, debt.winbar(d, nil):gsub("%%%%", "")) >= 0, "percent-escaping applied")
 
