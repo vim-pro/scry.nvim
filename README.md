@@ -28,6 +28,23 @@ opened one.
 across every capability that matches. Nothing new to learn — you already
 know the grammar; scry just gives it a bigger noun.
 
+The sentence is the only thing you type. Write what someone can do, press
+`+` on it, and scry goes and finds the files it's made of:
+
+```
+feature Read a checklist as markdown or JSON instead of a web page
+  Every checklist is fetchable as its source markdown or as structured
+  JSON, enough for an agent to use the library without parsing HTML.
+  module src/pages/[slug].md.ts
+  module src/pages/[slug].json.ts
+  module src/pages/index.json.ts
+```
+
+Everything under the first line arrived by pressing one key. Typing member
+paths by hand meant knowing the layout before you were allowed to describe
+the product, which is backwards. It's an ordinary buffer edit, so `u` takes
+it back.
+
 Adding a capability is the same verb, because an address exists before the
 file does: `route print` names `src/pages/print.astro` whether or not
 anything is there yet. Write the feature you want with the members it

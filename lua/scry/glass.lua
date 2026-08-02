@@ -1110,14 +1110,29 @@ function M.open(root)
     -- gesture. `+` is only a synonym for <CR>'s motion, which the glass has
     -- already taken, so nothing is lost — and it reads as "add what is not
     -- here yet".
+    -- SCOPED BY WHERE THE CURSOR IS. `+` means "add what is not here yet",
+    -- and what that is depends on what you are looking at.
+    --
+    -- On a feature with nothing under it, what is missing is its MEMBERS —
+    -- you typed the capability in your own words and the files it is made of
+    -- are scry's job to find (|scry-address|). Typing member paths by hand
+    -- meant knowing the layout before you were allowed to describe the
+    -- product, which is backwards, and it was the last hand-typed step in
+    -- the loop.
+    --
+    -- Anywhere else, what is missing is features for the files nothing
+    -- describes. Same verb, one key.
     vim.keymap.set("n", "+", function()
       local recover = require("scry.recover")
       if recover.passing() then
         recover.stop()
-      else
-        recover.start()
+        return
       end
-    end, { buffer = buf, desc = "scry: draft the files nothing describes (again to stop)" })
+      if require("scry.address").at_cursor() then
+        return
+      end
+      recover.start()
+    end, { buffer = buf, desc = "scry: fill in what is missing here (again to stop a pass)" })
 
     -- `~` IS THE OPERATOR, the same key conjurer uses on a text object.
     -- There it rewrites a region; here the noun is a whole capability and

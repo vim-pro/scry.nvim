@@ -12,6 +12,7 @@ CONTENTS                                                       *scry-contents*
      Altitude .................................... |scry-altitude|
      Naming a feature twice ...................... |scry-reopening|
      How the map reads ........................... |scry-lint|
+     Giving a capability an address .............. |scry-address|
      Programming a capability .................... |scry-compose|
      Footprint ................................... |scry-footprint|
   4. Verdicts .................................... |scry-verdicts|
@@ -54,6 +55,11 @@ copy.astro and c/index.astro. Four files, one intent, and you never opened
 one. `.` repeats it on the next feature. `:g/^feature.*export/normal ~`
 fans it across every capability that matches. Nothing new to learn — you
 know the grammar already; scry gives it a bigger noun. See |scry-compose|.
+
+THE SENTENCE IS THE ONLY THING YOU TYPE. Write what someone can do, press
+`+` on it, and scry finds the files it is made of (|scry-address|). Typing
+member paths by hand meant knowing the layout before you were allowed to
+describe the product, which is backwards.
 
 Adding a capability is the same verb, because an address exists before the
 file does: `route print` names src/pages/print.astro whether or not
@@ -823,8 +829,10 @@ has. Four mappings are added:
                 on a FEATURE line, the same as <Tab>
     ~           cast an intent across the whole feature under the cursor,
                 every file it is made of — see |scry-compose|
-    +           draft features for the files nothing describes; again to
-                stop a pass in flight — see |scry-drafting|
+    +           fill in what is missing here: on a feature with no members,
+                the files it is made of (|scry-address|); anywhere else,
+                features for the files nothing describes (|scry-drafting|).
+                Again to stop a pass in flight.
     ]d  [d      to the next and previous feature that wants something
 
 MOTIONS, NOT GROUPING. The obvious way to surface what needs attention is to
@@ -875,7 +883,9 @@ better and would cost `dd` and `dw` on your own prose, which is not a trade
 worth making for one gesture.
 
 THE AFFORDANCE IS IN THE BUFFER, not in a command you have to have read
-about. The header says how many files nothing describes and names the key
+about. So the ONE thing you ever type is the sentence — write a feature,
+press `+` on it, and the files it is made of arrive (|scry-address|). And
+the header says how many files nothing describes, naming the same key
 beside the number:
 >
     scry · 6 features · 46 unclaimed files (reach pending) · + to draft
@@ -1005,6 +1015,61 @@ IT PREFERS A FALSE FLAG TO A MISSED ONE. "Accept the terms and conditions"
 is one noun and gets flagged anyway. A finding says "if both halves are
 things a person does" rather than "this is wrong", because glancing at a
 wrong flag costs less than never seeing a real one.
+
+==============================================================================
+GIVING A CAPABILITY AN ADDRESS                                  *scry-address*
+
+Type the sentence. That is all you should ever have to type:
+>
+    feature Read a checklist as markdown or JSON instead of a web page
+<
+Leave the cursor on it and press `+`. Scry reads the project and fills in
+what the feature is for and the files it is made of:
+>
+    feature Read a checklist as markdown or JSON instead of a web page
+      Every checklist is fetchable as its source markdown or as structured
+      JSON, enough for an agent to use the library without parsing HTML.
+      module src/pages/[slug].md.ts
+      module src/pages/[slug].json.ts
+      module src/pages/index.json.ts
+<
+It is an ordinary buffer edit, so `u` takes it back like anything else you
+typed. Then `~` (|scry-compose|) works, because the address exists.
+
+THIS IS THE OPPOSITE DIRECTION FROM DRAFTING. A pass (|scry-drafting|)
+starts at the FILES nothing describes and writes features to cover them —
+bottom-up, whole-project, answering "what is this repo". This starts at a
+capability you already have in mind and answers "what is it made of", which
+is the question you have when you sit down to change something.
+
+WHY `+` DOES BOTH. `+` means "add what is not here yet", and what that is
+depends on what you are looking at: on a feature with nothing under it, the
+missing thing is its members; anywhere else, it is features for the files
+nothing describes. Same verb, scoped by the cursor.
+
+A feature that already has members is left alone, INCLUDING one whose
+members do not hold. A claim pointing at a file that does not exist yet is
+work you described on purpose — it is how you add a capability — so
+re-addressing it would delete the thing you were about to build.
+
+IT SEARCHES EVERYTHING, not just the unclaimed. A drafting sweep works the
+undescribed list because its job is coverage; this one is answering which
+files a capability is made of, and the honest answer often includes files
+another feature already claims. One file can serve two capabilities. Those
+files are offered with the feature that already claims them named beside
+them, so an answer can notice it is re-describing something already
+described — the failure that took one map to 301 features.
+
+WHAT COMES BACK IS READ BY THE SAME RULE AS THE REST. A line is a member
+only when its first word is a kind this project knows (|scry-kinds|),
+exactly as |scry-map| parses it. A kind the model invented lands as prose,
+and prose is never checked — so a wrong guess costs a sentence, never a
+claim nothing will ever answer.
+
+The limit worth knowing: the whole file list goes in the request. That is
+fine for the projects this has been run on and it is not a search engine.
+A very large repository will want narrowing (`sources` in
+|scry-configuration|) before this is useful.
 
 ==============================================================================
 PROGRAMMING A CAPABILITY                                        *scry-compose*
