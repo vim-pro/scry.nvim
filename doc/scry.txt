@@ -445,6 +445,17 @@ DRAFTING THE GAP ~
 |:ScryDraft| takes the unclaimed files and asks a conjurer to write features
 for them, into the glass, where you read them.
 
+WHAT YOU SEE while it works is two lines and the conjurer narrating between
+them. The worklist goes out in the request, not into the buffer: it used to
+be the region the model rewrote, so a draft opened by pasting every
+undescribed path into the glass — seventy-two file names nobody asked to
+read, with the narration buried at the top of them. The model needs that
+list. The buffer needs somewhere for the narration to land.
+
+Both lines are prose, so rejecting with `u` leaves nothing behind, and the
+starter (|scry-glass|) is cleared on the way in — it is instructions for
+someone with no map, and a draft is a map.
+
 This is the scrying itself, and it is the one place a machine writes into the
 map, so it is worth being exact about why that is not a contradiction. The
 argument for an authored model is that recovered ones are about half right,

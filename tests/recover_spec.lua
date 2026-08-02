@@ -27,10 +27,21 @@ local UNCLAIMED = { "lua/auth.lua", "lua/store.lua", "plugin/thing.lua" }
 
 -- 1) WHAT LEAVES. build() is pure so this can be read rather than trusted.
 local built = recover.build(m, UNCLAIMED)
-local worklist = table.concat(built.lines, "\n")
+
+-- THE WORKLIST TRAVELS IN THE REQUEST, NOT THE BUFFER. It used to be the
+-- region, so a draft opened by pasting every undescribed path into the
+-- glass — a screen of file names nobody asked to read, with the narration
+-- buried above them. The model needs the list; the buffer needs a place for
+-- the narration to stream into while the work happens.
 for _, path in ipairs(UNCLAIMED) do
-  H.ok(worklist:find(path, 1, true) ~= nil, "the worklist names " .. path)
+  H.ok(built.intent:find(path, 1, true) ~= nil, "the request names " .. path)
 end
+local worklist = table.concat(built.lines, "\n")
+H.eq(#built.lines, 2, "and the buffer gets two lines, whatever the project's size")
+for _, path in ipairs(UNCLAIMED) do
+  H.eq(worklist:find(path, 1, true), nil, "no path is pasted into the buffer: " .. path)
+end
+H.ok(worklist:find("^%-%-") ~= nil, "both of which are prose, so a rejected draft leaves nothing")
 H.ok(built.intent:find("feature <a statement", 1, true) ~= nil, "the grammar goes out")
 -- THE VOCABULARY IS IN THE PROMPT, and it is closed. Asked for "the files",
 -- a model returns a list of files: the first real draft came back with

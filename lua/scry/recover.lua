@@ -73,13 +73,17 @@ function M.build(map_, unclaimed, kindset)
   -- The region the model rewrites. Column 0 and not `feature ...`, so every
   -- line of it is prose to the parser: if you reject the draft, or never
   -- save, what is left behind is inert.
+  --
+  -- TWO LINES, NOT SEVENTY-FOUR. The worklist used to be the region, so a
+  -- draft opened by pasting every undescribed path into the buffer — a
+  -- screen of file names you did not ask to read, with conjurer's narration
+  -- buried at the top of it. The model needs that list; the buffer does
+  -- not. It travels in the request instead, and what is left here is a
+  -- place for the narration to stream into while the work happens.
   local lines = {
-    "-- scry: drafting features for " .. #unclaimed .. " undescribed file(s).",
+    "-- scry: drafting features for " .. #unclaimed .. " undescribed file(s)…",
     "-- Reject to discard. Nothing below is a belief until you edit it.",
   }
-  for _, path in ipairs(unclaimed) do
-    lines[#lines + 1] = "--   " .. path
-  end
 
   -- The vocabulary the draft is allowed. Listing it is the difference
   -- between a map of the product and a map of the filesystem: asked for
@@ -126,6 +130,9 @@ function M.build(map_, unclaimed, kindset)
     "- Do not write a `never` block, or any prohibition. Those are the",
     "  reader's to decide.",
     "- Output only map text. No fences, no commentary.",
+    "",
+    "THE FILES, all of which must be named by at least one claim:",
+    "  " .. table.concat(unclaimed, "\n  "),
   }, "\n")
 
   return { lines = lines, intent = intent }
