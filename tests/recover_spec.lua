@@ -212,4 +212,78 @@ local sent = table.concat(vim.api.nvim_buf_get_lines(capped, 0, -1, false), "\n"
 H.ok(sent:find("drafting features for 12 undescribed", 1, true) ~= nil, "a pass takes a bounded batch: " .. sent:sub(1, 60))
 H.eq(sent:find("300 undescribed", 1, true), nil, "not the whole three hundred")
 
+-- ONE COMMAND IS A PASS, NOT A REQUEST. A batch has to be small and a
+-- project has thousands of files, so the two together mean one request can
+-- never be the unit of work — asking someone to run :ScryDraft a hundred
+-- and thirty times is asking them to be the loop. Each batch issues the
+-- next when it lands.
+local proj = vim.fn.tempname()
+vim.fn.mkdir(proj .. "/src", "p")
+for i = 1, 20 do
+  vim.fn.writefile({ "-- " .. i }, ("%s/src/mod%02d.lua"):format(proj, i))
+end
+local casts = {}
+require("scry").setup({
+  provider = function() end,
+})
+local op = require("conjurer.operator")
+local real_region = op.conjure_region
+op.conjure_region = function(b, region, intent, opts)
+  casts[#casts + 1] = { buf = b, opts = opts, intent = intent }
+end
+
+local pbuf = vim.api.nvim_create_buf(false, true)
+recover.next_batch(proj, pbuf, true)
+H.eq(#casts, 1, "a pass opens with one batch")
+H.eq(recover.passing(), true, "and is running")
+
+-- The draft lands: write what the model would have written, then tell
+-- conjurer it is done. That is the moment the next batch is issued.
+vim.api.nvim_buf_set_lines(pbuf, 0, -1, false, {
+  "feature someone can use the first twelve modules",
+  "  module src/mod01.lua",
+  "  module src/mod02.lua",
+})
+casts[1].opts.on_done(nil)
+H.ok(H.wait(function()
+  return #casts >= 2
+end, 5000), "the next batch follows without being asked for")
+H.ok(
+  casts[2].intent:find("mod03.lua", 1, true) ~= nil,
+  "and asks about what is undescribed NOW, not the rest of the old list"
+)
+H.eq(casts[2].intent:find("mod01.lua", 1, true), nil, "a file the last batch claimed is not asked about again")
+
+-- A BATCH THAT DESCRIBES NOTHING ENDS THE PASS. Without this a file the
+-- model declines to describe is asked about forever, and the pass is an
+-- infinite loop that costs money on every turn of it.
+casts[2].opts.on_done(nil)
+H.eq(recover.passing(), false, "a batch that adds no claim stops the pass")
+local n = #casts
+vim.wait(200)
+H.eq(#casts, n, "and no further batch goes out")
+
+-- A FAILED REQUEST ends it too, which is what makes :ConjureCancel stop the
+-- whole pass rather than one batch of it.
+casts = {}
+local fbuf = vim.api.nvim_create_buf(false, true)
+recover.next_batch(proj, fbuf, true)
+H.eq(recover.passing(), true, "running again")
+casts[1].opts.on_done("canceled")
+H.eq(recover.passing(), false, "a failure ends the pass")
+
+-- :ScryDraftStop leaves the request in flight alone — it is already paid
+-- for, and its result is a draft worth keeping.
+casts = {}
+local sbuf = vim.api.nvim_create_buf(false, true)
+recover.next_batch(proj, sbuf, true)
+recover.stop()
+H.eq(recover.passing(), false, "stopped")
+vim.api.nvim_buf_set_lines(sbuf, 0, -1, false, { "feature x", "  module src/mod01.lua" })
+casts[1].opts.on_done(nil)
+vim.wait(200)
+H.eq(#casts, 1, "the batch in flight still lands, and nothing follows it")
+
+op.conjure_region = real_region
+
 H.done("recover_spec PASS")

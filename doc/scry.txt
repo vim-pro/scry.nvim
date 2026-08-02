@@ -467,14 +467,26 @@ file is still accounted for in the counts, each row jumps to a real file,
 and a small project has its files named one by one as before.
 |:ScryUnclaimed|! lists every file however many there are.
 
-AND THE DRAFT IS A BATCH. |:ScryDraft| used to send the whole worklist,
-which already ran past a five-minute timeout at seventy-two files and is
-not a long request at twenty thousand but an impossible one. A pass takes a
-bounded number and says how many are left. Iterating is natural because a
-kept draft CLAIMS what it described, so the next run sees what remains, and
-the files come in the order divergence found them — which keeps a
+AND THE DRAFT IS A BATCH, BUT THE COMMAND IS A PASS. |:ScryDraft| used to
+send the whole worklist, which already ran past a five-minute timeout at
+seventy-two files and is not a long request at twenty thousand but an
+impossible one. So a request takes a bounded number — and since a project
+has thousands of files, one request can never be the unit of work. Running
+the command a hundred and thirty times is being the loop by hand.
+
+A pass keeps going: each batch issues the next when it lands, and what to
+ask about is recomputed from the buffer every time, because a kept draft
+CLAIMS what it described and may well have claimed files outside its own
+batch. Files come in the order divergence found them, which keeps a
 directory's files together, so a batch tends to be one part of the product
 rather than a scatter.
+
+IT ENDS on its own when the files run out, and on its own when a batch
+describes nothing new — without that rule, a file the model declines to
+describe is asked about forever. |:ScryDraftStop| ends it after the batch
+in flight, which is left to land because it is already paid for.
+|:ConjureCancel| is the other choice: it kills the request, and a failed
+request ends the pass.
 
                                                             *scry-drafting*
 DRAFTING THE GAP ~
@@ -798,7 +810,17 @@ quiet list.
                         feature claims, into the glass. Drafts land untouched
                         — they are inventory until you edit them. Nothing
                         reaches the map file until you |:write|.
+
+                        A pass, not one request: batches follow each other
+                        until the project is described, a batch describes
+                        nothing new, a request fails, or you stop it.
                         See |scry-drafting|.
+
+                                                              *:ScryDraftStop*
+:ScryDraftStop          End the drafting pass after the batch in flight. The
+                        request already running is left to land — it is paid
+                        for, and its result is a draft worth keeping. To kill
+                        it outright, |:ConjureCancel|.
 
                                                                     *:ScryExercise*
 :ScryExercise [{feature}]

@@ -61,7 +61,8 @@ nobody wrote down. This is reflexion's third verdict — see
 
 **And `:ScryDraft` fills that gap — but a draft is not a belief.** The
 scrying pass asks a conjurer to write features for the unclaimed files, into
-the glass, where you read them. Drafted claims carry no ownership trail, so
+the glass, where you read them — a dozen at a time, batch after batch, until
+the project is described or you stop it. Drafted claims carry no ownership trail, so
 they render *untouched* and the header counts them that way: a hundred
 machine-written claims nobody has read is inventory, not understanding. One
 becomes yours when you edit it. The machine types; you decide. See

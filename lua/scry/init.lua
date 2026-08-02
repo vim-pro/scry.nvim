@@ -63,6 +63,14 @@ vim.api.nvim_create_user_command("ScryDraft", function()
   require("scry.recover").start()
 end, { desc = "Draft features for the files no feature claims (the scrying pass)" })
 
+-- A pass runs until the project is described, which on a large one is a
+-- great many requests. Ending it is a command rather than a prompt because
+-- the answer is almost always "keep going" and being asked every twelve
+-- files would be its own kind of tax.
+vim.api.nvim_create_user_command("ScryDraftStop", function()
+  require("scry.recover").stop()
+end, { desc = "End the drafting pass after the batch in flight" })
+
 -- Reach is asked for, never rendered on every check. Indexing a project is
 -- the slowest thing scry can do, and the rule everywhere else here is that
 -- looking is cheap and only a command may be expensive — :ScryExercise runs

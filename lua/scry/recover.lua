@@ -200,6 +200,41 @@ local function claim_ids(buf, root)
   return out
 end
 
+-- THE PASS. One :ScryDraft is not one request — it is a pass over
+-- everything undescribed, twelve files at a time, each batch issued when
+-- the last one lands.
+--
+-- A batch has to be small (see BATCH) and a project has thousands of files,
+-- so the two facts together mean one request can never be the unit of work.
+-- Asking someone to run the command a hundred and thirty times is asking
+-- them to be the loop.
+--
+-- It ends when the files run out, when a batch describes nothing new, when
+-- a request fails, or when you say so. The no-progress rule is the one that
+-- matters: without it a file the model declines to describe is asked about
+-- forever.
+local pass = { active = false, batches = 0, claims = 0 }
+
+--- Stop the pass after the batch in flight.
+---
+--- The in-flight request is left alone rather than killed — it is already
+--- paid for, and its result is a draft you can keep. :ConjureCancel is the
+--- other end of that choice.
+function M.stop()
+  if not pass.active then
+    vim.notify("[scry] no draft pass running")
+    return
+  end
+  pass.active = false
+  vim.notify("[scry] draft pass will end after the batch in flight")
+end
+
+--- Is a pass running? (For the header, and for a spec.)
+---@return boolean
+function M.passing()
+  return pass.active
+end
+
 --- The drafting half, separated from the command so a spec can drive it
 --- against a fake provider.
 ---@param root string
@@ -281,7 +316,7 @@ function M.draft(root, buf, map_, unclaimed)
   vim.api.nvim_buf_set_lines(buf, first, first, false, insert)
   if remaining > 0 then
     vim.notify(
-      ("[scry] drafting %d of %d undescribed files — keep this, then :ScryDraft again for the next %d"):format(
+      ("[scry] drafting %d of %d undescribed files — the next %d follow when this lands (:ScryDraftStop to end)"):format(
         #batch,
         #batch + remaining,
         math.min(remaining, BATCH)
@@ -313,6 +348,10 @@ function M.draft(root, buf, map_, unclaimed)
         -- The placeholder block is inert prose and nothing was saved, so the
         -- honest thing is to say where it is rather than silently rearrange
         -- the buffer under a failed request.
+        -- A failed request ends the pass. Cancelling arrives here too,
+        -- which is what makes :ConjureCancel stop the whole thing and not
+        -- just the batch you were looking at.
+        pass.active = false
         vim.notify("[scry] draft failed: " .. err .. " — `u` clears the block", vim.log.levels.WARN)
         return
       end
@@ -332,9 +371,69 @@ function M.draft(root, buf, map_, unclaimed)
         )
       )
       require("scry.glass").check()
+      -- A batch that described nothing ends the pass. Otherwise the next
+      -- one is issued from what is undescribed NOW — recomputed from the
+      -- buffer rather than sliced off the old list, because the draft just
+      -- claimed files and may well have claimed some outside its batch.
+      if pass.active then
+        if #drafted == 0 then
+          pass.active = false
+          vim.notify(("[scry] draft pass ended: a batch described nothing new (%d claims over %d batches)"):format(
+            pass.claims,
+            pass.batches
+          ))
+        else
+          pass.claims = pass.claims + #drafted
+          vim.schedule(function()
+            M.next_batch(root, buf)
+          end)
+        end
+      end
     end,
   })
   return built
+end
+
+--- Issue the next batch of a pass, or finish it.
+---
+--- What is undescribed is recomputed from the BUFFER every time rather than
+--- sliced off the list the pass started with: the last batch just claimed
+--- files, and may well have claimed some that were not in it.
+---@param root string
+---@param buf integer
+---@param begin boolean? Start a pass, rather than continue one.
+function M.next_batch(root, buf, begin)
+  if begin then
+    pass.active, pass.batches, pass.claims = true, 0, 0
+  end
+  if not (pass.active and vim.api.nvim_buf_is_valid(buf)) then
+    pass.active = false
+    return
+  end
+  local mapmod = require("scry.map")
+  local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(buf, 0, -1, false), mapmod.kinds_for(root))
+  local config = require("scry.project").resolve(root)
+  local unclaimed, total = require("scry.divergence").unclaimed(root, map_, config)
+  if #unclaimed == 0 then
+    pass.active = false
+    if pass.batches == 0 then
+      vim.notify(("[scry] nothing to draft — all %d files are claimed by a feature"):format(total))
+    else
+      vim.notify(("[scry] draft pass done — all %d files are described (%d claims over %d batches)"):format(
+        total,
+        pass.claims,
+        pass.batches
+      ))
+    end
+    return
+  end
+  if pass.batches == 0 then
+    vim.notify(("[scry] scrying %d undescribed file(s) of %d"):format(#unclaimed, total))
+  end
+  pass.batches = pass.batches + 1
+  vim.api.nvim_buf_call(buf, function()
+    M.draft(root, buf, map_, unclaimed)
+  end)
 end
 
 --- Draft features for the files no feature claims.
@@ -351,19 +450,7 @@ function M.start()
     error("[scry] conjurer.nvim is required — install vim-pro/conjurer.nvim", 0)
   end
 
-  local mapmod = require("scry.map")
-  local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), mapmod.kinds_for(state.root))
-  local config = require("scry.project").resolve(state.root)
-  local unclaimed, total = require("scry.divergence").unclaimed(state.root, map_, config)
-  if #unclaimed == 0 then
-    vim.notify(("[scry] nothing to draft — all %d files are claimed by a feature"):format(total))
-    return
-  end
-
-  vim.api.nvim_buf_call(state.buf, function()
-    M.draft(state.root, state.buf, map_, unclaimed)
-  end)
-  vim.notify(("[scry] scrying %d undescribed file(s) of %d"):format(#unclaimed, total))
+  M.next_batch(state.root, state.buf, true)
 end
 
 return M
