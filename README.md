@@ -147,6 +147,11 @@ Requires Neovim 0.10+, **ripgrep**, and the lua treesitter parser (bundled).
 scry conjures through it. [quickfix-pro.nvim](https://quickfix.vim.pro) is
 optional polish for the list.
 
+[stackgraphs.nvim](https://github.com/vim-pro/stackgraphs.nvim) is optional
+and does the name resolution behind `:ScryReach` — what a feature's entry
+points actually reach, so you don't hand-enumerate it. Without it every
+verdict still works and only reach goes away.
+
 `:Scry` to start. `:checkhealth scry` to verify.
 
 In the glass, `<CR>` opens what the line under the cursor is about — the code

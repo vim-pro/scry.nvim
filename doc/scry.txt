@@ -178,13 +178,22 @@ computed from and is ignored once any of them changes: a stale reach is
 worse than none, because it would keep a file off the list on the strength
 of a binding that has since been deleted.
 
+THE RESOLVING ITSELF IS NOT SCRY'S. It lives in stackgraphs.nvim, which
+answers four questions — what a name binds to, what binds to a definition,
+what a file reaches, and the transitive closure of that — and labels every
+answer with a fidelity. Scry may never render a stronger word than the one
+it was handed. See |stackgraphs| for the contract.
+
+That seam exists because the engine behind it is unmaintained upstream and
+covers five languages: a reasonable thing to depend on, a bad thing to have
+scry's vocabulary shaped by. Swapping the backend should not reach the map.
+
 Reach on a def is two passes, and the split is the honesty:
 
     candidates   ripgrep finds every position that mentions the name.
                  Fast, over-broad, never reported as more than it is.
-    resolved     a stack-graphs engine is asked, for each candidate,
-                 whether it binds to THIS definition. What survives is
-                 reach.
+    resolved     the engine is asked, for each candidate, whether it binds
+                 to THIS definition. What survives is reach.
 
 The difference is not small. On a fixture with one real caller and one
 unrelated function of the same name, ripgrep reports five positions and the
@@ -196,15 +205,23 @@ Without one, the first pass still runs and the quickfix title says
 `text only`, because a name match is evidence of a mention and nothing
 more. Scry says which kind of answer it has every time it gives one.
 
+REACH IS OPTIONAL. Without stackgraphs.nvim installed, every verdict scry
+gives still works — kinds are probed by path and grep, `def` by treesitter
+— and only |:ScryReach| and the divergence shrink go away. |:checkhealth|
+says so rather than scry failing to load.
+
+    https://github.com/vim-pro/stackgraphs.nvim
+
 ENGINES are provisioned per language, and |:checkhealth| reports which are
 present: >
 
     cargo install tree-sitter-stack-graphs-typescript --features cli \
-      --root ~/.local/share/nvim/scry
+      --root ~/.local/share/nvim/stackgraphs
 <
 javascript, typescript, tsx, python and java have engines. Lua does not —
 scry's own map is checked by treesitter and answered textually here, and
-says so.
+says so. Engines already installed under ~/.local/share/nvim/scry are still
+found, so an existing install does not need redoing.
 
                                                         *scry-reach-limits*
 REACH IS NOT UNIFORM, and what follows is what has been measured rather

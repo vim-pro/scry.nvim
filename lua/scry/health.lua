@@ -37,18 +37,30 @@ function M.check()
   -- so every time. Reporting it as broken would be the wrong shape — the
   -- degraded answer is a real answer, just a weaker one.
   local reach = require("scry.reach")
-  local any = false
-  for _, line in ipairs(reach.status()) do
-    if line:find("provisioned (", 1, true) then
-      health.ok("reach: " .. line)
-      any = true
-    else
-      health.info("reach: " .. line)
+  if not reach.sg() then
+    -- Not an error either. Every verdict scry gives works without it; only
+    -- :ScryReach and the divergence shrink go away, so this is a missing
+    -- feature rather than a broken install.
+    health.info("reach: stackgraphs.nvim not installed — :ScryReach and the divergence shrink are unavailable")
+    health.info("  https://github.com/vim-pro/stackgraphs.nvim")
+  else
+    local any = false
+    for _, line in ipairs(reach.status()) do
+      if line:find("provisioned (", 1, true) then
+        health.ok("reach: " .. line)
+        any = true
+      else
+        health.info("reach: " .. line)
+      end
     end
-  end
-  if not any then
-    health.info("reach: no engine provisioned — :ScryReach answers by name match, labeled `text only`")
-    health.info("  cargo install tree-sitter-stack-graphs-typescript --features cli --root " .. vim.fn.stdpath("data") .. "/scry")
+    if not any then
+      health.info("reach: no engine provisioned — :ScryReach answers by name match, labeled `text only`")
+      health.info(
+        "  cargo install tree-sitter-stack-graphs-typescript --features cli --root "
+          .. vim.fn.stdpath("data")
+          .. "/stackgraphs"
+      )
+    end
   end
 
   -- Where the map and the holdout live.
