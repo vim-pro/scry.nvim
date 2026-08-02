@@ -64,8 +64,9 @@ local M = {}
 ---@param kindset table<string, table>? kinds in force; the draft may use no
 ---  others, because a kind scry cannot probe is a claim nothing can check.
 ---@param examples table<string, string[]>? real names per kind, from disk
+---@param def_langs string[]? languages a `def` can actually be decided in
 ---@return { lines: string[], intent: string }
-function M.build(map_, unclaimed, kindset, examples)
+function M.build(map_, unclaimed, kindset, examples, def_langs)
   local names = {}
   for _, f in ipairs(map_.features) do
     names[#names + 1] = f.name
@@ -103,6 +104,16 @@ function M.build(map_, unclaimed, kindset, examples)
   -- `src/pages/api/{name}.ts` and reports `src/pages/api//index.json.ts`
   -- absent — accurately, about a path nobody meant. Real names settle it in
   -- one line each.
+  -- `def` is only checkable where an engine can ground a definition — one
+  -- language today. A def anywhere else is not wrong, it is unanswerable:
+  -- it renders `– unchecked (no lua resolver)` for good, and a feature
+  -- carrying two of them reads `◐ 1 of 3` forever. Say so, rather than let
+  -- a drafter spend its claims on questions nothing will answer.
+  local langs = table.concat(def_langs or { "lua" }, ", ")
+  local defnote = ("A `def` CAN ONLY BE CHECKED IN: %s. For a file in any other language name"):format(langs)
+    .. "\nthe FILE with `module`, or use a kind above — a def scry cannot check renders"
+    .. "\nunchecked forever and is worth no more than saying nothing.\n"
+
   local shape_lines = {}
   for _, name in ipairs(kindnames) do
     local ex = (examples or {})[name]
@@ -115,8 +126,22 @@ function M.build(map_, unclaimed, kindset, examples)
   local shapes = table.concat(shape_lines, "\n")
 
   local intent = table.concat({
-    "Replace this block with `feature` entries in scry's map grammar,",
-    "describing what the listed files make possible. Read them.",
+    -- THE SNIPPET IS NOT THE TASK. conjurer frames a region as "snippet to
+    -- transform", which is right for rewriting a function and wrong here:
+    -- since the worklist moved into this request the region is two comment
+    -- lines, and a model asked to transform two comment lines quite
+    -- reasonably hands them back unchanged. It did — twice, and the second
+    -- time it looked like the draft returning nothing.
+    --
+    -- So the instruction does not refer to the snippet at all. It says what
+    -- to output, and the files it is about are in this request rather than
+    -- in the buffer.
+    "The snippet is a two-line placeholder. DISCARD IT.",
+    "",
+    "Read the files listed at the end of these instructions, then output",
+    "`feature` entries in scry's map grammar describing what they make",
+    "possible for someone using this product. Your entire output replaces",
+    "the placeholder.",
     "",
     "GRAMMAR (indentation is the grammar):",
     "  feature <a statement of something the user can accomplish>",
@@ -130,6 +155,7 @@ function M.build(map_, unclaimed, kindset, examples)
       .. " available in this project, and nothing else:",
     "  " .. kindlist,
     "",
+    defnote,
     "A NAME IS NOT A URL. Each kind is found by a probe, and a member's name",
     "is exactly the text the probe substitutes — nothing more. Here is what",
     "names of each kind look like in THIS project, taken off disk; write",
@@ -214,7 +240,10 @@ function M.draft(root, buf, map_, unclaimed)
     batch = vim.list_slice(unclaimed, 1, BATCH)
     remaining = #unclaimed - BATCH
   end
-  local built = M.build(map_, batch, kindset, examples)
+  -- The resolver in force is what decides whether a `def` is worth writing:
+  -- it is the thing that would have to check one.
+  local resolver = require("scry.resolver").get(require("scry.project").resolve(root).resolver)
+  local built = M.build(map_, batch, kindset, examples, resolver and resolver.def_languages)
 
   -- The starter is instructions for someone with no map. A draft IS a map,
   -- so the instructions go — they were telling you to run the thing you
@@ -268,6 +297,12 @@ function M.draft(root, buf, map_, unclaimed)
     srow = srow,
     erow = srow + #built.lines,
   }, built.intent, {
+    -- The worklist is repo-relative, so the drafter has to be standing at
+    -- the root to read a single file of it. The glass is a scry:// buffer
+    -- with no directory of its own, and nvim's cwd is wherever you opened
+    -- it: from anywhere else the model got nine paths that resolve to
+    -- nothing and handed the placeholder straight back.
+    cwd = root,
     note = ("scry: drafting features for %d file(s) no feature claims"):format(#unclaimed),
     -- Passing on_done is what keeps conjurer's review tab shut (see the
     -- header) and is also the only moment scry can tell a drafted claim from

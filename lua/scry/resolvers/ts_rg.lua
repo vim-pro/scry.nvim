@@ -10,6 +10,12 @@
 -- Violations carry evidence lines and ARE certain; clean is evidence only.
 local M = {
   name = "ts_rg",
+  -- Languages this engine can decide a `def` in. Treesitter grounds a
+  -- definition and there is one grammar wired here, so the honest list is
+  -- one entry long — and it is a list rather than a comment because the
+  -- drafting pass reads it. Asking a model for claims scry cannot check
+  -- produces a map that renders `– unchecked` forever.
+  def_languages = { "lua" },
 }
 
 -- Definitions a lua file declares: function_declaration names plus
