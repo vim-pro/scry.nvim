@@ -116,4 +116,36 @@ local gone = debt.count(m, all_done, work .. "/does-not-exist")
 H.eq(gone.unclaimed, 0, "a missing root yields no divergence rather than an error")
 H.eq(gone.features, 1, "and the rest of the header still computes")
 
+
+-- SCALE IS NOT SPEED. Measured on a twenty-thousand-file project,
+-- divergence takes 24ms and the check 59ms — what fails is the REPORT.
+-- Eighteen thousand unclaimed files is the same wall of detail the altitude
+-- work was about, one level up, and a quickfix window with eighteen
+-- thousand rows is a thing you close rather than a thing you work.
+local d = require("scry.divergence")
+local many = {}
+for p = 0, 199 do
+  for f = 1, 94 do
+    many[#many + 1] = ("packages/pkg%03d/src/mod%03d.lua"):format(p, f)
+  end
+end
+H.eq(#many, 18800, "the shape of a real large repository")
+local rolled = d.rollup(many, 200)
+H.ok(#rolled <= 200, "rolled up to something a reader can hold: " .. #rolled .. " rows")
+H.ok(rolled[1].count > 1, "each row stands for many files")
+H.ok(rolled[1].sample:find(rolled[1].path, 1, true) == 1, "and names a real file to jump to")
+local sum = 0
+for _, g in ipairs(rolled) do
+  sum = sum + g.count
+end
+H.eq(sum, #many, "every file is accounted for, none dropped in the grouping")
+
+-- A SMALL PROJECT IS UNCHANGED. Grouping is what you do when a list stops
+-- being readable, not a thing to do to three files.
+local few = { "src/lib/db.js", "src/lib/run.js", "src/pages/about.astro" }
+local small = d.rollup(few, 200)
+H.eq(#small, 3, "three files stay three rows")
+H.eq(small[1].path, "src/lib/db.js", "named individually")
+H.eq(small[1].count, 1, "one apiece")
+
 H.done("divergence_spec PASS")

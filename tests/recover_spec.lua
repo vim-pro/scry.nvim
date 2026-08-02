@@ -196,4 +196,20 @@ H.ok(
   "and the map around it is untouched"
 )
 
+
+-- ONE PASS IS ONE BATCH. The worklist went out whole, and at seventy-two
+-- files that already ran past a five-minute timeout — at twenty thousand it
+-- is not a long request but an impossible one. Iterating is natural because
+-- a kept draft claims what it described, so the next run sees what is left.
+local many = {}
+for i = 1, 300 do
+  many[i] = ("src/mod%03d.js"):format(i)
+end
+local capped = vim.api.nvim_create_buf(false, true)
+require("scry").setup({ provider = function() end })
+pcall(recover.draft, vim.fn.tempname(), capped, map.parse({}), many)
+local sent = table.concat(vim.api.nvim_buf_get_lines(capped, 0, -1, false), "\n")
+H.ok(sent:find("drafting features for 40 undescribed", 1, true) ~= nil, "a pass takes a bounded batch: " .. sent:sub(1, 60))
+H.eq(sent:find("300 undescribed", 1, true), nil, "not the whole three hundred")
+
 H.done("recover_spec PASS")

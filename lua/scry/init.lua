@@ -52,9 +52,12 @@ vim.api.nvim_create_user_command("ScryCheck", function()
   end)
 end, { desc = "Re-check every claim against the files on disk" })
 
-vim.api.nvim_create_user_command("ScryUnclaimed", function()
-  require("scry.divergence").to_quickfix()
-end, { desc = "List the files no feature claims (reflexion's divergence)" })
+vim.api.nvim_create_user_command("ScryUnclaimed", function(a)
+  require("scry.divergence").to_quickfix({ all = a.bang })
+end, {
+  bang = true,
+  desc = "Where the code nothing describes is (! for every file, however many)",
+})
 
 vim.api.nvim_create_user_command("ScryDraft", function()
   require("scry.recover").start()

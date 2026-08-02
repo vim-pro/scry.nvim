@@ -192,7 +192,22 @@ function M.draft(root, buf, map_, unclaimed)
       examples[name] = ex
     end
   end
-  local built = M.build(map_, unclaimed, kindset, examples)
+  -- ONE PASS IS ONE BATCH. The worklist used to go out whole, and at
+  -- seventy-two files that already ran past a five-minute timeout — at
+  -- twenty thousand it is not a long request, it is an impossible one.
+  --
+  -- A cap makes the pass finite at any size, and iterating is natural
+  -- because a kept draft CLAIMS the files it described: run it again and
+  -- the next batch is whatever is still undescribed. Files are taken in the
+  -- order divergence found them, which groups a directory's files together,
+  -- so a batch tends to be one part of the product rather than a scatter.
+  local BATCH = 40
+  local batch, remaining = unclaimed, 0
+  if #unclaimed > BATCH then
+    batch = vim.list_slice(unclaimed, 1, BATCH)
+    remaining = #unclaimed - BATCH
+  end
+  local built = M.build(map_, batch, kindset, examples)
 
   -- The starter is instructions for someone with no map. A draft IS a map,
   -- so the instructions go — they were telling you to run the thing you
@@ -228,6 +243,15 @@ function M.draft(root, buf, map_, unclaimed)
   local insert = { "" }
   vim.list_extend(insert, built.lines)
   vim.api.nvim_buf_set_lines(buf, first, first, false, insert)
+  if remaining > 0 then
+    vim.notify(
+      ("[scry] drafting %d of %d undescribed files — keep this, then :ScryDraft again for the next %d"):format(
+        #batch,
+        #batch + remaining,
+        math.min(remaining, BATCH)
+      )
+    )
+  end
   local srow = first + 1 -- 0-based, past the blank separator
 
   local before = claim_ids(buf, root)

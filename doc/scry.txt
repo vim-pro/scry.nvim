@@ -449,7 +449,34 @@ and the opposite act in substance, and nothing here can tell the difference
 for you. If a path is arguably product, leave it in and claim it — the
 file-level `contains` form exists so that is always possible.
 
-                                                             *scry-drafting*
+                                                               *scry-scale*
+AT SCALE ~
+
+Measured on a twenty-thousand-file project with twelve hundred claims:
+parsing the map takes 2ms, divergence 24ms, checking every claim 59ms, the
+counts 37ms. Looking is cheap and stays cheap; nothing in the check path is
+the thing that fails first.
+
+WHAT FAILS IS THE REPORT. Eighteen thousand eight hundred unclaimed files is
+not a list — it is the same wall of detail |scry-altitude| is about, one
+level up, and a quickfix window with eighteen thousand rows is a thing you
+close rather than a thing you work. |:ScryUnclaimed| groups by directory
+until the answer fits in something a reader can hold: `packages/pkg042 —
+100 files, nothing claims any of them` is a sentence you can act on. Every
+file is still accounted for in the counts, each row jumps to a real file,
+and a small project has its files named one by one as before.
+|:ScryUnclaimed|! lists every file however many there are.
+
+AND THE DRAFT IS A BATCH. |:ScryDraft| used to send the whole worklist,
+which already ran past a five-minute timeout at seventy-two files and is
+not a long request at twenty thousand but an impossible one. A pass takes a
+bounded number and says how many are left. Iterating is natural because a
+kept draft CLAIMS what it described, so the next run sees what remains, and
+the files come in the order divergence found them — which keeps a
+directory's files together, so a batch tends to be one part of the product
+rather than a scatter.
+
+                                                            *scry-drafting*
 DRAFTING THE GAP ~
 
 |:ScryDraft| takes the unclaimed files and asks a conjurer to write features
@@ -763,7 +790,7 @@ quiet list.
                         |scry-reach|.
 
                                                               *:ScryUnclaimed*
-:ScryUnclaimed          List the files no feature claims in the quickfix
+:ScryUnclaimed[!]       Where the code nothing describes is, in the quickfix
                         list. See |scry-divergence|.
 
                                                                   *:ScryDraft*
