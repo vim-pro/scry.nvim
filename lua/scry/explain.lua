@@ -14,13 +14,6 @@
 -- sentence here is about the row it is under and the verdict that row
 -- actually got.
 --
--- IT IS ALSO THE ANSWER TO WHAT THE QUIET IS HIDING. The glass withholds a
--- verdict that is true of every member of a feature, because a column reading
--- the same on every row is texture (|scry-mappings|). That is right for
--- reading and wrong for learning: the first time you meet a silent row you
--- have no way to know whether it means "fine" or "nothing ran". `g?` says
--- what was withheld.
---
 -- THE WORDING IS LOAD-BEARING, exactly as the verdict labels are. Nothing
 -- here may claim more than the engine claimed — see |scry-honesty|, which
 -- these sentences are the reader-facing half of. `✓ present (file)` means a
@@ -50,8 +43,7 @@ local RUNG = {
 
 -- What a feature's rolled-up state means for you.
 local FEATURE = {
-  done = "every claim under this holds, and you have read it",
-  unread = "every claim holds — and nobody here has read the description. that is what a draft looks like",
+  done = "every claim under this holds, against the files on disk",
   broken = "something that used to hold does not. the most urgent row on the page",
   partial = "some of it holds. the rest is the work",
   absent = "nothing holds yet. a capability you have described and not built — this is on purpose",
@@ -60,24 +52,10 @@ local FEATURE = {
 }
 
 --- The gloss for a feature's line.
----
---- The note about withheld member verdicts belongs HERE and not on each
---- member, which is where it started: four members produced four identical
---- parentheticals, which is the exact texture the withholding exists to
---- remove, reproduced inside the mode that explains it. It is one fact about
---- the feature, so it goes on the feature.
 ---@param verdict table?
----@param withheld boolean whether this feature's member verdicts are hidden
 ---@return string?
-function M.feature(verdict, withheld)
-  local text = verdict and FEATURE[verdict.state]
-  if not text then
-    return nil
-  end
-  if withheld then
-    text = text .. " · its members are quiet below because they all say the same"
-  end
-  return text
+function M.feature(verdict)
+  return verdict and FEATURE[verdict.state] or nil
 end
 
 --- The gloss for a member's line.

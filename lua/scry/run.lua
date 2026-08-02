@@ -103,7 +103,6 @@ function M.start(opts)
 
   vim.notify(("[scry] running %d spec%s…"):format(#specs, #specs == 1 and "" or "s"))
   local runs = require("scry.runs")
-  local prov = require("scry.provenance")
   local by_spec = {}
   for _, claim in ipairs(map_.claims) do
     if claim.kind == "exercises" then
@@ -119,10 +118,6 @@ function M.start(opts)
     M.one(state.root, s.spec, config, deps, function(run)
       if not run.ok then
         failed[#failed + 1] = s.spec
-      end
-      -- red-then-green under your own :ScryExercise is the trail for these claims
-      for _, claim in ipairs(by_spec[s.spec] or {}) do
-        prov.record(state.root, claim, run.ok and "green" or "red")
       end
       pending = pending - 1
       if pending == 0 then

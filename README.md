@@ -70,14 +70,14 @@ address you can put a cursor on.
 
 ```
 scry · 3 features · 1 building · 1 broken · 1 to do · 4 unclaimed files   checked 40s ago
-      6 claims · 3 backed · 1 missing · 1 violated · 1 unchecked · 4 untouched
+      6 claims · 3 backed · 1 missing · 1 violated · 1 unchecked
 
 feature a user can reset their password                          ◐ 2 of 4
   Requests a link by email. The link burns on use.
 
   contains
     lua/auth/reset.lua:request_reset                             ✓ defined
-    lua/auth/reset.lua:consume_link                              ✗ absent · ∅ untouched
+    lua/auth/reset.lua:consume_link                              ✗ absent
   never
     token.*log                                                   ✓ no matches (rg)
   exercises
@@ -110,11 +110,10 @@ nobody wrote down. This is reflexion's third verdict — see
 **And `+` in the glass fills that gap — but a draft is not a belief.** The
 scrying pass asks a conjurer to write features for the unclaimed files, into
 the glass, where you read them — a dozen at a time, batch after batch, until
-the project is described or you stop it. Drafted claims carry no ownership trail, so
-they render *untouched* and the header counts them that way: a hundred
-machine-written claims nobody has read is inventory, not understanding. One
-becomes yours when you edit it. The machine types; you decide. See
-`:h scry-drafting`.
+the project is described or you stop it. A drafted claim arrives *unchecked*
+and stays that way until an engine answers it: a hundred machine-written
+lines are inventory until something confirms them, and the verdicts are what
+confirm them. The machine types; you decide. See `:h scry-drafting`.
 
 **Features sit at sea level; claims are their evidence.** A feature is one
 thing a user can accomplish, named the way they'd name it — not "the auth
@@ -127,20 +126,15 @@ its claims name, never declared — see `:h scry-altitude`.
 prose is preserved verbatim and never checked. The sentences carry the
 theory; the claims carry the check.
 
-**The work leaves a trail.** Authoring a claim, conjuring it, running its
-check red then green — each marks the claim it touched, and the trail is
-what clears `∅ untouched`. A trail can only exist if the work actually
-passed through your hands, and editing a claim resets it.
-
 **Prohibitions are a holdout.** `never` claims are withheld from the model
 that writes your code and checked afterwards. If the generator is shown the
 prohibition, its output satisfying it tells you nothing — it was asked to.
 A rule it never saw, checked after, is real evidence. That's why prohibitions
 are stored outside the repo by default.
 
-**Theory-debt is a number.** How much of your system has no one engaged
-with? Conjuring generates untouched claims at machine speed; working through
-them is the only thing that pays it down. `scry 9f ✓6 ◐2 ✗1 ∅3`.
+**Theory-debt is a number.** How much of your system does the map fail to
+describe, and how much of what it describes does not hold?
+`scry 9f ✓6 ◐2 ✗1`.
 
 ## Two axes of evidence
 
@@ -250,9 +244,9 @@ full. In short:
   has a remedy. It renders `✓ present (file)` — a map of
   bare paths is a list of files, which is what features exist to prevent.
 - **A feature's state is only as good as its claims.** `✓ done` means every
-  claim under it holds and someone here has read it, not that the feature
-  works. Backed but unread is its own state (`– unread`), because a fresh
-  draft and a freshly cloned map both land there.
+  claim under it holds, not that the feature works. Four claims that each say
+  "the file is on disk" roll up to `✓ done` and nothing has looked inside any
+  of them — press `g?` in the glass and it will tell you so.
 
 ## Development
 

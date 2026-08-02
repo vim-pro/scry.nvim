@@ -46,14 +46,12 @@ calls[3].cb({ status = "violated", fidelity = "rg-text", label = "✗ VIOLATED",
 H.ok(report ~= nil, "settled once, after the last verdict")
 H.ok(report.at > 0, "report is timestamped")
 
--- debt: ownership is provenance-based now; with no root every claim is
--- untouched, and the verdict axis is unaffected
+-- debt: the verdict axis, and only the verdict axis
 local d = debt.count(m, report)
 H.eq(d.claims, 3, "claim count")
 H.eq(d.backed, 1, "backed")
 H.eq(d.missing, 1, "missing")
 H.eq(d.violated, 1, "violated")
-H.eq(d.untouched, 3, "with no trail, every claim is untouched")
 
 -- header renders separate numbers with the claim count leading
 local header = debt.header(d, report.at)

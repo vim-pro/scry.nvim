@@ -19,19 +19,18 @@ CONTENTS                                                       *scry-contents*
   4. Verdicts .................................... |scry-verdicts|
      Divergence .................................. |scry-divergence|
      Drafting the gap ............................ |scry-drafting|
-  5. Ownership ................................... |scry-ownership|
-  6. Theory-debt ................................. |scry-debt|
-  7. The holdout ................................. |scry-holdout|
-  8. Conjuring from the glass .................... |scry-conjure|
-  9. Exercised claims ............................ |scry-exercised|
+  5. Theory-debt ................................. |scry-debt|
+  6. The holdout ................................. |scry-holdout|
+  7. Conjuring from the glass .................... |scry-conjure|
+  8. Exercised claims ............................ |scry-exercised|
      Moving around ............................... |scry-mappings|
- 10. Commands .................................... |scry-commands|
- 11. Configuration ............................... |scry-configuration|
+  9. Commands .................................... |scry-commands|
+ 10. Configuration ............................... |scry-configuration|
      Per-project ................................. |scry-project-config|
- 12. Highlights .................................. |scry-highlights|
- 13. What scry does NOT claim .................... |scry-honesty|
- 14. Health ...................................... |scry-health|
- 15. License ..................................... |scry-license|
+ 11. Highlights .................................. |scry-highlights|
+ 12. What scry does NOT claim .................... |scry-honesty|
+ 13. Health ...................................... |scry-health|
+ 14. License ..................................... |scry-license|
 
 ==============================================================================
 1. INTRODUCTION                                            *scry-introduction*
@@ -105,7 +104,7 @@ never-claims to the holdout file (|scry-holdout|), announcing where they
 went. Every render carries a header:
 >
     scry · 9 features · 5 done · 2 building · 1 broken · 1 to do   checked 40s ago (files on disk)
-          21 claims · 15 backed · 3 missing · 1 violated · 2 unchecked · 4 untouched
+          21 claims · 15 backed · 3 missing · 1 violated · 2 unchecked
 <
 Features lead, because the question a reader arrives with is what the
 product does — not how many subfunctions resolved. Claim numbers are the
@@ -126,24 +125,18 @@ authored:
 
     ✓ done             every claim holds, and you have read this
     ✗ broken (1 of 5)  a claim regressed; outranks everything else
-    – unread (5 of 5)  every claim holds and nobody has read it
     ◐ 2 of 5           real progress: some evidence holds
     ✗ not yet          nothing holds — the state you create on purpose
     – unchecked (n)    nothing has answered yet; NOT progress
     – no evidence yet  named, with nothing checkable under it
 
-`– unread` exists because evidence and engagement are different questions,
-and a feature can pass the first while failing the second entirely. That is
-the state a drafting pass leaves behind (|scry-drafting|), and also the state
-a map you have just cloned is in — the trail is per-machine and unversioned,
-so someone else's understanding does not arrive with their file. Calling
-either one `✓ done` would put a finished product on the line you scan.
-
-One owned claim is enough to make a feature read: the question is whether a
-human has been through the description at all, not whether they finished it.
-And `unread` displaces `done` only — a half-backed feature nobody has touched
-still reads `◐ 2 of 5`, because progress is the more useful reading and is not
-a claim of completion.
+THERE IS ONE AXIS HERE, AND IT IS EVIDENCE. There used to be a second: an
+`unread` state, meaning every claim held and nobody had recorded reading the
+description. It came with a per-machine trail, an `∅` marker on every row, and
+a word on the line you scan — and none of it said anything about your code.
+`– unread 4 of 4`, beside four members each already showing its own verdict,
+taught a reader nothing they could act on. It was the last of the ratification
+design, and it is gone.
 
 ==============================================================================
 3. THE MAP                                                          *scry-map*
@@ -474,7 +467,6 @@ The glyph never appears alone. The label states what was actually checked:
     ✗ unreferenced         the target exists, but this feature never mentions it
     ✗ VIOLATED             a prohibition matched — with the evidence line
     ✗ FAILING              that spec exited non-zero — with its output
-    ∅ untouched            no work has passed through this claim yet
     – unchecked            no resolver for this language; NOT a pass
     – unrun                nobody has run that spec yet; NOT a pass
     – stale                it passed, but the code has moved since; NOT a pass
@@ -615,11 +607,9 @@ stands. What it does not require is that authoring start from an empty
 buffer.
 
 The distinction that carries the weight: A DRAFT IS NOT A BELIEF. A drafted
-claim has no ownership trail, so it renders untouched and the header counts
-it as untouched — which is the honest reading of a hundred machine-written
-claims nobody has read. It is inventory. It becomes a belief when you edit
-it, and editing is what records the trail (|scry-ownership|). The machine
-does the typing; you do the deciding.
+claim arrives UNCHECKED and stays that way until an engine answers it, which
+is the honest reading of a hundred machine-written lines: they are inventory
+until something confirms them, and the verdicts are what confirm them.
 
 The pass is scoped by divergence rather than by repository, so it drafts
 against the gap instead of re-describing the product. That is what keeps each
@@ -627,7 +617,7 @@ pass short enough to actually read, and it means the report you ran to find
 the gap is the report that closes it.
 
 The glass is the review. A drafted feature wants to be read beside the rest
-of the map, with its claims checked and its untouched marker showing, and
+of the map, with its claims checked against the code, and
 none of that survives a diff view — so the draft lands in the buffer, `u`
 discards it, and nothing reaches the map file until you |:write|.
 
@@ -641,35 +631,10 @@ to have been fitted to. Running the tripwire here would look like a
 guarantee while guaranteeing nothing, which is worse than saying so.
 
 ==============================================================================
-5. OWNERSHIP                                                  *scry-ownership*
-
-The ordinary actions of doing the work each record a trail event on the
-claim they touch:
-
-    authored     you typed or edited the claim's text in the glass
-    conjured     you sent it to the conjurer (|scry-conjure|)
-    red / green  its spec failed, then passed, under your |:ScryExercise|
-    settled      a claim you conjured came true on your save
-
-A claim is YOURS — and drops its `∅ untouched` marker — when the trail
-shows you passed through it: authored, or conjured and it came true. A
-machine-drafted claim nobody has engaged with stays marked, which is
-exactly what the marker is for: inventory is not understanding.
-
-Every event is keyed to a hash of the claim's text at the moment it was
-recorded, so editing a claim resets its trail — mechanically, no hooks.
-Trails live outside the repo under `stdpath("state")`, like run results:
-facts about what you did on this machine, not something to commit.
-
-A `-- @name date hex` suffix on a claim line parses and is kept as data.
-
-==============================================================================
 6. THEORY-DEBT                                                     *scry-debt*
 
 Two separate numbers, never blended into one score:
 
-- **untouched** — claims no work has passed through yet. See
-  |scry-ownership|.
 - **diverged** — claims that are missing or violated.
 
 A claim is also always in exactly one verdict column — backed, missing,
@@ -685,7 +650,7 @@ can report code that no claim covers, debt says nothing about unclaimed
 code.
 
 `require("scry.debt").statusline()` returns a compact string for your own
-statusline: `scry 14c ✓11 ✗2 ∅3`, gaining a `–N` when anything is unchecked; `∅` counts untouched claims.
+statusline: `scry 14c ✓11 ✗2`, gaining a `–N` when anything is unchecked.
 
 ==============================================================================
 7. THE HOLDOUT                                                  *scry-holdout*
@@ -883,11 +848,6 @@ The same goes for an open feature's own line. Its state used to be withheld
 when every feature in the map read alike — which in a map with ONE feature is
 always, so the only row on the page said nothing at all.
 
-∅ IS THE EXCEPTION, and the difference is what it measures. A verdict is
-EVIDENCE about the code; ∅ is ENGAGEMENT — whether you have read this yet —
-and when nobody has read any of it, the feature's line already says `unread`
-in as many words.
-
 TWO COLUMNS, because a member row says two things: where it lands and whether
 it holds. Ragged, they read as one run-on annotation; aligned, they are
 columns you can run an eye down. The second collapses onto the first when no
@@ -935,10 +895,8 @@ and "nothing ran" look identical.
 `g?` puts a plain-language gloss under every line — what the row is, what its
 verdict actually asserts, and what it does NOT:
 >
-    feature Take a checklist away as a PDF                        – unread
-        ? every claim holds — and nobody here has read the description.
-          that is what a draft looks like · its members are quiet below
-          because they all say the same
+    feature Take a checklist away as a PDF                         ✓ done
+        ? every claim under this holds, against the files on disk
 
       route [slug]                    src/pages/[slug].astro
         ? the file is on disk. nothing has looked inside it
@@ -1050,7 +1008,7 @@ highlight, so the whole thing came out a single gray — most of what a reader
 looks at, in the one color that says nothing. 'foldtext' returns highlighted
 chunks instead, so the name, the state and the count render as they do when
 the fold is open and the state column can be read by color before it is read
-by word: amber is building, cyan is unread, green is done, red is broken.
+by word: amber is building, green is done, red is broken.
 
 At `zM` it is one feature per row, and built to be read as a column: the
 states line up at a common cell, so they can be run down rather than hunted
@@ -1436,13 +1394,10 @@ ScryDiverged            Missing and violated verdicts. Default:
                                                            *hl-ScryUnchecked*
 ScryUnchecked           Verdicts no engine answered. Default: DiagnosticHint.
                                                            *hl-ScryUntouched*
-ScryUntouched           The ∅ marker. Default: NonText, and quiet on
-                        purpose: untouched is the state every claim starts
-                        in, so a freshly drafted map is nothing but ∅, and
-                        rendering it as a warning would paint the whole
                         buffer with an alarm that only means "new".
                                                           *hl-ScryUnratified*
-ScryUnratified          Deprecated, named for ratification. Links to
+ScryUnratified          Deprecated, named for the ratification and ownership
+                        designs, both removed. Links to
                         ScryUntouched so a config that styled it keeps
                         working.
 

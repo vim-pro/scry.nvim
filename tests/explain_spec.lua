@@ -40,22 +40,15 @@ H.ok(none:find("not a pass", 1, true) ~= nil, "nothing answering is never a pass
 H.ok(explain.member(nil):find("no verdict yet", 1, true) ~= nil, "and no verdict at all says so plainly")
 
 -- 2) FEATURE STATES, in the reader's terms rather than the engine's.
-H.ok(explain.feature({ state = "unread" }):find("nobody here has read", 1, true) ~= nil, "unread is about people")
 H.ok(explain.feature({ state = "absent" }):find("on purpose", 1, true) ~= nil, "`not yet` is a state you create")
 H.ok(explain.feature({ state = "unknown" }):find("NOT progress", 1, true) ~= nil, "unchecked is not partial")
 H.ok(explain.feature({ state = "unevidenced" }):find("+", 1, true) ~= nil, "a bare name points at the way out")
 H.eq(explain.feature(nil), nil, "and nothing is explained about a feature with no verdict")
 
--- 3) THE WITHHELD NOTE GOES ON THE FEATURE, NOT ON EVERY MEMBER.
---
--- It started on the members, and four members produced four identical
--- parentheticals — the exact texture the withholding exists to remove,
--- reproduced inside the mode that explains it. It is one fact about the
--- feature, so it belongs to the feature.
-local quiet = explain.feature({ state = "unread" }, true)
-H.ok(quiet:find("quiet below", 1, true) ~= nil, "a feature whose members are hidden says why, once")
-H.eq(explain.feature({ state = "unread" }, false):find("quiet below"), nil, "and one whose members show does not")
-H.eq(file:find("hidden"), nil, "the member itself carries no copy of that note")
+-- 3) THERE IS NO ENGAGEMENT AXIS TO EXPLAIN. `unread` was a state meaning
+-- every claim held and nobody had recorded reading the description, and it
+-- said nothing about the code. It is gone, and so is the sentence for it.
+H.eq(explain.feature({ state = "unread" }), nil, "a state that no longer exists explains nothing")
 
 -- 4) IT IS OFF UNTIL ASKED FOR, and it is a reading mode rather than
 -- something about a project — which project you are looking at has nothing to

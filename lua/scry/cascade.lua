@@ -240,8 +240,6 @@ function M.seed(root, claim, intent, handoff)
     title = "scry: " .. claim.feature,
     items = built.items,
   })
-  -- the act of sending work is part of the ownership trail
-  require("scry.provenance").record(root, claim, "conjured")
 
   if active and active.augroup then
     pcall(vim.api.nvim_del_augroup_by_id, active.augroup)

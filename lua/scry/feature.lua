@@ -16,28 +16,17 @@
 -- the first check settles every feature is in exactly that state, and
 -- showing it as progress would be a lie told at the least useful moment.
 --
--- "unread" outranks "done", and it exists because the evidence axis and the
--- engagement axis are different questions. Every claim under a feature can
--- hold while nobody has read a word of it — which is precisely the state a
--- drafting pass produces, and dogfooding the pass produced it immediately:
--- two features, both `✓ done`, one of them written by a machine thirty
--- seconds earlier. The untouched count said so on the second line, and the
--- second line is not the line anybody scans.
+-- THERE IS ONE AXIS HERE, AND IT IS EVIDENCE. There used to be a second: an
+-- `unread` state, meaning every claim held and nobody had recorded reading
+-- the description. It was the last of the ratification design — a whole
+-- subsystem of per-machine trails, an ∅ marker on every row, and a word on
+-- the line you scan — and none of it said anything about the code. A reader
+-- looking at `– unread 4 of 4` learned nothing they could act on.
 --
--- So a feature whose every claim is untouched cannot read done. It reads
--- `– unread`, and the wording covers the other way into this state too: a
--- map you have just cloned. The trail is per-machine and unversioned, so
--- someone else's understanding does not arrive with their file — which is
--- the whole reason the theory cannot be externalised, and `unread` is a true
--- sentence about a map you have never opened.
---
--- Deliberately narrow: `unread` displaces `done` only. A half-backed feature
--- nobody has touched still reads `◐ 2 of 5`, because progress is the more
--- useful reading and it is not claiming to be finished. The lie worth
--- closing is the claim of completion.
+-- What is left says only what the evidence says.
 local M = {}
 
----@alias scry.FeatureState "done"|"broken"|"unread"|"partial"|"unknown"|"absent"|"unevidenced"
+---@alias scry.FeatureState "done"|"broken"|"partial"|"unknown"|"absent"|"unevidenced"
 
 ---@class scry.FeatureVerdict
 ---@field state scry.FeatureState
@@ -48,11 +37,9 @@ local M = {}
 --- Roll a feature's claim verdicts into one state.
 ---@param feature scry.Feature
 ---@param report scry.Report?
----@param root string? Project root. Without it engagement cannot be read, so
----  `unread` is never reported — a caller with no root gets the evidence axis
----  only, which is honest about what it could see.
+---@param root string? Unused; kept so every caller does not change shape.
 ---@return scry.FeatureVerdict
-function M.verdict(feature, report, root)
+function M.verdict(feature, report, root) -- luacheck: ignore root
   local mapmod = require("scry.map")
   local total = #feature.claims
   if total == 0 then
@@ -84,17 +71,6 @@ function M.verdict(feature, report, root)
     }
   end
   if backed == total then
-    if root and not M.engaged(root, feature) then
-      return {
-        state = "unread",
-        -- Same shape as every other state, so the column has one rhythm:
-        -- `– unread 3 of 3` reads beside `◐ 2 of 4`, where
-        -- `– unread (3 of 3 backed)` was half again as long and broke it.
-        label = ("– unread %d of %d"):format(backed, total),
-        backed = backed,
-        total = total,
-      }
-    end
     return { state = "done", label = "✓ done", backed = backed, total = total }
   end
   if backed > 0 then
@@ -116,32 +92,13 @@ function M.verdict(feature, report, root)
   return { state = "absent", label = "✗ not yet", backed = 0, total = total }
 end
 
---- Has anyone here engaged with any part of this feature?
----
---- Any single owned claim is enough. The question is whether a human has been
---- through this description at all, not whether they finished — one edited
---- claim means the feature was read, and holding out for all of them would
---- report `unread` for work visibly in progress.
----@param root string
----@param feature scry.Feature
----@return boolean
-function M.engaged(root, feature)
-  local prov = require("scry.provenance")
-  for _, claim in ipairs(feature.claims) do
-    if prov.owned(root, claim) then
-      return true
-    end
-  end
-  return false
-end
-
 --- Count features by state, for the header.
 ---@param map_ scry.Map
 ---@param report scry.Report?
 ---@param root string?
 ---@return table<scry.FeatureState, integer> counts, integer total
 function M.tally(map_, report, root)
-  local counts = { done = 0, broken = 0, unread = 0, partial = 0, unknown = 0, absent = 0, unevidenced = 0 }
+  local counts = { done = 0, broken = 0, partial = 0, unknown = 0, absent = 0, unevidenced = 0 }
   for _, feature in ipairs(map_.features) do
     local v = M.verdict(feature, report, root)
     counts[v.state] = counts[v.state] + 1

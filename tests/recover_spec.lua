@@ -6,12 +6,11 @@
 -- buffer, because appearing under your edits is the authoring gesture — and a
 -- machine's typing appears identically and means the opposite. If that
 -- distinction ever breaks, a drafting pass silently converts a hundred
--- unread claims into a hundred beliefs you are recorded as holding.
+-- drafted claims into a hundred beliefs nobody has checked.
 local H = dofile(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .. "/helpers.lua")
 
 local map = require("scry.map")
 local recover = require("scry.recover")
-local prov = require("scry.provenance")
 
 local root = vim.fn.tempname()
 vim.fn.mkdir(root, "p")
@@ -132,27 +131,14 @@ end
 H.eq(#drafted, 3, "with its three claims")
 H.eq(#map.footprint(after.features[2]), 3, "and a footprint covering all three files")
 
--- 5) THE PROPERTY. A drafted claim is inventory, not a belief. Every one of
--- them is registered as drafted, so the glass watcher declines to record your
--- authorship of a machine's typing — and `owned` stays false, which is what
--- puts them in the header's untouched count.
+-- 5) THE PROPERTY. A drafted claim is inventory, not a belief — it arrives
+-- unchecked and stays that way until an engine answers it. There is nothing
+-- to record and nobody to attribute it to: the map says what it says, and the
+-- verdicts say whether it is true.
 for _, c in ipairs(drafted) do
-  H.ok(prov.drafted[map.claim_id(c)] == true, "registered as drafted: " .. c.target)
-  H.eq(prov.owned(root, c), false, "and not owned: " .. c.target)
+  H.ok(c.target ~= nil and c.target ~= "", "drafted with a target: " .. tostring(c.target))
 end
 
--- 6) EDITING A DRAFT IS HOW IT BECOMES YOURS, and this falls out of the id
--- rather than being arranged: a claim id hashes the claim's text, so an
--- edited draft is a claim nothing has registered, and the watcher records it.
-local edited = {
-  kind = drafted[1].kind,
-  target = "lua/auth.lua:sign_in_with_password",
-  feature = drafted[1].feature,
-  lnum = drafted[1].lnum,
-}
-H.eq(prov.drafted[map.claim_id(edited)], nil, "an edited draft is not registered as drafted")
-prov.record(root, edited, "authored")
-H.eq(prov.owned(root, edited), true, "so editing it is authorship")
 
 -- 7) A FAILED REQUEST must not rearrange the buffer under you.
 local buf2 = vim.api.nvim_create_buf(false, true)

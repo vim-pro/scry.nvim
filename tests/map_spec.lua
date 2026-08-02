@@ -78,23 +78,6 @@ local weird = map.parse({
 H.eq(#weird.claims, 1, "claim before the dedent parsed; line after it is prose")
 H.eq(weird.claims[1].target, "real.lua:sym", "the real claim survived its weird neighbors")
 
--- Ownership is inferred, never performed: the provenance trail is keyed to
--- a hash of the claim's text, so EDITING a claim voids its trail — the old
--- ratification property, kept without the stamp.
-local prov = require("scry.provenance")
-local root = vim.fn.tempname()
-vim.fn.mkdir(root, "p")
-local m2 = map.parse({ "feature a", "  contains", "    x.lua:one" })
-local claim = m2.claims[1]
-H.eq(prov.owned(root, claim), false, "an untouched claim is not owned")
-prov.record(root, claim, "authored")
-H.eq(prov.owned(root, claim), true, "authoring is ownership")
-claim = { kind = claim.kind, target = "x.lua:two", feature = claim.feature, lnum = claim.lnum }
-H.eq(prov.owned(root, claim), false, "an edited claim's trail is void")
-prov.record(root, claim, "conjured")
-H.eq(prov.owned(root, claim), false, "conjuring alone is not ownership")
-prov.record(root, claim, "green")
-H.eq(prov.owned(root, claim), true, "conjured and came true is ownership")
 -- stamps from the ratification era still PARSE (legacy lines are claims with
 -- a stamp field), they just no longer mean anything
 local legacy = map.parse({ "feature a", "  contains", "    x.lua:one  -- @w0zro 2026-07-26 abc123" })

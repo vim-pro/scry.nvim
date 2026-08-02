@@ -110,13 +110,6 @@ local function row_of(needle)
 end
 H.ok(virt[row_of("create_session")]:find("✓ defined", 1, true) ~= nil, "backed verdict rendered")
 
--- ∅ IS THE ONE MARKER THAT STILL FOLDS, and the difference is what it
--- measures. A verdict is EVIDENCE about the code, and every open row carries
--- its own (below). ∅ is ENGAGEMENT — whether YOU have read this yet — and
--- when nobody has read any of it, the feature's own line already says
--- `unread` in as many words. Nothing in the fixture has been touched, so this
--- is exactly that case.
-H.eq(virt[row_of("create_session")]:find("∅", 1, true), nil, "a marker true of every member is on none of them")
 
 -- Verdicts line up in a column rather than trailing whatever the line says.
 -- Two claims of very different lengths must start their verdict at the same
@@ -193,30 +186,16 @@ H.ok(
   "and so does the disk caveat"
 )
 
--- 4) ownership is inferred from the work: record an authored event for the
--- cursor claim and the marker clears on the next render — no command, no stamp
-local prov = require("scry.provenance")
-local target_claim
-for _, c in ipairs(glass._state.map.claims) do
-  if c.target == "lua/auth.lua:create_session" then
-    target_claim = c
-  end
+-- 4) THERE IS NO ENGAGEMENT AXIS. The ∅ marker, the per-machine trail behind
+-- it, and the `unread` feature state were the last of the ratification
+-- design: a whole subsystem that said nothing about the code. A reader
+-- looking at `– unread 4 of 4` beside four members each already showing their
+-- own verdict learned nothing they could act on.
+H.eq(package.loaded["scry.provenance"], nil, "the trail module is gone")
+H.eq(pcall(require, "scry.provenance"), false, "and not merely unloaded")
+for _, row in pairs(H.virt_by_row(buf, ns)) do
+  H.eq(row:find("∅", 1, true), nil, "no ownership marker survives anywhere: " .. row)
 end
-prov.record(work, target_claim, "authored")
-require("scry.glass").render()
-local virt2 = H.virt_by_row(buf, ns)
-H.eq(virt2[row_of("create_session")]:find("∅", 1, true), nil, "a claim with a trail carries no marker")
--- ...and now that ONE member of that feature has been read, the marker
--- discriminates, so it comes back on the ones that have not. This is the
--- same rule in the other direction: the column earns its place the moment
--- the rows stop agreeing.
-H.ok(virt2[row_of("validate_token")]:find("∅", 1, true) ~= nil, "and its untouched neighbor gets one")
--- The marker is the glyph alone. It used to read "∅ untouched", twelve
--- characters repeated down every line of a freshly drafted map — the state
--- EVERY claim starts in. As a column it is a marker you scan past; as a word
--- it was the loudest thing on a page about something else. The manual
--- carries the meaning (|scry-ownership|).
-H.eq(virt2[row_of("validate_token")]:find("untouched", 1, true), nil, "as the glyph, not the word")
 
 -- 5) write: split-save both files + notification
 local notified
@@ -325,7 +304,7 @@ H.eq(reopened[2], "feature already spaced", "and its first feature has not been 
 -- information, it is texture. Measured on a real drafted map: fourteen rows,
 -- ONE distinct verdict state between them, and not one row whose fraction
 -- differed from `N of N` — three hundred and fifty characters repeating,
--- while the header above already said `14 unread · 50 backed · 0 missing`.
+-- while the header above already said `14 done · 50 backed · 0 missing`.
 local function fold_line(lnum)
   local out = ""
   for _, c in ipairs(glass.foldtext(lnum)) do

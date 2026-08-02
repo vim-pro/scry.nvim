@@ -10,7 +10,7 @@
 --
 -- The distinction that makes this safe is the one the whole plugin turns on:
 -- a DRAFT is not a belief. A drafted feature has no ownership trail, so it
--- renders untouched, and the header counts it as untouched — which is exactly
+-- renders unchecked until something answers it — which is exactly
 -- the honest reading of a hundred machine-written claims nobody has read yet.
 -- It is inventory. It becomes a belief when you edit it, and editing is what
 -- records the trail. So the machine does the typing and you do the deciding,
@@ -39,7 +39,7 @@
 -- THE GLASS IS THE REVIEW, not a diff tab. Conjurer's review compares two
 -- versions of a source region, which is the right surface for code and the
 -- wrong one for this: a drafted feature wants to be read next to the rest of
--- the map, with its claims checked against the code and its untouched marker
+-- the map, with its claims checked against the code and its verdicts
 -- showing, and none of that survives a diff view. So the draft lands in the
 -- buffer directly and the ordinary glass affordances are the review — the
 -- verdicts tell you whether it described anything real, `u` discards it, and
@@ -408,11 +408,10 @@ function M.draft(root, buf, map_, unclaimed)
         vim.api.nvim_buf_set_lines(buf, 0, -1, false, tidied)
       end
 
-      require("scry.provenance").mark_drafted(drafted)
       vim.notify(
         ("[scry] drafted %d claim(s)%s — read them, edit what is right, `u` to discard"):format(
           #drafted,
-          folded > 0 and (", %d added to features already here"):format(folded) or ", all untouched"
+          folded > 0 and (", %d added to features already here"):format(folded) or ""
         )
       )
       require("scry.glass").check()

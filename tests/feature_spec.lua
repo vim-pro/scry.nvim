@@ -153,13 +153,17 @@ H.eq(
 )
 
 
--- UNREAD outranks DONE. Every claim can hold while nobody has read a word of
--- the feature — which is exactly what a drafting pass produces, and what a
--- freshly cloned map looks like, since the trail is per-machine and does not
--- travel with the file. Reporting that as `✓ done` puts a finished product on
--- the one line the whole design says you scan.
-local unread_root = vim.fn.tempname()
-vim.fn.mkdir(unread_root, "p")
+-- THERE IS ONE AXIS HERE, AND IT IS EVIDENCE.
+--
+-- There used to be a second. `unread` meant every claim held and nobody had
+-- recorded reading the description — a whole subsystem of per-machine trails,
+-- an ∅ marker on every row, and a word on the line you scan, none of which
+-- said anything about the code. `– unread 4 of 4` on a feature whose four
+-- members each already showed their own verdict taught a reader nothing they
+-- could act on. It was the last of the ratification design.
+--
+-- What is left says only what the evidence says: every claim holding is
+-- `done`, whoever wrote it and whether or not anyone has been through it.
 local drafted = map.parse({
   "feature you can sign in",
   "  contains",
@@ -170,31 +174,18 @@ local all_backed = { at = os.time(), verdicts = {} }
 for _, c in ipairs(drafted.claims) do
   all_backed.verdicts[map.claim_id(c)] = { status = "backed", fidelity = "ts-def", label = "✓ defined" }
 end
+H.eq(feat.verdict(drafted.features[1], all_backed).state, "done", "every claim holding is done")
+-- A root used to switch on the engagement axis. It is accepted and ignored,
+-- so no caller has to change shape and none of them can reintroduce it.
+local anywhere = vim.fn.tempname()
+vim.fn.mkdir(anywhere, "p")
+H.eq(feat.verdict(drafted.features[1], all_backed, anywhere).state, "done", "and a root changes nothing")
+H.eq(feat.tally(drafted, all_backed, anywhere).done, 1, "the header counts it as done")
+H.eq(feat.tally(drafted, all_backed, anywhere).unread, nil, "and has no count for a state that is gone")
+H.eq(feat.engaged, nil, "the engagement test is gone, not merely unused")
 
--- with no root there is no engagement axis to read, so the evidence axis
--- answers alone — honest about what it could see
-H.eq(feat.verdict(drafted.features[1], all_backed).state, "done", "no root: the evidence axis alone")
-
-local v = feat.verdict(drafted.features[1], all_backed, unread_root)
-H.eq(v.state, "unread", "with a root and no trail: unread, not done")
-H.eq(v.backed, 2, "the evidence is still reported")
--- Same shape as every other state, so the closed map reads as one column:
--- `– unread 2 of 2` beside `◐ 2 of 4`, where `(2 of 2 backed)` was half
--- again as long and broke the rhythm of the one view built for scanning.
-H.ok(v.label:find("unread 2 of 2", 1, true) ~= nil, "and the label says so: " .. v.label)
-H.eq(feat.tally(drafted, all_backed, unread_root).unread, 1, "the header counts it apart from done")
-H.eq(feat.tally(drafted, all_backed, unread_root).done, 0, "and not as done")
-
--- ONE owned claim is enough. The question is whether a human has been through
--- this at all, not whether they finished; holding out for every claim would
--- report `unread` for work visibly in progress.
-require("scry.provenance").record(unread_root, drafted.claims[1], "authored")
-H.eq(feat.engaged(unread_root, drafted.features[1]), true, "one edited claim means the feature was read")
-H.eq(feat.verdict(drafted.features[1], all_backed, unread_root).state, "done", "so it reads done")
-
--- Narrow on purpose: unread displaces `done` only. A half-backed feature
--- nobody has touched still reads as progress, because that is the more useful
--- reading and it is not claiming to be finished.
+-- A half-backed feature reads as progress, which is the more useful reading
+-- and is not a claim of completion.
 local half = map.parse({ "feature f", "  contains", "    a.lua:one", "    b.lua:two" })
 local one = { at = os.time(), verdicts = {} }
 one.verdicts[map.claim_id(half.claims[1])] = { status = "backed", fidelity = "ts-def", label = "✓ defined" }

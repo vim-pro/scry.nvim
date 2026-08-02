@@ -13,16 +13,8 @@ local M = {}
 ---@field unchecked integer no resolver, parse failure, resolver error, or no
 ---  verdict at all. NOT a pass — the fourth column exists so this can never
 ---  be inferred by subtraction.
----@field untouched integer no work has passed through this claim: not
----  authored by hand, not conjured to completion. Ownership is INFERRED
----  from the trail (see provenance.lua), never performed as an act.
 ---@field features integer
----@field done integer      features whose every claim holds AND that someone
----  here has engaged with.
----@field unread integer    features whose every claim holds and that nobody
----  has read: a fresh draft, or a map you have just cloned. Counted apart
----  from `done` because otherwise the first line of the header reports a
----  finished product on evidence nobody has looked at.
+---@field done integer      features whose every claim holds.
 ---@field building integer  features with some evidence, none broken.
 ---@field broken integer    features with a violated or failing claim.
 ---@field todo integer      features with no evidence holding yet.
@@ -45,7 +37,6 @@ local M = {}
 ---@return scry.Debt
 function M.count(map_, report, root)
   local mapmod = require("scry.map")
-  local prov = require("scry.provenance")
   local counts = require("scry.feature").tally(map_, report, root)
   local d = {
     claims = #map_.claims,
@@ -53,10 +44,8 @@ function M.count(map_, report, root)
     missing = 0,
     violated = 0,
     unchecked = 0,
-    untouched = 0,
     features = #map_.features,
     done = counts.done,
-    unread = counts.unread,
     building = counts.partial,
     broken = counts.broken,
     todo = counts.absent + counts.unevidenced,
@@ -87,9 +76,6 @@ function M.count(map_, report, root)
   end
 
   for _, claim in ipairs(map_.claims) do
-    if not (root and prov.owned(root, claim)) then
-      d.untouched = d.untouched + 1
-    end
     local v = report and report.verdicts[mapmod.claim_id(claim)]
     local status = v and v.status
     if status == "backed" or status == "clean" then
@@ -158,10 +144,10 @@ function M.parts(d, at)
     end
   end
   -- ONE STATE FOR EVERY FEATURE IS ONE FACT, not a repeated one. `14
-  -- features · 14 unread` says the same number twice; `14 features, all
-  -- unread` says it once and reads as the sentence it is. The rows below
-  -- follow this rule too — see glass.foldtext.
-  local states = { { d.done, "done", "ScryDone" }, { d.unread, "unread", "ScryUnread" },
+  -- features · 14 done` says the same number twice; `14 features, all done`
+  -- says it once and reads as the sentence it is. The folded scan follows
+  -- this rule too — see glass.foldtext.
+  local states = { { d.done, "done", "ScryDone" },
     { d.building, "building", "ScryBuilding" }, { d.broken, "broken", "ScryBroken" },
     { d.todo, "to do", "ScryTodo" }, { d.unknown, "unknown", "ScryUnchecked" } }
   local only, folded = nil, false
@@ -179,7 +165,6 @@ function M.parts(d, at)
     add(d.done, "done", "ScryDone")
     -- Immediately after done, and before anything else: this is the number
     -- that keeps "N done" from being read as "N finished".
-    add(d.unread, "unread", "ScryUnread")
     add(d.building, "building", "ScryBuilding")
     add(d.broken, "broken", "ScryBroken")
     add(d.todo, "to do", "ScryTodo")
@@ -202,19 +187,17 @@ function M.parts(d, at)
   )
   line1[#line1 + 1] = { "   " .. when .. " (files on disk)", "ScryHeaderDim" }
 
-  -- The unchecked column is shown whenever it is non-zero, between violated
-  -- and unratified: nothing an engine declined to answer may be omitted from
-  -- the one line the reader actually glances at.
+  -- The unchecked column is shown whenever it is non-zero: nothing an engine
+  -- declined to answer may be omitted from the line a reader glances at.
   local unchecked = d.unchecked > 0 and (" · %d unchecked"):format(d.unchecked) or ""
   local line2 = {
     {
-      ("%d claims · %d backed · %d missing · %d violated%s · %d untouched"):format(
+      ("%d claims · %d backed · %d missing · %d violated%s"):format(
         d.claims,
         d.backed,
         d.missing,
         d.violated,
-        unchecked,
-        d.untouched
+        unchecked
       ),
       "ScryHeaderDim",
     },
@@ -295,7 +278,7 @@ function M.winbar(d, at, width)
 end
 
 --- Compact string for the user's own statusline. Plain function, no
---- statusline framework: `scry 9f ✓6 ◐2 ✗1 ∅3` — features first. The `–` count appears only
+--- statusline framework: `scry 9f ✓6 ◐2 ✗1` — features first. The `–` count appears only
 --- when something went unchecked, for the same reason the header carries it:
 --- `✗0` must not be readable as "everything is accounted for". Unread
 --- features fold into the `◐` count rather than the `✓` one: in six
@@ -308,13 +291,12 @@ function M.statusline()
     return ""
   end
   local unchecked = d.unchecked > 0 and (" –%d"):format(d.unchecked) or ""
-  return ("scry %df ✓%d ◐%d ✗%d%s ∅%d"):format(
+  return ("scry %df ✓%d ◐%d ✗%d%s"):format(
     d.features,
     d.done,
-    d.building + d.unread,
+    d.building,
     d.broken + d.todo,
-    unchecked,
-    d.untouched
+    unchecked
   )
 end
 

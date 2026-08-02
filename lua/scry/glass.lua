@@ -16,10 +16,6 @@ local ns = vim.api.nvim_create_namespace("scry.glass")
 -- buffer's own text borrows SYNTAX groups, because the map is a language
 -- and reads best when it is colored like one.
 --
--- `untouched` is deliberately the quietest thing on the page. It is the
--- state every claim starts in — a freshly drafted map is nothing but
--- untouched claims — so rendering it as a warning would paint the whole
--- buffer with an alarm that means "new".
 local HL = {
   -- the page
   --
@@ -66,7 +62,6 @@ local HL = {
   ScryBacked = "DiagnosticOk",
   ScryDiverged = "DiagnosticError",
   ScryUnchecked = "DiagnosticHint",
-  ScryUntouched = "NonText",
 
   -- feature states, which get their own groups because a reader scans this
   -- column first and the seven states are not four
@@ -83,9 +78,11 @@ for group, target in pairs(HL) do
     vim.api.nvim_set_hl(0, group, { link = target, default = true })
   end
 end
--- Named for ratification, which no longer exists. Kept linked so a config
--- that styled it does not silently lose its color.
-vim.api.nvim_set_hl(0, "ScryUnratified", { link = "ScryUntouched", default = true })
+-- Named for the ratification and ownership designs, both gone. Kept linked so
+-- a config that styled either does not error on a group that no longer exists.
+for _, dead in ipairs({ "ScryUnratified", "ScryUntouched" }) do
+  vim.api.nvim_set_hl(0, dead, { link = "NonText", default = true })
+end
 
 -- A feature's state to the group that renders it. Module scope because BOTH
 -- views need it: render() puts it at the end of an open feature line, and
@@ -95,20 +92,16 @@ local FEATURE_HL = {
   done = "ScryDone",
   broken = "ScryBroken",
   partial = "ScryBuilding",
-  unread = "ScryUnread",
   absent = "ScryTodo",
   unevidenced = "ScryTodo",
   unknown = "ScryUnchecked",
 }
 
--- WHICH STATES WANT YOU. Column one is the most valuable space on the
--- screen — a scan reads the first characters of each line and little else —
--- and it was spent on the first letter of a sentence, fourteen times over.
--- It carries state instead, and carries nothing when a feature is fine.
---
--- Silence is the healthy reading. `unread` is not an alarm: it is what every
--- claim in a freshly drafted map is, and marking all of them would mark
--- none of them.
+-- WHICH STATES WANT YOU, in the folded scan. Column one is the most valuable
+-- space on the screen — a scan reads the first characters of each line and
+-- little else — and it was spent on the first letter of a sentence, fourteen
+-- times over. It carries state instead, and carries nothing when a feature is
+-- fine, because marking every row would mark none of them.
 local ATTENTION = {
   broken = "✗",
   absent = "✗",
@@ -123,7 +116,7 @@ local ATTENTION = {
 --- information, it is texture. Measured on a real map: fourteen rows, one
 --- distinct verdict state between them, not one row whose fraction differed
 --- from `N of N` — three hundred and fifty characters repeating while the
---- header already said `14 unread · 50 backed · 0 missing · 0 violated`.
+--- header already said `14 done · 50 backed · 0 missing · 0 violated`.
 ---
 --- So the verdict column appears when it discriminates and stays away when
 --- it does not.
@@ -377,7 +370,6 @@ function M.render()
     return
   end
   local mapmod = require("scry.map")
-  local prov = require("scry.provenance")
   local debt = require("scry.debt")
   local feat = require("scry.feature")
   vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
@@ -465,33 +457,15 @@ function M.render()
   -- A member's verdict used to be withheld when every member of the feature
   -- agreed — the same "render what varies" rule the folded map follows. That
   -- rule was measured on the SCAN: fourteen features, one state between them,
-  -- three hundred characters of pure texture. It does not transfer down here,
-  -- and carrying it down was a mistake.
+  -- three hundred characters of pure texture. It does not transfer down here.
   --
   -- At a member row the reader is not scanning for anomalies, they are
   -- VERIFYING AN ADDRESS. Each row is a separate assertion — is that the right
   -- file, is it really there — and a silent row makes you recall a rendering
-  -- rule before you can interpret it. You have just asked a model which files
-  -- a capability is made of; "nothing is written here, which means they all
-  -- agreed, which means fine" is not a thing to make someone reconstruct.
+  -- rule before you can interpret it.
   --
   -- So: open rows always carry their verdict. The folded scan still drops what
   -- repeats (see foldtext), because there the density argument is real.
-  --
-  -- The ∅ marker is the exception, and the difference is what it measures.
-  -- A verdict is EVIDENCE about the code; ∅ is ENGAGEMENT — whether you have
-  -- read this yet — and when nobody has read any of it the feature's own line
-  -- already says `unread` in as many words.
-  local unowned_throughout = {}
-  for _, f in ipairs(state.map.features) do
-    local owned_any = false
-    for _, claim in ipairs(f.claims) do
-      if state.root and prov.owned(state.root, claim) then
-        owned_any = true
-      end
-    end
-    unowned_throughout[f.name] = #f.claims > 1 and not owned_any
-  end
 
   -- Each feature carries the state its evidence adds up to. This is the line
   -- a reader actually scans, so it gets the strongest rendering on the page.
@@ -594,9 +568,6 @@ function M.render()
         or (v.status == "unchecked" and "ScryUnchecked" or "ScryDiverged")
       local gap = VERDICT_AT - used
       parts[#parts + 1] = { (" "):rep(gap >= 2 and gap or 2) .. v.label, hl }
-    end
-    if not (state.root and prov.owned(state.root, claim)) and not unowned_throughout[claim.feature] then
-      parts[#parts + 1] = { (#parts > 0 and " · ∅" or pad(claim.lnum) .. "∅"), "ScryUntouched" }
     end
     if explain.showing() then
       gloss(claim.lnum, explain.member(v))
@@ -1025,9 +996,6 @@ function M.check(cb)
   local m = combined_map()
   require("scry.check").run(m, { root = state.root, resolver = require("scry.resolver").get() }, function(report)
     state.report = report
-    -- turn state transitions into trail events (cascaded → settled) before
-    -- rendering, so ownership appears the moment the work comes true
-    require("scry.provenance").sync(state.root, m, report)
     M.render()
     if cb then
       cb()
@@ -1248,14 +1216,6 @@ function M.open(root)
         vim.notify("[scry] nothing under the cursor to open", vim.log.levels.WARN)
       end
     end, { buffer = buf, desc = "scry: open what this line is about" })
-    -- Claims that appear under the user's own edits are AUTHORED — that is
-    -- the whole ownership gesture. state.map is the renderer's snapshot, so
-    -- scry's own writes never register as authorship.
-    require("scry.provenance").watch(buf, function()
-      return state.root
-    end, function()
-      return state.map
-    end)
   end
   vim.bo[buf].modified = false
   state.buf = buf
