@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>scry.nvim — scry your software</title>
-<meta name="description" content="Look into your codebase and see the product it describes, then conjure the changes you want. One buffer of features and claims, checked against the real code as you look.">
+<meta name="description" content="Vim's grammar, one noun up. Aim an operator at a capability instead of a region: one intent lands across every file the feature is made of, and you never open one.">
 <meta property="og:title" content="scry.nvim — scry your software">
-<meta property="og:description" content="Look into your codebase and see the product it describes. Then conjure the changes you want.">
+<meta property="og:description" content="Vim's grammar, one noun up. Aim an operator at a capability, not a region — one intent, every file it is made of.">
 <meta property="og:url" content="https://scry.vim.pro">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://scry.vim.pro/og.png">
@@ -52,7 +52,7 @@ a:hover { color: var(--text); }
 code { font-family: var(--mono); }
 
 .shell { width: 100%; }
-nav, .hero, .glass-sect, .waters-sect, .loop-sect, .seal-sect, .ref, .flatter, .cta {
+nav, .hero, .glass-sect, .grammar-sect, .waters-sect, .loop-sect, .seal-sect, .ref, .flatter, .cta {
   padding-inline: max(48px, calc((100% - 1060px) / 2 + 48px));
 }
 .glass-sect { padding-inline: max(24px, calc((100% - 1060px) / 2 + 72px)); }
@@ -195,6 +195,30 @@ h2 em { font-style: italic; color: var(--mercury); }
 .section-head .s { margin-top: 8px; font-size: 14px; color: var(--faint); }
 .section-head .s code { color: var(--muted); }
 
+/* ---------- the grammar: operators, one noun up ---------- */
+.grammar-sect { padding-block: 72px 8px; }
+.grammar { max-width: 760px; margin: 0 auto; }
+.grammar p { font-size: 16.5px; line-height: 1.66; color: var(--muted); margin-bottom: 18px; }
+.grammar p.lead { font-size: 19px; color: var(--mercury); font-family: var(--serif); font-style: italic; }
+.grammar strong { color: var(--mercury); font-weight: 600; }
+.grammar code {
+  font-family: var(--mono); font-size: .9em; color: var(--seal);
+  background: rgba(143,179,189,0.08); padding: 1px 5px; border-radius: 4px;
+}
+.raise {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  gap: 18px; margin: 30px 0 26px; text-align: center;
+}
+.raise .side { padding: 16px 14px; border: 1px solid rgba(143,179,189,0.18); border-radius: 12px; background: var(--panel); }
+.raise .side .l { display: block; font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+.raise .side .n { font-family: var(--mono); font-size: 14px; color: var(--mercury); }
+.raise .side .g { display: block; margin-top: 6px; font-size: 13px; color: var(--faint); }
+.raise .arrow { font-size: 22px; color: var(--seal); }
+@media (max-width: 720px) {
+  .raise { grid-template-columns: 1fr; }
+  .raise .arrow { transform: rotate(90deg); }
+}
+
 /* ---------- the waters: what surfaces ---------- */
 .waters-sect { padding-block: 64px 20px; }
 .waters { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
@@ -289,7 +313,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
-  nav, .hero, .glass-sect, .waters-sect, .loop-sect, .seal-sect, .ref, .flatter, .cta { padding-inline: 24px; }
+  nav, .hero, .glass-sect, .grammar-sect, .waters-sect, .loop-sect, .seal-sect, .ref, .flatter, .cta { padding-inline: 24px; }
   nav { padding-block: 16px; }
   .nav-links .optional { display: none; }
   .hero { padding-block: 60px 24px; }
@@ -315,6 +339,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <span class="name">scry.nvim</span>
   </a>
   <div class="nav-links">
+    <a class="optional" href="#grammar">The grammar</a>
     <a class="optional" href="#reference">The manual <span class="h">(:h scry)</span></a>
     <a class="optional" href="#flatter">Limits</a>
     <a href="https://conjurer.vim.pro">conjurer.nvim</a>
@@ -364,6 +389,57 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <span class="note" id="termNote">&nbsp;</span>
       <span class="pos" id="termPos">1:1</span>
     </div>
+  </div>
+</section>
+
+<!-- ============================ the grammar ========================== -->
+<section class="grammar-sect" id="grammar">
+  <div class="section-head">
+    <h2>Operators, one <em>noun</em> up</h2>
+    <div class="s">you already know the grammar</div>
+  </div>
+  <div class="grammar">
+    <p class="lead">Vim's bargain is operators &times; text objects.</p>
+    <p><code>d2w</code>, <code>ci"</code>, <code>&gt;ap</code> — small orthogonal verbs
+    applied to precisely addressed nouns, repeatable with <code>.</code>, fannable with
+    <code>:g</code>. That grammar is why vim outlived every editor that set out to
+    replace it.</p>
+    <p><a href="https://conjurer.vim.pro">conjurer.nvim</a> ported the grammar to
+    generated edits: <code>~{motion}</code> is an operator whose effect is
+    <em>rewrite this region toward an intent</em>. Same verbs, same nouns, a new
+    effect.</p>
+
+    <div class="raise">
+      <div class="side">
+        <span class="l">conjurer</span>
+        <span class="n">~ap</span>
+        <span class="g">a region in a file</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="side">
+        <span class="l">scry</span>
+        <span class="n">~</span>
+        <span class="g">a capability, across every file it is made of</span>
+      </div>
+    </div>
+
+    <p><strong>scry raises the noun.</strong> Not a region in a file — a capability.
+    The glass is not a report you read; it is the noun-space you aim at.</p>
+    <p>Put the cursor on <code>Tailor a checklist to your own situation</code>, press
+    <code>~</code>, say what you want. The change lands across <code>compile.ts</code>,
+    <code>c/[slug].astro</code>, <code>copy.astro</code> and <code>c/index.astro</code>.
+    Four files, one intent, and you never opened one.</p>
+    <p><code>.</code> repeats it on the next feature.
+    <code>:g/^feature.*export/normal ~</code> fans it across every capability that
+    matches. Nothing new to learn.</p>
+    <p>Adding a capability is the same verb, because an address exists before the file
+    does: <code>route print</code> names <code>src/pages/print.astro</code> whether or
+    not anything is there yet. Write the feature you want with the members it should
+    have, and cast — absent members are files to create.</p>
+    <p><strong>Everything else here exists to make that address real.</strong> The
+    checks say whether what you asked for actually landed. The kinds say where a
+    member's file lives. Neither is the point. The point is that a capability has an
+    address you can put a cursor on.</p>
   </div>
 </section>
 

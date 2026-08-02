@@ -34,35 +34,48 @@ CONTENTS                                                       *scry-contents*
 ==============================================================================
 1. INTRODUCTION                                            *scry-introduction*
 
-scry is the surface you write software from. Features, fixes, and
-refactors start in the glass, not in the code: one buffer describes the
-product — prose at whatever altitude you think at, claims underneath that
-are checked against the real code — and you work by changing the
-description. A new feature is a claim that is not true yet (`✗ absent`).
-A bug fix is a check that does not pass yet. Your worklist and your
-product share one vocabulary.
+OPERATORS, ONE NOUN UP.
 
-|scry-conjure| takes a claim from there: the check is conjured first — you
-read it, and it must fail — then the code, with the check and the
-feature's prohibitions withheld from the model that writes it. The code is
-where you review, not where you start.
+Vim's bargain is operators x text objects. `d2w`, `ci"`, `>ap` — small
+orthogonal verbs applied to precisely addressed nouns, repeatable with `.`,
+fannable with `:g`. That grammar is why vim outlived every editor that set
+out to replace it.
 
-The work leaves a trail: typing a claim yourself, conjuring one and
-watching it come true, running its check red and then green. The trail is
-what clears the `∅ untouched` marker, and editing a claim resets it,
-because every event is keyed to a hash of the claim's text. See
-|scry-ownership|.
+conjurer.nvim ported the grammar to generated edits: `~{motion}` is an
+operator whose effect is REWRITE THIS REGION TOWARD AN INTENT. Same verbs,
+same nouns, a new effect.
+
+scry raises the noun. Not a region in a file — a CAPABILITY. The glass is
+not a report you read; it is the noun-space you aim at.
+
+Put the cursor on `Tailor a checklist to your own situation`, press `~`,
+say what you want. The change lands across compile.ts, c/[slug].astro,
+copy.astro and c/index.astro. Four files, one intent, and you never opened
+one. `.` repeats it on the next feature. `:g/^feature.*export/normal ~`
+fans it across every capability that matches. Nothing new to learn — you
+know the grammar already; scry gives it a bigger noun. See |scry-compose|.
+
+Adding a capability is the same verb, because an address exists before the
+file does: `route print` names src/pages/print.astro whether or not
+anything is there yet (|scry-kinds|). Write the feature you want with the
+members it should have and cast — absent members are files to create.
+
+EVERYTHING ELSE HERE EXISTS TO MAKE THAT ADDRESS REAL. The checks say
+whether what you asked for actually landed. The kinds say where a member's
+file lives. Divergence says what has no address yet. None of that is the
+point; the point is that a capability has an address you can put a cursor
+on, and the rest is what keeps the address from lying.
+
+So the checks are a means. They keep the description honest while you write
+it — you find out you meant something slightly different from what you
+typed, which is the whole reason to type it. What scry cannot do is recover
+your understanding for you: a program's theory lives in the people who
+built it, and this narrows the drift rather than storing the theory. See
+|scry-honesty| for what each verdict does and does not assert.
 
 Three tools, three jobs: the glass is where you work (scry.nvim), the
 conjurer types (conjurer.nvim), and the list is where changes get reviewed
 (quickfix-pro).
-
-The checks are a means, not the point. They keep the description honest
-while you write it — you find out you meant something slightly different
-from what you typed, which is the whole reason to type it. What scry cannot
-do is recover your understanding for you: a program's theory lives in the
-people who built it, and this narrows the drift rather than storing the
-theory. See |scry-honesty| for what each verdict does and does not assert.
 
 ==============================================================================
 2. THE GLASS                                                      *scry-glass*

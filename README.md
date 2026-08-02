@@ -5,20 +5,38 @@ describes. Then conjure the changes you want.
 
 **[scry.vim.pro](https://scry.vim.pro)** · `:h scry`
 
-Features, fixes, and refactors start in the glass, not in the code. One
-buffer describes the product, and you work by changing the description: a
-new feature is a part of the product that isn't real yet, a bug fix is a
-behavior that doesn't hold yet. Your worklist and your product are the
-same document.
+## Operators, one noun up
 
-`:Conjure` takes it from there: the check is conjured first (you read
-it, it must fail), then the code — with the check and the feature's
-prohibitions withheld from the model that writes it. The code is where you
-review, not where you start.
+Vim's bargain is operators × text objects. `d2w`, `ci"`, `>ap` — small
+orthogonal verbs applied to precisely addressed nouns, repeatable with `.`,
+fannable with `:g`. That grammar is why vim survives every editor that
+tried to replace it.
 
-The work leaves a trail: type a claim yourself, or conjure one and watch it
-come true, and its `∅ untouched` marker clears. Edit a claim and its trail
-resets — every event is keyed to a hash of the claim's text.
+[conjurer.nvim](https://conjurer.vim.pro) ported the grammar to generated
+edits: `~{motion}` is an operator whose effect is *rewrite this region
+toward an intent*. Same verbs, same nouns, new effect.
+
+**scry raises the noun.** Not a region in a file — a capability. The glass
+is not a report you read; it is the noun-space you aim at.
+
+Put the cursor on `Tailor a checklist to your own situation`, press `~`,
+say what you want. The change lands across `compile.ts`, `c/[slug].astro`,
+`copy.astro` and `c/index.astro`. Four files, one intent, and you never
+opened one.
+
+`.` repeats it on the next feature. `:g/^feature.*export/normal ~` fans it
+across every capability that matches. Nothing new to learn — you already
+know the grammar; scry just gives it a bigger noun.
+
+Adding a capability is the same verb, because an address exists before the
+file does: `route print` names `src/pages/print.astro` whether or not
+anything is there yet. Write the feature you want with the members it
+should have, and cast — absent members are files to create.
+
+Everything else here exists to make that address real. The checks tell you
+whether what you asked for actually landed; the kinds tell a member where
+its file lives. Neither is the point. The point is that a capability has an
+address you can put a cursor on.
 
 ```
 scry · 3 features · 1 building · 1 broken · 1 to do · 4 unclaimed files   checked 40s ago
