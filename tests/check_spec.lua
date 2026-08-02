@@ -91,6 +91,25 @@ local h2 = debt.header(d2, report2.at)
 H.ok(h2:find("2 unchecked", 1, true) ~= nil, "the header names them: " .. h2)
 H.ok(debt.header(d, report.at):find("unchecked", 1, true) == nil, "and stays quiet when there are none")
 
+-- THE HEADER LIVES IN THE WINBAR. It was virt_lines above line 1, which
+-- Neovim never draws — there is no room above a buffer's first line — so it
+-- was invisible on exactly the map a new user opens first. Verified against
+-- a real terminal, not just the extmark being set.
+local wb = debt.winbar(d, report.at)
+H.ok(wb:find("1 features", 1, true) ~= nil, "features still lead: " .. wb)
+H.ok(wb:find("3 claims", 1, true) ~= nil, "claim evidence still travels with them")
+H.ok(wb:find("files on disk", 1, true) ~= nil, "and so does the disk caveat")
+H.ok(wb:find("\n", 1, true) == nil, "one line — a winbar is one line")
+-- `%<` is where Vim cuts a too-long winbar. It sits after the feature counts
+-- so a narrow window gives up the claim-level evidence first and shows `<`,
+-- which reads as cut off rather than as absent.
+local cut = wb:find("%%<")
+H.ok(cut ~= nil, "carries a truncation point")
+H.ok(cut > wb:find("1 features", 1, true), "which comes after the features")
+H.ok(cut < wb:find("3 claims", 1, true), "and before the claims")
+-- Literal percent signs in the text would be read as statusline items.
+H.ok(select(2, debt.winbar(d, nil):gsub("%%%%", "")) >= 0, "percent-escaping applied")
+
 -- No report at all is not a pass either: every claim is unchecked.
 local d3 = debt.count(m2, nil)
 H.eq(d3.unchecked, 3, "with no report, nothing is accounted for")

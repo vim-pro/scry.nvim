@@ -140,6 +140,30 @@ function M.header(d, at)
   )
 end
 
+--- The header, formatted for a window bar.
+---
+--- The glass header used to be virtual lines above line 1, which Neovim
+--- never draws: there is no room above the first line of a buffer, so the
+--- header was invisible on exactly the map everyone sees first. A winbar has
+--- no such problem, and gains something the virtual lines never had — it
+--- stays put while you scroll, so the counts are readable from anywhere in a
+--- long map rather than only from the top.
+---
+--- One line instead of two, so `%<` marks where to truncate: features are
+--- what a reader scans, so the claim-level evidence is what a narrow window
+--- gives up first. A truncated line shows Vim's `<`, which reads as cut off
+--- rather than as absent — the distinction the fourth column exists for.
+---@param d scry.Debt
+---@param at integer? report timestamp
+---@return string
+function M.winbar(d, at)
+  local lines = vim.split(M.header(d, at), "\n", { plain = true })
+  local function esc(s)
+    return (vim.trim(s or ""):gsub("%%", "%%%%"))
+  end
+  return "%#ScryHeader#" .. esc(lines[1]) .. "%<  ·  " .. esc(lines[2]) .. "%*"
+end
+
 --- Compact string for the user's own statusline. Plain function, no
 --- statusline framework: `scry 9f ✓6 ◐2 ✗1 ∅3` — features first. The `–` count appears only
 --- when something went unchecked, for the same reason the header carries it:

@@ -233,16 +233,10 @@ function M.render()
   state.map = combined_map()
   state.debt = debt.count(state.map, state.report, state.root)
 
-  -- header (virt_lines above line 1); it is two lines now — features, then
-  -- the claim-level evidence behind them
-  local header = {}
-  for _, line in ipairs(vim.split(debt.header(state.debt, state.report and state.report.at), "\n", { plain = true })) do
-    header[#header + 1] = { { line, "ScryHeader" } }
-  end
-  pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, 0, 0, {
-    virt_lines = header,
-    virt_lines_above = true,
-  })
+  -- The header lives in the winbar (see scry.debt.winbar and M.winbar
+  -- below), not in an extmark. It used to be virt_lines above line 1, which
+  -- Neovim does not draw — there is no room above a buffer's first line —
+  -- so it was invisible on precisely the map a new user opens first.
 
   -- THE VERDICT COLUMN.
   --
@@ -319,6 +313,20 @@ function M.render()
   end
 end
 
+--- The winbar's content for the window this is evaluated in.
+---
+--- Evaluated per redraw rather than assigned, so it answers for whatever
+--- window asks and empties itself the moment that window stops showing the
+--- glass. Returning the counts from `state` means it refreshes with every
+--- check without anything having to remember to update it.
+---@return string
+function M.winbar()
+  if not (state.buf and vim.api.nvim_get_current_buf() == state.buf and state.debt) then
+    return ""
+  end
+  return require("scry.debt").winbar(state.debt, state.report and state.report.at)
+end
+
 --- Fold expression: one fold per feature.
 ---
 --- A real map is long — scry's own is 12 features over 130 lines — and the
@@ -368,11 +376,22 @@ function M.window_options(buf)
     -- map from someone who just asked to see it.
     vim.wo.foldlevel = 99
     vim.wo.foldenable = true
+    vim.wo.winbar = "%{%v:lua.require'scry.glass'.winbar()%}"
   end
   apply()
   vim.api.nvim_create_autocmd("BufWinEnter", {
     buffer = buf,
     callback = apply,
+  })
+  -- An empty winbar still costs a screen row, so it is removed outright when
+  -- this window moves on to another buffer rather than left evaluating to "".
+  vim.api.nvim_create_autocmd("BufWinLeave", {
+    buffer = buf,
+    callback = function()
+      pcall(function()
+        vim.wo.winbar = ""
+      end)
+    end,
   })
 end
 

@@ -121,8 +121,19 @@ H.eq(
 H.ok(virt[row_of("refresh_token")]:find("✗ absent", 1, true) ~= nil, "absent verdict rendered")
 H.ok(virt[row_of("logging\\.debug")]:find("VIOLATED", 1, true) ~= nil, "violation rendered")
 H.ok(virt[row_of("logging\\.debug")]:find("lua/auth.lua:9", 1, true) ~= nil, "evidence line rendered")
-H.ok(virt[0] ~= nil and virt[0]:find("claims", 1, true) ~= nil, "header present")
-H.ok(virt[0]:find("files on disk", 1, true) ~= nil, "header carries the disk caveat")
+-- The header is NOT an extmark. It was virt_lines above line 1 and Neovim
+-- never draws those — there is no room above a buffer's first line — so the
+-- counts were invisible on exactly the map a new user opens first, while
+-- this spec passed because the extmark existed. Existing is not drawing.
+local above = 0
+for _, m in ipairs(vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, { details = true })) do
+  if m[4].virt_lines and m[4].virt_lines_above then
+    above = above + 1
+  end
+end
+H.eq(above, 0, "no virtual header above line 1, where Neovim could not draw it")
+H.ok(glass.winbar():find("claims", 1, true) ~= nil, "the counts are in the winbar: " .. glass.winbar())
+H.ok(glass.winbar():find("files on disk", 1, true) ~= nil, "and so does the disk caveat")
 
 -- 4) ownership is inferred from the work: record an authored event for the
 -- cursor claim and the marker clears on the next render — no command, no stamp
@@ -193,5 +204,12 @@ require("scry.glass").open(work)
 vim.notify = rn2
 H.eq(glass._state.root, other, "a modified glass refuses to re-point at another root")
 H.ok(warned_open and warned_open:find("unsaved", 1, true) ~= nil, "and says why: " .. tostring(warned_open))
+
+-- The winbar answers for whatever window asks, so it empties itself when a
+-- window stops showing the glass instead of stranding a stale header there.
+vim.cmd("enew")
+H.eq(glass.winbar(), "", "no winbar outside the glass")
+vim.api.nvim_set_current_buf(buf)
+H.ok(glass.winbar():find("features", 1, true) ~= nil, "and the counts come back in it")
 
 H.done("glass_spec PASS")

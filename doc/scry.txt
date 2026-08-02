@@ -564,6 +564,14 @@ The jump does not take the glass's own window — the point is to have the map
 and the code both in front of you. It reuses a window already showing
 something else, and splits only when the glass is all there is.
 
+THE HEADER is the window bar, so it stays in view from anywhere in a long
+map rather than only from the top. It was virtual lines above line 1 until
+Neovim was asked to draw them: there is no room above a buffer's first line,
+so the counts were invisible on exactly the map a new user opens first. One
+line now, with Vim's truncation point after the feature counts — a narrow
+window gives up the claim-level evidence first and shows `<`, which reads as
+cut off rather than as absent.
+
 FOLDING is per feature: everything under a feature, prose and claims alike,
 belongs to it. Lines above the first feature fold into nothing, so a
 drafting block (|scry-drafting|) or a stale header is never swallowed. Folds
