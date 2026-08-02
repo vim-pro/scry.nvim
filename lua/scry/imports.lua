@@ -56,9 +56,25 @@ function M.specifiers(text)
     end
   end
   for _, line in ipairs(vim.split(text, "\n", { plain = true })) do
-    -- Comments are not imports. Cheap and wrong at the edges — a `--` inside
-    -- a string starts no comment — but the cost of being wrong is following
-    -- an import that is not there, and M.resolve drops what does not exist.
+    -- A LINE THAT STARTS AS A COMMENT IS A COMMENT, and this is not
+    -- fastidiousness. Without it, this very file was reported as importing
+    -- scry.map, on the strength of a doc comment containing the words
+    -- `require("scry.map")` — and because that module really exists, nothing
+    -- downstream dropped it. A file excused from the unclaimed list by a
+    -- sentence in a comment is precisely the over-claim scry exists to
+    -- prevent.
+    --
+    -- Only leading markers, deliberately. Deciding whether a `//` halfway
+    -- along a line is a comment or part of a URL means lexing the language,
+    -- which is the cost this module was written to avoid. An import inside a
+    -- trailing comment or a /* block */ is still counted; that is a known
+    -- edge and it over-reports rather than misses.
+    local first = line:match("^%s*(%S%S?)") or ""
+    local commented = first:sub(1, 2) == "--"
+      or first:sub(1, 2) == "//"
+      or first:sub(1, 1) == "#"
+      or first:sub(1, 1) == "*"
+    if not commented then
     for s in line:gmatch("from%s+['\"]([^'\"]+)['\"]") do
       add(s)
     end
@@ -70,6 +86,7 @@ function M.specifiers(text)
     end
     for s in line:gmatch("require%s*%(?%s*['\"]([^'\"]+)['\"]") do
       add(s)
+    end
     end
   end
   return out
@@ -199,6 +216,57 @@ function M.of(root, path)
   end
   table.sort(out)
   return out, true
+end
+
+--- The files that import THIS one — the graph run backwards.
+---
+--- The inbound question, at the altitude scry actually works at. A symbol
+--- resolver answers "who calls allChecklists"; this answers "which files
+--- pull in db.js", which over-approximates that and never under-reports it.
+--- For a tool whose nouns are features rather than functions, the file is
+--- the useful grain — and unlike the symbol answer, this one exists for
+--- astro and Lua.
+---
+--- Narrowed with ripgrep before anything is parsed. A file that imports
+--- `src/lib/db.js` must mention `db` in the specifier, so the stem is a
+--- sound filter: it cannot miss an importer, and the files it lets through
+--- are then parsed properly rather than trusted.
+---@param root string
+---@param path string repo-relative
+---@return string[]
+function M.importers(root, path)
+  local base = path:match("([^/]+)$") or path
+  local stem = base:match("^(.*)%.[%w]+$") or base
+  local needles = { stem }
+  -- `import '../comp/widget'` names the DIRECTORY, never the index file, so
+  -- searching for `index` would find nothing that reaches it.
+  if stem == "index" then
+    local dir = path:match("([^/]+)/[^/]+$")
+    if dir then
+      needles = { dir }
+    end
+  end
+
+  local args = { "rg", "--files-with-matches", "--fixed-strings" }
+  for _, n in ipairs(needles) do
+    args[#args + 1] = "-e"
+    args[#args + 1] = n
+  end
+  local res = vim.system(args, { cwd = root, text = true }):wait()
+
+  local out = {}
+  for line in (res.stdout or ""):gmatch("[^\n]+") do
+    if line ~= path then
+      for _, imported in ipairs(M.of(root, line)) do
+        if imported == path then
+          out[#out + 1] = line
+          break
+        end
+      end
+    end
+  end
+  table.sort(out)
+  return out
 end
 
 --- Everything a set of files reaches, transitively.

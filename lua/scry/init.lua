@@ -58,11 +58,6 @@ end, {
   bang = true,
   desc = "Where the code nothing describes is (! for every file, however many)",
 })
-
-vim.api.nvim_create_user_command("ScryDraft", function()
-  require("scry.recover").start()
-end, { desc = "Draft features for the files no feature claims (the scrying pass)" })
-
 -- A pass runs until the project is described, which on a large one is a
 -- great many requests. Ending it is a command rather than a prompt because
 -- the answer is almost always "keep going" and being asked every twelve
@@ -85,11 +80,6 @@ end, { desc = "Gather every block of a re-opened feature into one" })
 vim.api.nvim_create_user_command("ScryLint", function()
   require("scry.lint").to_quickfix()
 end, { desc = "Flag feature names that are hard to read (never a verdict — the wording is yours)" })
-
-vim.api.nvim_create_user_command("ScryDraftStop", function()
-  require("scry.recover").stop()
-end, { desc = "End the drafting pass after the batch in flight" })
-
 vim.api.nvim_create_user_command("ScryExercise", function(a)
   require("scry.run").start({ feature = a.args ~= "" and a.args or nil })
 end, { nargs = "?", desc = "Run the specs behind this map's exercises claims, then re-check" })

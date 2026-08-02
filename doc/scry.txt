@@ -272,7 +272,7 @@ reaches nothing.
 
 Indexing is the slowest thing scry does, which is why reach is a command
 and never part of a check. |:Scry| stays cheap; only a command may be
-expensive, the same rule |:ScryExercise| and |:ScryDraft| follow.
+expensive, the same rule |:ScryExercise| and the drafting pass follow.
 
                                                                  *scry-kinds*
 A MEMBER NAMES A TYPED OBJECT ~
@@ -313,7 +313,7 @@ else. For `"endpoint": { "path": "src/pages/api/{name}.ts" }` the names are
 means to a person. Scry would paste that in and report
 `src/pages/api//index.json.ts` absent: accurate, about a path nobody meant.
 
-|:ScryDraft| settles it by showing rather than telling. It lists the names
+Drafting settles it by showing rather than telling. It lists the names
 of each kind that already exist, taken off disk, so a drafter writes names
 of the same shape.
 
@@ -407,7 +407,7 @@ again re-opens that feature and adds to it; it does not start a second
 feature with an identical name. Prose may sit between the blocks, and the
 stored text is untouched — the map round-trips byte for byte as ever.
 
-This is how a map grows. |:ScryDraft| works through a project a batch at a
+This is how a map grows. A pass works through a project a batch at a
 time, and a batch whose files serve a feature already written needs a way to
 say so; without one its only legal output is a NEW feature, and the map
 fragments a file at a time. One pass reached 301 features over 60 files that
@@ -432,7 +432,7 @@ describes.
 
 A path-probed kind used to contribute nothing either, and the cost was not
 cosmetic: divergence never counted those pages as described, so they stayed
-on the undescribed worklist and |:ScryDraft| was asked about them on every
+on the undescribed worklist and the drafter was asked about them on every
 pass. Since a claim's identity includes its feature name, each rewording
 looked like new work. One run reached 301 features over 60 files before it
 was stopped by hand.
@@ -569,7 +569,7 @@ only once is returned exactly as it was, blank lines and all, because its
 layout is yours. |:ScryTidy| does the same on demand, for a map written
 before this did it.
 
-AND THE DRAFT IS A BATCH, BUT THE COMMAND IS A PASS. |:ScryDraft| used to
+AND THE DRAFT IS A BATCH, BUT THE GESTURE IS A PASS. Drafting used to
 send the whole worklist, which already ran past a five-minute timeout at
 seventy-two files and is not a long request at twenty thousand but an
 impossible one. So a request takes a bounded number — and since a project
@@ -585,7 +585,7 @@ rather than a scatter.
 
 IT ENDS on its own when the files run out, and on its own when a batch
 describes nothing new — without that rule, a file the model declines to
-describe is asked about forever. |:ScryDraftStop| ends it after the batch
+describe is asked about forever. `+` again ends it after the batch
 in flight, which is left to land because it is already paid for.
 |:ConjureCancel| is the other choice: it kills the request, and a failed
 request ends the pass.
@@ -593,7 +593,7 @@ request ends the pass.
                                                             *scry-drafting*
 DRAFTING THE GAP ~
 
-|:ScryDraft| takes the unclaimed files and asks a conjurer to write features
+`+` in the glass takes the unclaimed files and asks a conjurer to write features
 for them, into the glass, where you read them.
 
 WHAT YOU SEE while it works is two lines and the conjurer narrating between

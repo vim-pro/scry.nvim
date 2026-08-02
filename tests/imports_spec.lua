@@ -32,6 +32,22 @@ H.ok(set["node:fs"], "require() — collected here, rejected later")
 H.ok(set["scry.map"], "Lua's require, without parentheses")
 H.ok(set["./re-export.js"], "a re-export pulls the file in just the same")
 
+-- A COMMENTED LINE IS NOT AN IMPORT. This module's own doc comment contains
+-- the words `require("scry.map")`, and without this it reported itself as
+-- importing scry.map — which resolves, so nothing downstream dropped it. A
+-- file excused from the unclaimed list by a sentence in a comment is the
+-- over-claim scry exists to prevent.
+local commented = imports.specifiers(table.concat({
+  "-- see require('scry.map') for the parser",
+  "--- `require(\"scry.runs\")` records a run",
+  "// import { a } from './dead.js';",
+  "# from 'python.comment' import thing",
+  " * import '../block/comment.js';",
+  "import { real } from './real.js';",
+}, "\n"))
+H.eq(#commented, 1, "one real import among five commented ones, got: " .. table.concat(commented, ", "))
+H.eq(commented[1], "./real.js", "and it is the uncommented one")
+
 -- 2) NORMALIZE, including the case that must refuse. A specifier that climbs
 -- out of the repository names something this project does not contain, and
 -- returning a path outside the root would put it in the reach of a feature.

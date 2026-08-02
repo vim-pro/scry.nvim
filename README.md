@@ -77,7 +77,7 @@ is a decision: add a claim to the feature that owns it, or name the feature
 nobody wrote down. This is reflexion's third verdict — see
 `:h scry-divergence`.
 
-**And `:ScryDraft` fills that gap — but a draft is not a belief.** The
+**And `+` in the glass fills that gap — but a draft is not a belief.** The
 scrying pass asks a conjurer to write features for the unclaimed files, into
 the glass, where you read them — a dozen at a time, batch after batch, until
 the project is described or you stop it. Drafted claims carry no ownership trail, so

@@ -667,6 +667,26 @@ function M.open(root)
       pcall(vim.cmd, "normal! za")
     end, { buffer = buf, desc = "scry: expand or collapse this feature" })
 
+    -- `+` DRAFTS WHAT IS MISSING, and stops a pass in flight.
+    --
+    -- The affordance belongs in the buffer rather than in a command you have
+    -- to have read about: the header says how many files nothing describes,
+    -- and the key to do something about it sits next to the number.
+    --
+    -- `+` because this buffer is edited. `d` would read best and cost `dd`
+    -- and `dw` on your own prose, which is not a trade worth making for one
+    -- gesture. `+` is only a synonym for <CR>'s motion, which the glass has
+    -- already taken, so nothing is lost — and it reads as "add what is not
+    -- here yet".
+    vim.keymap.set("n", "+", function()
+      local recover = require("scry.recover")
+      if recover.passing() then
+        recover.stop()
+      else
+        recover.start()
+      end
+    end, { buffer = buf, desc = "scry: draft the files nothing describes (again to stop)" })
+
     -- `~` IS THE OPERATOR, the same key conjurer uses on a text object.
     -- There it rewrites a region; here the noun is a whole capability and
     -- the change lands across every file it is made of. Same verb, coarser

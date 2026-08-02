@@ -158,10 +158,15 @@ function M.parts(d, at)
   -- does not exist — a file a feature REACHES is described by that feature,
   -- so the number is an upper bound rather than an answer. Saying which it
   -- is costs four words and is the difference between a count and a claim.
+  -- The number, what it is still waiting on, and the key that acts on it.
+  -- A count with nothing to do about it is a complaint; the gesture belongs
+  -- beside it rather than in a command someone has to have read about.
+  local drafting = pcall(require, "scry.recover") and require("scry.recover").passing()
   add(
     d.unclaimed,
     "unclaimed files"
-      .. ((d.reach == "running" and " (reach pending)") or (d.reach == "unavailable" and " (no reach)") or ""),
+      .. ((d.reach == "running" and " (reach pending)") or (d.reach == "unavailable" and " (no reach)") or "")
+      .. (drafting and " · + to stop" or " · + to draft"),
     "ScryTodo"
   )
   line1[#line1 + 1] = { "   " .. when .. " (files on disk)", "ScryHeaderDim" }
