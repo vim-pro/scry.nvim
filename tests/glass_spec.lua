@@ -212,4 +212,15 @@ H.eq(glass.winbar(), "", "no winbar outside the glass")
 vim.api.nvim_set_current_buf(buf)
 H.ok(glass.winbar():find("features", 1, true) ~= nil, "and the counts come back in it")
 
+-- THE STARTER MAP IS INERT. A first :Scry used to open on a feature whose
+-- only claim named `path/to/file.lua:symbol`, so a new user met two red
+-- verdicts about a file that was never meant to exist. Scry was right and it
+-- did not matter: nothing in a template is a belief anyone holds, so nothing
+-- in it should be checked.
+local starter = require("scry.map").parse(glass.starter())
+H.eq(#starter.features, 0, "the starter map claims nothing")
+H.eq(#starter.claims, 0, "so there is nothing to render a verdict against")
+local joined = table.concat(glass.starter(), "\n")
+H.ok(joined:find(":ScryDraft", 1, true) ~= nil, "and it points at the way out of an empty map")
+
 H.done("glass_spec PASS")

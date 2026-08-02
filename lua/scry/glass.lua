@@ -327,6 +327,42 @@ function M.winbar()
   return require("scry.debt").winbar(state.debt, state.report and state.report.at)
 end
 
+--- The starter map, for a project that has none.
+---
+--- EVERY LINE OF IT IS PROSE, and a spec pins that. An earlier version
+--- opened on a real feature whose one claim pointed at
+--- `path/to/file.lua:symbol`, so the first thing anyone ever saw was two red
+--- verdicts against a file that was never meant to exist — scry reporting,
+--- accurately, on its own placeholder. Accurate and useless: nothing there
+--- was a belief anyone held, so nothing there was worth checking.
+---
+--- It leads with :ScryDraft because that is the honest answer to an empty map
+--- over a full repository, and its example is written at sea level (see
+--- |scry-altitude|) so the shape you copy is the right shape.
+---@return string[]
+function M.starter()
+  return {
+      "-- No map yet. :ScryDraft asks a conjurer to write the first pass over",
+      "-- the files nothing describes; everything it writes lands unread, and",
+      "-- stays unread until you have read it.",
+      "--",
+      "-- Or write one yourself and delete this. Indentation is the grammar:",
+      "--",
+      "--   feature a reader can follow a link someone sent them",
+      "--     Prose is never checked. Say what the feature is for, and why it",
+      "--     is one feature rather than two.",
+      "--",
+      "--     contains",
+      "--       lua/links.lua:resolve    a definition that exists right now",
+      "--       lua/links.lua            when the file defines nothing nameable",
+      "--",
+      "-- A feature is one thing someone can accomplish, named the way they",
+      "-- would name it — not \"the auth system\", which swallows the product,",
+      "-- and not \"validate the token\", which is what a claim already is.",
+      "-- :h scry-altitude",
+    }
+end
+
 --- Fold expression: one fold per feature.
 ---
 --- A real map is long — scry's own is 12 features over 130 lines — and the
@@ -455,22 +491,7 @@ function M.open(root)
   local holdout_lines = require("scry.holdout").load(root, config).lines
   local composed = M.compose(map_lines, holdout_lines)
   if #composed == 0 then
-    -- The starter map. It has to be VALID grammar: whatever is here is the
-    -- first thing anyone sees, and a template the parser reads as prose
-    -- teaches a syntax that does not exist. (It did exactly that until the
-    -- feature layer landed and this line kept seeding `# my project` and a
-    -- `files` glob, neither of which has been grammar for some time.)
-    composed = {
-      "feature name one thing a user can accomplish",
-      "  Prose is never checked. Say what the feature is for, and why it is",
-      "  one feature rather than two.",
-      "",
-      "  contains",
-      "    path/to/file.lua:symbol",
-      "",
-      "-- :Scry checks this against the code every time you look.",
-      "-- :h scry-altitude for what belongs on a feature line.",
-    }
+    composed = M.starter()
   end
 
   local buf = state.buf
