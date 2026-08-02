@@ -134,7 +134,7 @@ function M.parse(lines, known)
       else
         -- `lnums` is every header line this feature is written on; `lnum` is
         -- the first, which is what a single-block feature has always meant.
-        feature = { name = trimmed, lnum = lnum, lnums = { lnum }, claims = {} }
+        feature = { name = trimmed, lnum = lnum, lnums = { lnum }, claims = {}, desc = {} }
         table.insert(map.features, feature)
       end
       section, member = nil, nil
@@ -174,6 +174,16 @@ function M.parse(lines, known)
         member.desc[#member.desc + 1] = vim.trim(line)
       elseif not line:match("^%s*$") and not line:match("^    ") then
         -- A DEDENTED non-blank line ends the section; the line is prose.
+        --
+        -- Two-space prose directly under a feature is the sentence saying
+        -- what the feature IS, and it is kept. The syntax file has always
+        -- colored it as the one piece of writing a reader most needs
+        -- (|scry-glass|); the parser dropped it, so nothing downstream
+        -- could use it. A whole-feature cast wants it most of all: it is
+        -- the statement of the capability the change is being made to.
+        if line:match("^  %S") then
+          feature.desc[#feature.desc + 1] = vim.trim(line)
+        end
         --
         -- A blank line deliberately does not. It reads like a terminator to a
         -- human, but treating it as one silently demotes every claim after it

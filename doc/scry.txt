@@ -12,7 +12,7 @@ CONTENTS                                                       *scry-contents*
      Altitude .................................... |scry-altitude|
      Naming a feature twice ...................... |scry-reopening|
      How the map reads ........................... |scry-lint|
-     How the map reads ........................... |scry-lint|
+     Programming a capability .................... |scry-compose|
      Footprint ................................... |scry-footprint|
   4. Verdicts .................................... |scry-verdicts|
      Divergence .................................. |scry-divergence|
@@ -892,6 +892,42 @@ things a person does" rather than "this is wrong", because glancing at a
 wrong flag costs less than never seeing a real one.
 
 ==============================================================================
+PROGRAMMING A CAPABILITY                                        *scry-compose*
+
+Vim's bargain is an operator applied to a precisely addressed noun: `d2w`,
+`ci"`, `>ap`. Conjurer ported that to generated edits — `~{motion}` rewrites
+a region toward an intent. |:ScryConjure| raises the noun.
+
+The thing you aim at is a FEATURE, and its address is every file the
+feature is made of. Put the cursor on one, press `~`, say what you want,
+and the change lands across the whole footprint. You do not open the files.
+That is the point: a capability spanning four files is one thought, not
+four.
+
+ONE CAST, NOT ONE PER FILE. |:ScryCascade| does the other thing — it seeds
+a claim's site into the quickfix list and lets conjurer visit each one with
+the same intent. That is cheaper and reviewable a site at a time, but no
+single request ever sees the whole capability, and a change that has to
+stay coherent across files is exactly the change worth making here. A page
+and the endpoint it posts to have to agree.
+
+ADDING A CAPABILITY IS THE SAME VERB. A member's address comes from its
+kind's probe, so `route print` names src/pages/print.astro whether or not
+anything is there yet. Write the feature you want with the members it
+should have and cast: absent members are files to create, present ones are
+files to change.
+
+A cast may only edit files it was shown. A path the model invents is a path
+nobody addressed; it is refused and named, not written.
+
+REVIEW IS VIM'S. Results land in BUFFERS, modified and unsaved — nothing
+touches the disk. That is the state you would be in had you typed the
+change yourself, so every tool you already have applies: `u` to undo a
+buffer, `:diffthis` against what is on disk, `:w` what you keep, `:e!` what
+you don't, `:wa` when it is all right. A review UI invented here would be
+worse than the one already in your hands.
+
+==============================================================================
 10. COMMANDS                                                   *scry-commands*
 
                                                                        *:Scry*
@@ -921,6 +957,12 @@ wrong flag costs less than never seeing a real one.
                         until the project is described, a batch describes
                         nothing new, a request fails, or you stop it.
                         See |scry-drafting|.
+
+                                                                *:ScryConjure*
+:ScryConjure            Cast an intent across the whole feature under the
+                        cursor — every file it is made of, in one request.
+                        Bound to `~` in the glass. Results land in buffers,
+                        unsaved. See |scry-compose|.
 
                                                                    *:ScryLint*
 :ScryLint               Flag feature names that are hard to read, into the

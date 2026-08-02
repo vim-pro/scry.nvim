@@ -69,6 +69,13 @@ end, { desc = "Draft features for the files no feature claims (the scrying pass)
 -- files would be its own kind of tax.
 -- How the map READS, as against whether it is true. Every other check asks
 -- the code a question; this one asks nothing of the code at all.
+-- The verb. Vim aims an operator at a precisely addressed noun; this aims
+-- one at a capability, and the address is every file the capability is made
+-- of. You do not open the files.
+vim.api.nvim_create_user_command("ScryConjure", function()
+  require("scry.compose").start()
+end, { desc = "Cast an intent across the whole feature under the cursor" })
+
 vim.api.nvim_create_user_command("ScryLint", function()
   require("scry.lint").to_quickfix()
 end, { desc = "Flag feature names that are hard to read (never a verdict — the wording is yours)" })

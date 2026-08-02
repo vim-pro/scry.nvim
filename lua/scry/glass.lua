@@ -650,6 +650,14 @@ function M.open(root)
       pcall(vim.cmd, "normal! za")
     end, { buffer = buf, desc = "scry: expand or collapse this feature" })
 
+    -- `~` IS THE OPERATOR, the same key conjurer uses on a text object.
+    -- There it rewrites a region; here the noun is a whole capability and
+    -- the change lands across every file it is made of. Same verb, coarser
+    -- grain — which is the only reason this buffer exists.
+    vim.keymap.set("n", "~", function()
+      require("scry.compose").start()
+    end, { buffer = buf, desc = "scry: cast an intent across this whole feature" })
+
     vim.keymap.set("n", "<CR>", function()
       if vim.fn.getline("."):match("^feature%s") then
         pcall(vim.cmd, "normal! za")

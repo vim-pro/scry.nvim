@@ -159,6 +159,31 @@ local rt = {
 }
 H.eq(table.concat(map.serialize(map.parse(rt)), "\n"), table.concat(rt, "\n"), "round-trip is unaffected")
 
+-- A FEATURE KEEPS ITS OWN PROSE. Two-space text under a feature, above its
+-- members, is the sentence saying what the capability IS. The syntax file
+-- has always colored it as the one piece of writing a reader most needs;
+-- the parser dropped it, so nothing downstream could use it — and a
+-- whole-feature cast wants it most of all, since it is the statement of the
+-- thing being changed.
+local prosed = map.parse({
+  "feature Tailor a checklist to your own situation",
+  "  Describe your circumstances in ordinary words and the compiler",
+  "  selects from the vetted steps.",
+  "  route copy",
+  "    the tailored copy, decoded from the link",
+  "  Prose at two spaces is the feature's wherever it sits — indentation is",
+  "  the grammar, not position.",
+}, { route = true })
+H.eq(#prosed.features[1].desc, 4, "every two-space sentence belongs to the feature")
+H.eq(prosed.features[1].desc[1]:find("Describe your circumstances", 1, true), 1, "in order")
+H.eq(
+  prosed.features[1].desc[3]:find("Prose at two spaces", 1, true),
+  1,
+  "including prose that follows a member — four spaces would have made it the member's"
+)
+H.eq(#prosed.features[1].claims[1].desc, 1, "and the four-space note is still the member's")
+H.eq(#map.parse({ "feature bare" }, {}).features[1].desc, 0, "a feature with no prose has none")
+
 H.done("map_spec PASS")
 
 -- A `contains` target with no symbol names the FILE. This exists because
