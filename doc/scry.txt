@@ -829,12 +829,29 @@ every feature that exercises it.
 MOVING AROUND ~
 
 The glass is a normal, writable buffer, so it keeps every editing key it
-has. One mapping is added, and it means "take me to what this line is
-about":
+has. Four mappings are added:
 
     <Tab>       expand or collapse the feature under the cursor
     <CR>        on a CLAIM, open the code it points at
                 on a FEATURE line, the same as <Tab>
+    ~           cast an intent across the whole feature under the cursor,
+                every file it is made of — see |scry-compose|
+    +           draft features for the files nothing describes; again to
+                stop a pass in flight — see |scry-drafting|
+
+WHY THOSE TWO KEYS. `~` is conjurer's operator, at a coarser noun. `+` is
+only a synonym for <CR>'s motion, which the glass has already taken, so
+nothing is lost by claiming it — and drafting is the one gesture that has
+to be reachable from the header that reports the gap. `d` would read
+better and would cost `dd` and `dw` on your own prose, which is not a trade
+worth making for one gesture.
+
+THE AFFORDANCE IS IN THE BUFFER, not in a command you have to have read
+about. The header says how many files nothing describes and names the key
+beside the number:
+>
+    scry · 6 features · 46 unclaimed files (reach pending) · + to draft
+<
 
 WHERE A CLAIM TAKES YOU, in order. Evidence first, always: if the last check
 found a line for this claim, that is somewhere an engine actually looked, so
