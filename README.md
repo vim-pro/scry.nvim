@@ -36,10 +36,27 @@ say what you want and it aims you:
 :Scry add a PDF export
 ```
 
-The cursor lands on the capability that work is about, matching a feature
-you already have or writing one and finding what it's made of. Then it
-**stops**. You see the files before anything is cast across them, and `~`
-comes up pre-filled with what you already said.
+The cursor lands on the capability that work is about — matching a feature
+you already have, or writing one — and aiming ends in a **plan**, in the
+map's own grammar:
+
+```
+feature Take a checklist away as a PDF
+  Turns the on-screen checklist into a clean sheet of paper.
+  route c/[slug]           src/pages/c/[slug].astro   ✓ present (file)
+    add a print button that opens the print view
+  def src/styles/global.css                           ✓ present (file)
+    add the @media print block; remove the dark-mode force
+  module src/lib/site.js                              ✓ present (file)
+  route print              src/pages/print.astro      ✗ absent
+    the print-only sheet: steps, notes, no chrome
+```
+
+What exists, what will change, what gets created, what gets removed, what
+this change doesn't touch — one screen. Alter it by editing lines; it's your
+buffer. Discard it with `u`. Build it with `~`, pre-filled with what you
+said — and the cast carries your edited notes, so it executes the plan you
+approved rather than re-deriving one.
 
 Or write the sentence yourself and press `+` on it, and scry finds the files
 it's made of:

@@ -14,6 +14,7 @@ CONTENTS                                                       *scry-contents*
      How the map reads ........................... |scry-lint|
      Aiming an intent ............................ |scry-aim|
      Finding what a feature is made of ........... |scry-members|
+     The plan .................................... |scry-plan|
      Programming a capability .................... |scry-compose|
      Footprint ................................... |scry-footprint|
   4. Verdicts .................................... |scry-verdicts|
@@ -1164,9 +1165,9 @@ covers it, that one. If none does, scry writes one at sea level and finds
 what it is made of (|scry-members|), so the noun is whole by the time you
 look at it.
 
-IT AIMS, IT DOES NOT FIRE. The cursor lands and it stops. You see the files
-before anything is cast across them — that is the shape of this whole tool,
-and a step that skipped the looking would be a different product.
+IT AIMS, IT DOES NOT FIRE — and aiming ends in a PLAN (|scry-plan|), not a
+bare cursor. What this intent will do is written under the members where you
+can read and edit it; firing is still yours.
 
 What it does do is REMEMBER. `~` comes up pre-filled with the intent you
 already gave, so agreeing costs one keystroke and disagreeing costs an edit.
@@ -1240,6 +1241,47 @@ The limit worth knowing: the whole file list goes in the request. That is
 fine for the projects this has been run on and it is not a search engine.
 A very large repository will want narrowing (`sources` in
 |scry-configuration|) before this is useful.
+
+==============================================================================
+THE PLAN                                                          *scry-plan*
+
+After aiming, what the intent will do is written into the feature's block —
+in the map's own grammar, because the grammar already had everything needed.
+A member this change touches gets a note saying what happens there. A file
+that needs creating arrives as a member whose verdict is already `✗ absent`,
+which is what "to be added" looks like in a buffer that only says true
+things. An untouched member stays bare:
+>
+    feature Take a checklist away as a PDF
+      Turns the on-screen checklist into a clean sheet of paper.
+      route c/[slug]           src/pages/c/[slug].astro   ✓ present (file)
+        add a print button that opens the print view
+      def src/styles/global.css                           ✓ present (file)
+        add the @media print block; remove the dark-mode force
+      module src/lib/site.js                              ✓ present (file)
+      route print              src/pages/print.astro      ✗ absent
+        the print-only sheet: steps, notes, no chrome
+<
+Reading down the page: what exists, what will change, what gets created,
+what gets removed (a note like any other), and what this change does not
+touch.
+
+THE PLAN IS BUFFER TEXT, NOT AN OVERLAY. Altering the suggestion is editing
+lines. Discarding it is `u`. Building it is `~` — whose request already
+carries every member's notes, so the cast executes the plan you approved
+rather than re-deriving one. There is no accept/reject UI: the review
+surface for a suggestion in a text file is the text file.
+
+THE MACHINE MAY NOT SHRINK THE MAP. A plan that omits an existing member is
+re-completed on the way in — the member comes back with the notes it had.
+Removing a member is an edit only you make: `dd`, like anything else you
+delete. Removing CONTENT is a note ("remove the dark-mode force"); deleting
+whole files is outside a cast's power and stays yours.
+
+The plan reads the members' current contents before proposing anything — a
+plan written without reading the code says "update the stylesheet"; one
+written with it says which rule to remove. It is the same look the cast
+takes, earlier, while it can still change your mind.
 
 ==============================================================================
 PROGRAMMING A CAPABILITY                                        *scry-compose*

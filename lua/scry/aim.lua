@@ -102,7 +102,7 @@ function M.parse(result, map_)
   return nil, nil
 end
 
---- Put the cursor on a feature and say what `~` will do there.
+--- Put the cursor on a feature; the plan that follows does the talking.
 ---@param buf integer
 ---@param feature scry.Feature
 ---@param intent string
@@ -118,7 +118,6 @@ local function land(buf, feature, intent)
     pcall(require("scry.glass").toggle_members)
   end
   require("scry.compose").remember(intent)
-  vim.notify(("[scry] %s · ~ casts your intent here"):format(feature.name))
 end
 
 --- Aim an intent at the capability it is about.
@@ -171,10 +170,17 @@ function M.at(root, buf, intent, done)
       end
 
       if kind == "match" then
-        land(buf, mapmod.feature(map_, name), intent)
-        if done then
-          done("match", name)
-        end
+        -- AIMING ENDS IN A PLAN, not a bare cursor. The cursor lands, and
+        -- what this intent will do — which members change, which files get
+        -- created — is written under the members where you can edit it
+        -- (|scry-plan|). Firing is still yours.
+        local target = mapmod.feature(map_, name)
+        land(buf, target, intent)
+        require("scry.plan").give(root, buf, target, intent, function()
+          if done then
+            done("match", name)
+          end
+        end)
         return
       end
 
@@ -210,8 +216,11 @@ function M.at(root, buf, intent, done)
         vim.notify("[scry] wrote `" .. name .. "` but could not find it again", vim.log.levels.ERROR)
         return
       end
+      -- A bare feature's plan IS its first members, so the plan step does
+      -- both jobs here — one call, and the notes arrive intent-aware rather
+      -- than describing a status quo the intent is about to change.
       land(buf, written, intent)
-      require("scry.members").give(root, buf, written, function()
+      require("scry.plan").give(root, buf, written, intent, function()
         if done then
           done("new", name)
         end

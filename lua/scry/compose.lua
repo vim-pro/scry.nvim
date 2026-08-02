@@ -114,14 +114,16 @@ function M.request(root, feature, intent, kinds, read)
   out[#out + 1] = ""
   out[#out + 1] = "WHAT IT IS MADE OF:"
   for _, f in ipairs(files) do
-    local note = f.claim.desc and f.claim.desc[1]
     out[#out + 1] = ("  %s %s -> %s%s"):format(
       f.claim.kind,
       f.claim.target,
       f.path,
       f.exists and "" or "   (DOES NOT EXIST YET — create it)"
     )
-    if note then
+    -- ALL the member's notes, not the first. A plan (|scry-plan|) writes
+    -- what should happen in this file as these lines, and a cast that only
+    -- read the first line of its own instructions built half the plan.
+    for _, note in ipairs(f.claim.desc or {}) do
       out[#out + 1] = "      " .. note
     end
   end

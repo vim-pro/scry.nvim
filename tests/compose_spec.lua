@@ -14,6 +14,7 @@ local FEATURE = mapmod.parse({
   "  Describe your circumstances and the compiler selects from vetted steps.",
   "  endpoint compile",
   "    selects and lightly adapts canonical items",
+  "    remove the legacy csv branch",
   "  route copy",
   "  route print",
 }, KINDS).features[1]
@@ -39,6 +40,10 @@ H.ok(req.user:find("add a PDF export", 1, true) ~= nil, "and the intent")
 H.ok(req.user:find("export function compile", 1, true) ~= nil, "an existing file's contents are shown")
 H.ok(req.user:find("<h1>copy</h1>", 1, true) ~= nil, "all of them, not just the first")
 H.ok(req.user:find("selects and lightly adapts", 1, true) ~= nil, "a member's own note is shown too")
+-- ALL of a member's notes. A plan (|scry-plan|) writes what should happen in
+-- a file as these lines, and a cast that reads only the first line of its
+-- own instructions builds half the plan.
+H.ok(req.user:find("remove the legacy csv branch", 1, true) ~= nil, "every note line, not just the first")
 
 -- A MEMBER NAMES ITS FILE BEFORE THE FILE EXISTS. `route print` resolves
 -- through its kind's probe whether or not anything is there, so adding a
