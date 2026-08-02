@@ -76,6 +76,12 @@ vim.api.nvim_create_user_command("ScryConjure", function()
   require("scry.compose").start()
 end, { desc = "Cast an intent across the whole feature under the cursor" })
 
+-- Drafting gathers re-opened blocks as each batch lands; this is for a map
+-- written before it did.
+vim.api.nvim_create_user_command("ScryTidy", function()
+  require("scry.recover").tidy()
+end, { desc = "Gather every block of a re-opened feature into one" })
+
 vim.api.nvim_create_user_command("ScryLint", function()
   require("scry.lint").to_quickfix()
 end, { desc = "Flag feature names that are hard to read (never a verdict — the wording is yours)" })

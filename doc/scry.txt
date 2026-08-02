@@ -545,6 +545,21 @@ file is still accounted for in the counts, each row jumps to a real file,
 and a small project has its files named one by one as before.
 |:ScryUnclaimed|! lists every file however many there are.
 
+RE-OPENING, AND WHY IT DOES NOT READ AS REPETITION. A batch whose files
+serve a feature already in the map says so by writing that feature's name
+again with the new members under it — |scry-reopening|. The parser has
+always read those blocks as one feature. The buffer did not: four batches
+adding to one capability left four `feature` lines with the same name, so a
+map of fourteen was written across twenty-eight headers and read as a page
+of duplicates.
+
+Each batch now gathers its re-opened blocks into the features they belong
+to as it lands, in the same tick as the splice — so `u` still undoes a
+batch as one thing. A member written twice is kept once. A feature written
+only once is returned exactly as it was, blank lines and all, because its
+layout is yours. |:ScryTidy| does the same on demand, for a map written
+before this did it.
+
 AND THE DRAFT IS A BATCH, BUT THE COMMAND IS A PASS. |:ScryDraft| used to
 send the whole worklist, which already ran past a five-minute timeout at
 seventy-two files and is not a long request at twenty thousand but an
@@ -976,6 +991,11 @@ worse than the one already in your hands.
                         cursor — every file it is made of, in one request.
                         Bound to `~` in the glass. Results land in buffers,
                         unsaved. See |scry-compose|.
+
+                                                                   *:ScryTidy*
+:ScryTidy               Gather every block of a re-opened feature into
+                        one. Drafting does this as each batch lands;
+                        this is for a map written before it did.
 
                                                                    *:ScryLint*
 :ScryLint               Flag feature names that are hard to read, into the

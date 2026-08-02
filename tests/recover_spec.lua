@@ -363,4 +363,60 @@ H.ok(big.intent:find("40 most recent of 90", 1, true) ~= nil, "the cap is stated
 H.ok(big.intent:find("capability number 90", 1, true) ~= nil, "the newest is shown")
 H.eq(big.intent:find("capability number 1\n", 1, true), nil, "the oldest is dropped, not hidden")
 
+-- RE-OPENING MUST NOT READ AS REPETITION. Naming a feature again is how a
+-- later batch adds to what an earlier one wrote, and the parser has always
+-- read those blocks as one feature. The buffer did not: four batches that
+-- each added to `Inspect how the library maintains itself` left four
+-- `feature` lines with that name, so fourteen capabilities were written
+-- across twenty-eight headers and read as a page of duplicates. The
+-- fragmentation the re-open move fixed had become repetition.
+local K = { route = true, module = true }
+local folded_lines, folded = recover.consolidate({
+  "feature Work through a checklist",
+  "  route c/[slug]",
+  "    the runnable page",
+  "",
+  "feature Fetch as JSON",
+  "  module src/x.json.ts",
+  "",
+  "feature Work through a checklist",
+  "  module src/lib/run.js",
+  "  route c/[slug]",
+  "",
+}, K)
+H.eq(folded, 1, "one duplicate header is absorbed")
+local text = table.concat(folded_lines, "\n")
+local headers = 0
+for _ in text:gmatch("\nfeature ") do
+  headers = headers + 1
+end
+H.eq(headers + 1, 2, "two features, written once each")
+H.ok(text:find("module src/lib/run.js", 1, true) ~= nil, "the later block's member moved up")
+H.ok(text:find("the runnable page", 1, true) ~= nil, "and the first block's intent line stayed with its member")
+
+-- A member written twice is one claim, not two — two batches naming the
+-- same route agree with each other rather than disagreeing.
+local _, n = text:gsub("route c/%[slug%]", "")
+H.eq(n, 1, "a repeated member is kept once")
+
+-- ORDER SURVIVES. Features keep the order they were first written in, so a
+-- map does not reshuffle under a reader between batches.
+H.eq(folded_lines[1], "feature Work through a checklist", "the first feature is still first")
+
+-- A FEATURE WRITTEN ONCE IS RETURNED EXACTLY AS IT WAS. Its blank lines are
+-- someone's layout, and consolidating is not a license to reformat.
+local untouched = {
+  "feature Only ever written once",
+  "  Prose about it.",
+  "",
+  "  module src/a.lua",
+}
+local same, none = recover.consolidate(untouched, K)
+H.eq(none, 0, "nothing to fold")
+H.eq(table.concat(same, "\n"), table.concat(untouched, "\n") .. "\n", "and the block comes back as written")
+
+-- Prose above the first feature is not inside any feature and stays put.
+local led = recover.consolidate({ "-- a note", "", "feature a", "  module x.lua" }, K)
+H.eq(led[1], "-- a note", "a leading comment keeps its place")
+
 H.done("recover_spec PASS")

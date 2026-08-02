@@ -410,10 +410,20 @@ function M.draft(root, buf, map_, unclaimed)
           drafted[#drafted + 1] = id
         end
       end
+      -- Gather the blocks this batch re-opened into the features they
+      -- belong to, before anything reads the buffer. It happens in the same
+      -- tick as the splice, so `u` still undoes the batch as one thing.
+      local kinds_now = require("scry.map").kinds_for(root)
+      local tidied, folded = M.consolidate(vim.api.nvim_buf_get_lines(buf, 0, -1, false), kinds_now)
+      if folded > 0 then
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, tidied)
+      end
+
       require("scry.provenance").mark_drafted(drafted)
       vim.notify(
-        ("[scry] drafted %d claim(s), all untouched — read them, edit what is right, `u` to discard"):format(
-          #drafted
+        ("[scry] drafted %d claim(s)%s — read them, edit what is right, `u` to discard"):format(
+          #drafted,
+          folded > 0 and (", %d added to features already here"):format(folded) or ", all untouched"
         )
       )
       require("scry.glass").check()
@@ -451,6 +461,86 @@ function M.draft(root, buf, map_, unclaimed)
     end,
   })
   return built
+end
+
+--- Gather every block of a re-opened feature into the first one.
+---
+--- Re-opening is how a later batch adds to what an earlier one wrote (see
+--- map.parse), and the parser has always read the blocks as one feature.
+--- The BUFFER did not: four batches that each added to `Inspect how the
+--- library maintains itself` left four `feature` lines with that name, so a
+--- map of fourteen capabilities was written across twenty-eight headers and
+--- read as a page of duplicates. The fragmentation the re-open move fixed
+--- had turned into repetition.
+---
+--- Members keep their order and their own intent lines travel with them. A
+--- member written twice is kept once — two batches naming the same route is
+--- the same claim, not two.
+---@param lines string[]
+---@param known table<string, boolean|table> the kinds in force
+---@return string[] lines, integer folded how many blocks were absorbed
+function M.consolidate(lines, known)
+  local order, blocks, lead = {}, {}, {}
+  local headers = 0
+  local current = nil
+  for _, line in ipairs(lines) do
+    local name = line:match("^feature%s+(.+)$")
+    if name then
+      name = vim.trim(name)
+      headers = headers + 1
+      if not blocks[name] then
+        blocks[name] = { header = line, body = {}, blocks = 0 }
+        order[#order + 1] = name
+      end
+      current = blocks[name]
+      current.blocks = current.blocks + 1
+    elseif current then
+      current.body[#current.body + 1] = line
+    else
+      lead[#lead + 1] = line
+    end
+  end
+
+  local out = {}
+  vim.list_extend(out, lead)
+  for _, name in ipairs(order) do
+    local b = blocks[name]
+    out[#out + 1] = b.header
+    -- A member line and the indented lines under it are one unit.
+    local seen, keep, dropping = {}, {}, false
+    for _, line in ipairs(b.body) do
+      local kind = line:match("^  ([%w_]+)%s+%S")
+      if kind and known[kind] then
+        dropping = seen[line] == true
+        seen[line] = true
+      elseif not line:match("^    %S") then
+        dropping = false
+      end
+      if not dropping then
+        keep[#keep + 1] = line
+      end
+    end
+    -- A FEATURE WRITTEN ONCE IS LEFT EXACTLY AS IT WAS. Its blank lines are
+    -- someone's layout and none of this function's business.
+    --
+    -- Where blocks were actually merged, the seams are: every contribution
+    -- ends with a blank and the next begins right after it, so the members
+    -- of one capability arrive in visually separated clumps by batch. The
+    -- point of consolidating is that a feature reads as though it had been
+    -- written once, so in that case the blanks go.
+    local tidy = {}
+    for _, line in ipairs(keep) do
+      if b.blocks == 1 or vim.trim(line) ~= "" then
+        tidy[#tidy + 1] = line
+      end
+    end
+    while #tidy > 0 and vim.trim(tidy[#tidy]) == "" do
+      table.remove(tidy)
+    end
+    vim.list_extend(out, tidy)
+    out[#out + 1] = ""
+  end
+  return out, headers - #order
 end
 
 --- Issue the next batch of a pass, or finish it.
@@ -512,6 +602,31 @@ function M.next_batch(root, buf, begin)
   vim.api.nvim_buf_call(buf, function()
     M.draft(root, buf, map_, unclaimed)
   end)
+end
+
+--- Gather re-opened blocks in the glass, on demand.
+---
+--- Drafting does this as each batch lands, so a pass run today needs no
+--- tidying. This is for a map written before it did — or one you have been
+--- re-opening features in by hand.
+function M.tidy()
+  local glass = require("scry.glass")
+  local state = glass._state
+  if not (state.buf and vim.api.nvim_buf_is_valid(state.buf) and state.root) then
+    vim.notify("[scry] open the glass first (:Scry)", vim.log.levels.WARN)
+    return
+  end
+  local lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
+  local tidied, folded = M.consolidate(lines, require("scry.map").kinds_for(state.root))
+  if folded == 0 then
+    vim.notify("[scry] every feature is already written once")
+    return
+  end
+  vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, tidied)
+  glass.check()
+  vim.notify(
+    ("[scry] gathered %d re-opened block(s) into the features they belong to — `u` puts them back"):format(folded)
+  )
 end
 
 --- Draft features for the files no feature claims.
