@@ -201,7 +201,14 @@ function M.draft(root, buf, map_, unclaimed)
   -- the next batch is whatever is still undescribed. Files are taken in the
   -- order divergence found them, which groups a directory's files together,
   -- so a batch tends to be one part of the product rather than a scatter.
-  local BATCH = 40
+  -- TWELVE, NOT FORTY. Measured against the real CLI on a forty-file
+  -- batch: 112 seconds of silence, then everything at once in four. The
+  -- silence is the model thinking, the CLI sends no thinking text for it,
+  -- and no amount of streaming can show what is not sent — so the way to
+  -- see work arrive is to ask for less of it at a time. Smaller batches
+  -- start producing sooner and land in waves you can read, and iterating
+  -- costs nothing because a kept draft claims what it described.
+  local BATCH = 12
   local batch, remaining = unclaimed, 0
   if #unclaimed > BATCH then
     batch = vim.list_slice(unclaimed, 1, BATCH)

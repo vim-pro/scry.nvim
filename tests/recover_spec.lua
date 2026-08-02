@@ -209,7 +209,7 @@ local capped = vim.api.nvim_create_buf(false, true)
 require("scry").setup({ provider = function() end })
 pcall(recover.draft, vim.fn.tempname(), capped, map.parse({}), many)
 local sent = table.concat(vim.api.nvim_buf_get_lines(capped, 0, -1, false), "\n")
-H.ok(sent:find("drafting features for 40 undescribed", 1, true) ~= nil, "a pass takes a bounded batch: " .. sent:sub(1, 60))
+H.ok(sent:find("drafting features for 12 undescribed", 1, true) ~= nil, "a pass takes a bounded batch: " .. sent:sub(1, 60))
 H.eq(sent:find("300 undescribed", 1, true), nil, "not the whole three hundred")
 
 H.done("recover_spec PASS")
