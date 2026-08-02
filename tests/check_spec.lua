@@ -57,7 +57,15 @@ H.eq(d.untouched, 3, "with no trail, every claim is untouched")
 
 -- header renders separate numbers with the claim count leading
 local header = debt.header(d, report.at)
-H.ok(header:find("1 features", 1, true) ~= nil, "features lead the header")
+-- Features lead the header, because the question a reader arrives with is
+-- what the product does, not how many subfunctions resolved.
+--
+-- Asserted as the count and the word rather than as the string `1 features`,
+-- which is what this pinned before. The map has ONE feature in it, so the
+-- literal being defended was a plural bug — the spec was holding the defect
+-- in place instead of the promise, on the first line anyone ever sees.
+H.ok(header:find("1 feature", 1, true) ~= nil, "features lead the header")
+H.eq(header:find("1 features", 1, true), nil, "and one of them is not plural")
 H.ok(header:find("3 claims", 1, true) ~= nil, "claim evidence follows")
 H.ok(header:find("1 backed", 1, true) ~= nil, "backed shown")
 H.ok(header:find("1 violated", 1, true) ~= nil, "violated shown")
@@ -96,7 +104,7 @@ H.ok(debt.header(d, report.at):find("unchecked", 1, true) == nil, "and stays qui
 -- was invisible on exactly the map a new user opens first. Verified against
 -- a real terminal, not just the extmark being set.
 local wb = debt.winbar(d, report.at)
-H.ok(wb:find("1 features", 1, true) ~= nil, "features still lead: " .. wb)
+H.ok(wb:find("1 feature", 1, true) ~= nil, "features still lead: " .. wb)
 H.ok(wb:find("3 claims", 1, true) ~= nil, "claim evidence still travels with them")
 H.ok(wb:find("files on disk", 1, true) ~= nil, "and so does the disk caveat")
 H.ok(wb:find("\n", 1, true) == nil, "one line — a winbar is one line")
@@ -110,7 +118,7 @@ H.ok(wb:find("\n", 1, true) == nil, "one line — a winbar is one line")
 H.eq(wb:find("%%<"), nil, "no Vim truncation marker; the fitting is ours")
 local narrow = debt.winbar(d, report.at, 40)
 H.ok(vim.fn.strdisplaywidth(narrow:gsub("%%#%w+#", ""):gsub("%%%*", "")) <= 40, "a narrow window gets a line that fits: " .. narrow)
-H.ok(narrow:find("features", 1, true) ~= nil, "and keeps the features")
+H.ok(narrow:find("feature", 1, true) ~= nil, "and keeps the features")
 H.eq(narrow:find("3 claims", 1, true), nil, "dropping the claim counts, which are the evidence beneath them")
 -- COLOR MEANS STATE, and nothing else. The bar was one band of ScryHeader,
 -- which linked to Title — in a normal scheme the loudest color it has —

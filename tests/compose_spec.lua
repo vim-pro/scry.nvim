@@ -121,4 +121,69 @@ H.eq(vim.bo[buf].modified, true, "which is modified and unsaved, as if you had t
 -- The refused path was never even opened.
 H.eq(vim.fn.bufexists(proj .. "/src/lib/secrets.js"), 0, "a refused file is not loaded, let alone written")
 
+-- 5) THE CAST LANDS YOU IN THE CHANGE. Measured by running it: the old
+-- ending printed a summary longer than the window, so every SUCCESSFUL cast
+-- finished at a `Press ENTER` prompt and then left you typing `:b` with
+-- paths you had to recall — eight steps to answer "did it do what I asked",
+-- on the one gesture that is supposed to feel like `d2w`.
+--
+-- The list is the answer instead. Changes go where changes go in this stack,
+-- and then every key is one you already have: `]q` walks it, `u` undoes a
+-- file, `:w` keeps one.
+local seeded = require("scry.compose")
+local fake_root = vim.fn.tempname()
+vim.fn.mkdir(fake_root, "p")
+vim.fn.writefile({ "old" }, fake_root .. "/a.ts")
+vim.fn.setqflist({}, "r") -- start clean so the assertions are about this cast
+
+local applied = seeded.apply(fake_root, {
+  { path = "a.ts", lines = { "new" } },
+  { path = "b.ts", lines = { "fresh" } },
+}, { ["a.ts"] = true, ["b.ts"] = true })
+seeded._seed(fake_root, "add a PDF export", applied)
+
+local qf = vim.fn.getqflist({ title = 1, items = 1 })
+H.eq(#qf.items, 2, "every file the cast touched is in the list")
+H.ok(qf.title:find("add a PDF export", 1, true) ~= nil, "titled with the intent, so the list says what it is")
+local texts = {}
+for _, item in ipairs(qf.items) do
+  texts[#texts + 1] = item.text
+end
+table.sort(texts)
+H.eq(table.concat(texts, ","), "changed,created", "and says which are new, because that changes how you read them")
+
+-- 6) A CAST CAN BE TAKEN BACK. An operator you cannot reverse is not an
+-- operator, it is a commitment — and `:e!` once per file, from a list of
+-- paths you had to remember, meant the real undo was git.
+H.eq(vim.bo[vim.fn.bufnr(fake_root .. "/a.ts")].modified, true, "the changed file is modified before")
+seeded.discard()
+local reverted = vim.fn.bufnr(fake_root .. "/a.ts")
+H.eq(vim.api.nvim_buf_get_lines(reverted, 0, -1, false)[1], "old", "an edited file goes back to what is on disk")
+H.eq(vim.bo[reverted].modified, false, "and stops being modified")
+-- A file the cast INVENTED has nothing on disk to go back to, so taking it
+-- back means the buffer goes rather than reloading from nothing.
+H.eq(vim.fn.bufexists(fake_root .. "/b.ts"), 0, "a created file is gone entirely")
+H.eq(vim.fn.filereadable(fake_root .. "/b.ts"), 0, "and never reached the disk in the first place")
+
+-- ONCE YOU SAVE, IT IS YOURS. Reverting a file already written is git's job,
+-- and doing it behind someone's back would be the most destructive thing
+-- here. Discard says which files it could not take back rather than
+-- reporting a clean sweep it did not perform.
+vim.fn.writefile({ "old" }, fake_root .. "/c.ts")
+seeded.apply(fake_root, { { path = "c.ts", lines = { "cast wrote this" } } }, { ["c.ts"] = true })
+local saved = vim.fn.bufnr(fake_root .. "/c.ts")
+vim.api.nvim_buf_call(saved, function()
+  vim.cmd("silent write")
+end)
+local told
+local restore = vim.notify
+vim.notify = function(m)
+  told = m
+end
+seeded.discard()
+vim.notify = restore
+H.eq(vim.fn.readfile(fake_root .. "/c.ts")[1], "cast wrote this", "a saved file is left exactly alone")
+H.ok(told and told:find("c.ts", 1, true) ~= nil, "and named as one discard could not take back: " .. tostring(told))
+H.ok(told:find("git", 1, true) ~= nil, "with the tool that can")
+
 H.done("compose_spec PASS")

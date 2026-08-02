@@ -1035,12 +1035,29 @@ files to change.
 A cast may only edit files it was shown. A path the model invents is a path
 nobody addressed; it is refused and named, not written.
 
-REVIEW IS VIM'S. Results land in BUFFERS, modified and unsaved — nothing
-touches the disk. That is the state you would be in had you typed the
-change yourself, so every tool you already have applies: `u` to undo a
-buffer, `:diffthis` against what is on disk, `:w` what you keep, `:e!` what
-you don't, `:wa` when it is all right. A review UI invented here would be
-worse than the one already in your hands.
+THE CAST LEAVES YOU IN THE CHANGE. Every file it touched goes into the
+quickfix list and you land in the first one. Nothing touches the disk —
+results are BUFFERS, modified and unsaved, which is the state you would be
+in had you typed the change yourself. So every key is one you already have:
+>
+    ]q  [q      the next and previous file the cast touched
+    u           undo this one — it is an ordinary buffer edit
+    :w          keep it        :wa   keep all of them
+    :e!         drop it        |:ScryDiscard|  drop the whole cast
+<
+That ending was measured rather than designed. It used to print a summary
+of what changed — longer than a window, so vim ended every SUCCESSFUL cast
+at a `Press ENTER` prompt, and then left you typing `:b` with paths you had
+to remember. Eight steps to answer "did it do what I asked", on the one
+gesture meant to feel like `d2w`.
+
+|:ScryDiscard| takes back what is still unsaved, and says which files it
+could not. Once you `:w`, the change is yours: reverting a written file is
+git's job, and doing it behind your back would be the most destructive
+thing here.
+
+A review UI invented here would be worse than the one already in your
+hands — but the list IS that hand, and not printing to it was the mistake.
 
 ==============================================================================
 10. COMMANDS                                                   *scry-commands*
@@ -1050,6 +1067,14 @@ worse than the one already in your hands.
 
                                                                   *:ScryCheck*
 :ScryCheck              Re-check every claim against the files on disk.
+
+                                                                *:ScryDiscard*
+:ScryDiscard            Drop the last cast's unsaved changes — an edited
+                        file goes back to what is on disk, a file the cast
+                        created goes away entirely. Files you have already
+                        saved are left alone and named, because reverting
+                        those is git's job. `d2w` has `u`; this is the same
+                        thing for a change across four files.
 
                         it outright, |:ConjureCancel|.
 

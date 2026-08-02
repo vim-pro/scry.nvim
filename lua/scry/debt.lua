@@ -144,7 +144,13 @@ function M.parts(d, at)
   local age = at and (os.time() - at) or nil
   local when = age == nil and "unchecked" or (age < 5 and "just checked" or ("checked " .. age .. "s ago"))
 
-  local line1 = { { "scry", "ScryHeaderDim" }, { " · ", "ScryHeaderDim" }, { ("%d features"):format(d.features), "ScryHeader" } }
+  local line1 = {
+    { "scry", "ScryHeaderDim" },
+    { " · ", "ScryHeaderDim" },
+    -- A map with one feature in it read `1 features`. Small, and it is the
+    -- first line anyone ever sees.
+    { ("%d feature%s"):format(d.features, d.features == 1 and "" or "s"), "ScryHeader" },
+  }
   local function add(n, word, group)
     if n > 0 then
       line1[#line1 + 1] = { " · ", "ScryHeaderDim" }

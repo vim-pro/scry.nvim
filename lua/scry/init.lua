@@ -71,6 +71,15 @@ vim.api.nvim_create_user_command("ScryConjure", function()
   require("scry.compose").start()
 end, { desc = "Cast an intent across the whole feature under the cursor" })
 
+-- THE UNDO FOR A CAST. `d2w` has `u`; a cast across four files had `:e!`
+-- once per file, from a list of paths you had to remember — so in practice
+-- the way to take one back was git. This is a command rather than a key
+-- because you are in your own source file when you want it, and scry does
+-- not get to put mappings there.
+vim.api.nvim_create_user_command("ScryDiscard", function()
+  require("scry.compose").discard()
+end, { desc = "Drop the last cast's unsaved changes" })
+
 -- Drafting gathers re-opened blocks as each batch lands; this is for a map
 -- written before it did.
 vim.api.nvim_create_user_command("ScryTidy", function()
