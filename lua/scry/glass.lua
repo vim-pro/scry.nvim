@@ -488,6 +488,31 @@ function M.render()
         pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, at - 1, 0, mark)
       end
     end
+
+    -- AND AIR BETWEEN THE SENTENCE AND THE FILE LIST. What a feature IS and
+    -- what it is MADE OF are the two altitudes this whole buffer is built
+    -- around, and they were running together as one block of text.
+    --
+    -- Attached BELOW the last line of the description rather than above the
+    -- first member, because the members are a fold: a mark above a closed
+    -- fold's first line is not drawn (Neovim has nowhere to put it), so the
+    -- gap would have vanished in exactly the default view.
+    local first = feature.lnums and feature.lnums[1] or feature.lnum
+    for i = first + 1, #lines do
+      if lines[i]:match("^feature%s") then
+        break
+      end
+      if M.is_member_line(lines[i], state.kinds) then
+        -- Only when there is something between the name and the members. A
+        -- feature with no description reads fine tight.
+        if i > first + 1 then
+          pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, i - 2, 0, {
+            virt_lines = { { { "", "NonText" } } },
+          })
+        end
+        break
+      end
+    end
   end
 
   for _, claim in ipairs(state.map.claims) do

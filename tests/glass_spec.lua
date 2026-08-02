@@ -394,6 +394,35 @@ H.eq(#desc.features, 2, "two features staged")
 H.eq(sep[0], nil, "no separator above the first feature, where Neovim cannot draw one")
 H.eq(sep[6], nil, "nor above one the author already spaced")
 
+-- AND AIR BETWEEN THE SENTENCE AND THE FILE LIST — what a feature IS and what
+-- it is MADE OF, which are the two altitudes this whole buffer is built
+-- around and which were running together as one block.
+--
+-- Attached BELOW the last line of the description, not above the first
+-- member. The members are a fold, and a mark above a closed fold's first line
+-- is never drawn — Neovim has nowhere to put it — so anchoring it there would
+-- have made the gap vanish in exactly the default view.
+local below = {}
+for _, m in ipairs(vim.api.nvim_buf_get_extmarks(glass._state.buf, ns2, 0, -1, { details = true })) do
+  if m[4].virt_lines and not m[4].virt_lines_above then
+    below[m[2]] = true
+  end
+end
+H.eq(below[1], true, "the description is spaced off from the members")
+H.eq(below[0], nil, "and the gap hangs off the description, not off the feature's name")
+
+-- A feature with no description reads fine tight, so it gets nothing.
+staged({ "feature one", "  module a.lua", "feature two", "  module b.lua" }, function()
+  return "backed"
+end)
+local none = 0
+for _, m in ipairs(vim.api.nvim_buf_get_extmarks(glass._state.buf, ns2, 0, -1, { details = true })) do
+  if m[4].virt_lines and not m[4].virt_lines_above then
+    none = none + 1
+  end
+end
+H.eq(none, 0, "a feature whose members follow its name directly is not spaced")
+
 local tight = staged({
   "feature one",
   "  module a.lua",
