@@ -32,6 +32,25 @@ function M.check()
     health.warn("no lua treesitter parser — contains claims will render as unchecked")
   end
 
+  -- Reach, and what kind of answer it can give here. An engine that is not
+  -- provisioned is not an error: reach falls back to a name match and says
+  -- so every time. Reporting it as broken would be the wrong shape — the
+  -- degraded answer is a real answer, just a weaker one.
+  local reach = require("scry.reach")
+  local any = false
+  for _, line in ipairs(reach.status()) do
+    if line:find("provisioned (", 1, true) then
+      health.ok("reach: " .. line)
+      any = true
+    else
+      health.info("reach: " .. line)
+    end
+  end
+  if not any then
+    health.info("reach: no engine provisioned — :ScryReach answers by name match, labeled `text only`")
+    health.info("  cargo install tree-sitter-stack-graphs-typescript --features cli --root " .. vim.fn.stdpath("data") .. "/scry")
+  end
+
   -- Where the map and the holdout live.
   local map_path = root .. "/" .. config.map_path
   if vim.fn.filereadable(map_path) == 1 then

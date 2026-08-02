@@ -150,6 +150,46 @@ one of them is still a claim. Only a dedented non-blank line ends a block.
 the rest of a `never` block to prose, which both stops checking those patterns
 and routes them into the repository on the next |:write|.)
 
+                                                                 *scry-reach*
+REACH — WHAT A DEFINITION ACTUALLY TOUCHES ~
+
+A feature's members are its ENTRY POINTS. The code behind them is not
+something anyone should have to list, and listing it is what made a map of a
+real project run to eighty-six members.
+
+|:ScryReach| on a `def` puts everything that binds to it in the quickfix
+list. Two passes, and the split is the honesty:
+
+    candidates   ripgrep finds every position that mentions the name.
+                 Fast, over-broad, never reported as more than it is.
+    resolved     a stack-graphs engine is asked, for each candidate,
+                 whether it binds to THIS definition. What survives is
+                 reach.
+
+The difference is not small. On a fixture with one real caller and one
+unrelated function of the same name, ripgrep reports five positions and the
+engine keeps one — and two of the four it drops are a DIFFERENT function
+that merely shares a name. That is the question a text search cannot answer
+and the reason reach needs an engine at all.
+
+Without one, the first pass still runs and the quickfix title says
+`text only`, because a name match is evidence of a mention and nothing
+more. Scry says which kind of answer it has every time it gives one.
+
+ENGINES are provisioned per language, and |:checkhealth| reports which are
+present: >
+
+    cargo install tree-sitter-stack-graphs-typescript --features cli \
+      --root ~/.local/share/nvim/scry
+<
+javascript, typescript, tsx, python and java have engines. Lua does not —
+scry's own map is checked by treesitter and answered textually here, and
+says so.
+
+Indexing is the slowest thing scry does, which is why reach is a command
+and never part of a check. |:Scry| stays cheap; only a command may be
+expensive, the same rule |:ScryExercise| and |:ScryDraft| follow.
+
                                                                  *scry-kinds*
 A MEMBER NAMES A TYPED OBJECT ~
 
@@ -636,6 +676,13 @@ verdict, since that is an extmark on the feature line.
 
                                                                   *:ScryCheck*
 :ScryCheck              Re-check every claim against the files on disk.
+
+                                                                  *:ScryReach*
+:ScryReach              Everything that binds to the `def` under the cursor,
+                        into the quickfix list. Indexes first, so it is slow
+                        the first time; the title says whether the answer
+                        was resolved by an engine or is a name match. See
+                        |scry-reach|.
 
                                                               *:ScryUnclaimed*
 :ScryUnclaimed          List the files no feature claims in the quickfix
