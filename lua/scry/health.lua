@@ -44,22 +44,24 @@ function M.check()
     health.info("reach: stackgraphs.nvim not installed — :ScryReach and the divergence shrink are unavailable")
     health.info("  https://github.com/vim-pro/stackgraphs.nvim")
   else
-    local any = false
-    for _, line in ipairs(reach.status()) do
-      if line:find("provisioned (", 1, true) then
-        health.ok("reach: " .. line)
-        any = true
-      else
-        health.info("reach: " .. line)
-      end
+    -- Which languages actually resolve, and by what. This is the fact that
+    -- decides every reach answer, so it leads — the per-backend detail is
+    -- only useful once you know there is nothing.
+    local resolvable = require("stackgraphs").languages()
+    local names = {}
+    for lang, backend in pairs(resolvable) do
+      names[#names + 1] = ("%s (%s)"):format(lang, backend)
     end
-    if not any then
-      health.info("reach: no engine provisioned — :ScryReach answers by name match, labeled `text only`")
-      health.info(
-        "  cargo install tree-sitter-stack-graphs-typescript --features cli --root "
-          .. vim.fn.stdpath("data")
-          .. "/stackgraphs"
-      )
+    table.sort(names)
+    if #names > 0 then
+      health.ok("reach: resolves " .. table.concat(names, ", "))
+    else
+      health.info("reach: nothing resolves here — :ScryReach answers by name match, labeled `text only`")
+      health.info("  install a language server for your language, or a stack-graphs engine")
+      health.info("  :h stackgraphs-backends")
+    end
+    for _, line in ipairs(reach.status()) do
+      health.info("reach: " .. line)
     end
   end
 

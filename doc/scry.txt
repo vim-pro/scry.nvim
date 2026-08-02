@@ -187,9 +187,12 @@ what a file reaches, and the transitive closure of that — and labels every
 answer with a fidelity. Scry may never render a stronger word than the one
 it was handed. See |stackgraphs| for the contract.
 
-That seam exists because the engine behind it is unmaintained upstream and
-covers five languages: a reasonable thing to depend on, a bad thing to have
-scry's vocabulary shaped by. Swapping the backend should not reach the map.
+That seam has already paid for itself. The backend behind it was swapped
+from an archived stack-graphs CLI to a LANGUAGE SERVER, and nothing in scry
+changed — not the map, not the glass, not one of the fourteen specs. It also
+widened what reach can answer about: a language server resolves lua, go,
+rust and c, which stack graphs never did, so scry's own map is now reachable
+by the same machinery as a TypeScript project.
 
 Reach on a def is two passes, and the split is the honesty:
 
@@ -215,16 +218,16 @@ says so rather than scry failing to load.
 
     https://github.com/vim-pro/stackgraphs.nvim
 
-ENGINES are provisioned per language, and |:checkhealth| reports which are
-present: >
+A RESOLVER is per language, and |:checkhealth| reports what resolves what.
+Either a language server on $PATH — nothing to configure — or a stack-graphs
+engine: >
 
     cargo install tree-sitter-stack-graphs-typescript --features cli \
       --root ~/.local/share/nvim/stackgraphs
 <
-javascript, typescript, tsx, python and java have engines. Lua does not —
-scry's own map is checked by treesitter and answered textually here, and
-says so. Engines already installed under ~/.local/share/nvim/scry are still
-found, so an existing install does not need redoing.
+Engines already installed under ~/.local/share/nvim/scry are still found, so
+an existing install does not need redoing. See |stackgraphs-backends| for
+which servers are recognized out of the box.
 
                                                         *scry-reach-limits*
 REACH IS NOT UNIFORM, and what follows is what has been measured rather
