@@ -92,6 +92,14 @@ with verdicts rendered beside each claim as virtual text. The verdicts are
 COMPUTED, never stored: the buffer's text is your beliefs, and everything
 after it is scry's answer.
 
+A PROJECT WITH NO MAP OPENS EMPTY. There was a block of instructions here
+once — what a feature is, how the indentation works, which key to press. It
+read well and it could not leave: it is prose, so nothing objected to it, and
+it sat above every feature that arrived after it and went into
+`.scry/map.scry` on the first `:write`. Instructions that live inside the
+document they are teaching you to write have no way out of it. The header
+says what to do, and `:Scry {intent}` (|scry-aim|) needs no reading at all.
+
 Editing the model is the primary gesture. `:write` saves it — and routes
 never-claims to the holdout file (|scry-holdout|), announcing where they
 went. Every render carries a header:
@@ -597,9 +605,7 @@ undescribed path into the glass — seventy-two file names nobody asked to
 read, with the narration buried at the top of them. The model needs that
 list. The buffer needs somewhere for the narration to land.
 
-Both lines are prose, so rejecting with `u` leaves nothing behind, and the
-starter (|scry-glass|) is cleared on the way in — it is instructions for
-someone with no map, and a draft is a map.
+Both lines are prose, so rejecting with `u` leaves nothing behind.
 
 This is the scrying itself, and it is the one place a machine writes into the
 map, so it is worth being exact about why that is not a contradiction. The

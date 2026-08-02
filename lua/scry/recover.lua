@@ -302,10 +302,6 @@ function M.draft(root, buf, map_, unclaimed)
   local resolver = require("scry.resolver").get(require("scry.project").resolve(root).resolver)
   local built = M.build(map_, batch, kindset, examples, resolver and resolver.def_languages)
 
-  -- The starter is instructions for someone with no map. A draft IS a map,
-  -- so the instructions go — they were telling you to run the thing you
-  -- just ran, and they sat above every drafted feature until deleted by
-  -- hand.
   -- A FAILED DRAFT LEAVES ITS BLOCK, by design: the notification says `u`
   -- clears it. Re-running instead of undoing then stacked a second block on
   -- the first, and a third on that — inert prose, so nothing broke, but the
@@ -322,13 +318,6 @@ function M.draft(root, buf, map_, unclaimed)
       vim.api.nvim_buf_set_lines(buf, i - 1, last, false, {})
       buflines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
     end
-  end
-
-  local glass = require("scry.glass")
-  local starter = glass.starter()
-  local head = vim.api.nvim_buf_get_lines(buf, 0, #starter, false)
-  if table.concat(head, "\n") == table.concat(starter, "\n") then
-    vim.api.nvim_buf_set_lines(buf, 0, #starter, false, {})
   end
 
   -- Append the region, then hand conjurer exactly those lines to rewrite.

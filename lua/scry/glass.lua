@@ -545,42 +545,6 @@ function M.winbar()
   return require("scry.debt").winbar(state.debt, state.report and state.report.at, ok and width or nil)
 end
 
---- The starter map, for a project that has none.
----
---- EVERY LINE OF IT IS PROSE, and a spec pins that. An earlier version
---- opened on a real feature whose one claim pointed at
---- `path/to/file.lua:symbol`, so the first thing anyone ever saw was two red
---- verdicts against a file that was never meant to exist — scry reporting,
---- accurately, on its own placeholder. Accurate and useless: nothing there
---- was a belief anyone held, so nothing there was worth checking.
----
---- It leads with `+` because that is the honest answer to an empty map
---- over a full repository, and its example is written at sea level (see
---- |scry-altitude|) so the shape you copy is the right shape.
----@return string[]
-function M.starter()
-  return {
-      "-- No map yet. Press + to have a conjurer write the first pass over",
-      "-- the files nothing describes; everything it writes lands unread, and",
-      "-- stays unread until you have read it.",
-      "--",
-      "-- Or write one yourself and delete this. Indentation is the grammar:",
-      "--",
-      "--   feature a reader can follow a link someone sent them",
-      "--     Prose is never checked. Say what the feature is for, and why it",
-      "--     is one feature rather than two.",
-      "--",
-      "--     contains",
-      "--       lua/links.lua:resolve    a definition that exists right now",
-      "--       lua/links.lua            when the file defines nothing nameable",
-      "--",
-      "-- A feature is one thing someone can accomplish, named the way they",
-      "-- would name it — not \"the auth system\", which swallows the product,",
-      "-- and not \"validate the token\", which is what a claim already is.",
-      "-- :h scry-altitude",
-    }
-end
-
 -- The first `feature` line, memoized per change. The fold expression is
 -- evaluated once per line per redraw, and the "is there a feature above me"
 -- question used to walk backwards from every one of them — quadratic in the
@@ -1019,10 +983,15 @@ function M.open(root)
 
   local map_lines = require("scry.map").load(root .. "/" .. config.map_path).lines
   local holdout_lines = require("scry.holdout").load(root, config).lines
+  -- AN EMPTY MAP OPENS EMPTY. There used to be a block of instructions
+  -- here for a project with no map. It was prose, so it parsed fine and
+  -- never left — it sat above every feature that arrived after it and was
+  -- written into .scry/map.scry on the first `:w`, which is a file of
+  -- someone's beliefs about their product with a tutorial at the top.
+  --
+  -- The header already says what to do (`+ to draft`), and `:Scry {intent}`
+  -- is the way in that does not need reading about. See |scry-aim|.
   local composed = M.compose(map_lines, holdout_lines)
-  if #composed == 0 then
-    composed = M.starter()
-  end
 
   local buf = state.buf
   if reusing then

@@ -248,28 +248,33 @@ H.eq(glass.winbar(), "", "no winbar outside the glass")
 vim.api.nvim_set_current_buf(buf)
 H.ok(glass.winbar():find("features", 1, true) ~= nil, "and the counts come back in it")
 
--- THE STARTER MAP IS INERT. A first :Scry used to open on a feature whose
--- only claim named `path/to/file.lua:symbol`, so a new user met two red
--- verdicts about a file that was never meant to exist. Scry was right and it
--- did not matter: nothing in a template is a belief anyone holds, so nothing
--- in it should be checked.
-local starter = require("scry.map").parse(glass.starter())
-H.eq(#starter.features, 0, "the starter map claims nothing")
-H.eq(#starter.claims, 0, "so there is nothing to render a verdict against")
-local joined = table.concat(glass.starter(), "\n")
-H.ok(joined:find("+", 1, true) ~= nil, "and it points at the way out of an empty map")
-
--- IT MAY NOT POINT AT SOMETHING THAT IS NOT THERE. The starter is the first
--- thing anyone reads, and it told new users to run :ScryDraft for a while
--- after that command was removed in favor of `+` — the one screen whose
--- whole job is to say what to do next, naming something that does nothing.
+-- AN EMPTY MAP OPENS EMPTY.
 --
--- So rather than pinning a string, this checks the promise: every command
--- the starter mentions has to exist.
-require("scry")
-for name in joined:gmatch(":(Scry%a*)") do
-  H.eq(vim.fn.exists(":" .. name), 2, "the starter names :" .. name .. ", so it had better exist")
-end
+-- There was a block of instructions here for a project with no map — what a
+-- feature is, how the indentation works, which key to press. It read well and
+-- it would not leave. It is PROSE, so it parsed fine and nothing ever
+-- objected to it: it sat above every feature that arrived after it, came back
+-- in the request behind every draft, and went into `.scry/map.scry` on the
+-- first `:w` — a versioned file of someone's beliefs about their product,
+-- with a tutorial at the top.
+--
+-- Instructions that live in the document they are teaching you to write have
+-- no way out of it. The header says what to do (`+ to draft`) without being
+-- part of the map, and `:Scry {intent}` (|scry-aim|) is a way in that needs
+-- no reading at all.
+local blank = vim.fn.tempname()
+vim.fn.mkdir(blank, "p")
+-- The section above deliberately left the glass modified, and a modified
+-- glass refuses to re-point at another root (that is its own assertion).
+vim.bo[glass._state.buf].modified = false
+-- ...and a fresh holdout, since this suite pointed the configured one at a
+-- file with prohibitions in it, and those compose into every glass.
+require("scry").setup({ holdout_path = blank .. "/holdout.scry" })
+require("scry.glass").open(blank)
+local opened = vim.api.nvim_buf_get_lines(glass._state.buf, 0, -1, false)
+H.eq(table.concat(opened, ""), "", "a project with no map opens to nothing at all")
+H.eq(#require("scry.map").parse(opened).features, 0, "and there is nothing in it to check")
+H.eq(glass.starter, nil, "the template is gone, not merely unused")
 
 -- RENDER WHAT VARIES. A column that says the same thing on every row is not
 -- information, it is texture. Measured on a real drafted map: fourteen rows,

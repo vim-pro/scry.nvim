@@ -181,12 +181,19 @@ function M.at(root, buf, intent, done)
       -- with nothing under it would just move the hand-typing one step
       -- along.
       local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+      -- Written after the last line that says anything. An empty map is one
+      -- blank line, and appending past it left the first feature of a
+      -- project's map on line 2 with a blank above it forever.
+      local last = #lines
+      while last > 0 and vim.trim(lines[last]) == "" do
+        last = last - 1
+      end
       local tail = {}
-      if #lines > 0 and vim.trim(lines[#lines]) ~= "" then
+      if last > 0 then
         tail[#tail + 1] = ""
       end
       tail[#tail + 1] = "feature " .. name
-      vim.api.nvim_buf_set_lines(buf, #lines, #lines, false, tail)
+      vim.api.nvim_buf_set_lines(buf, last, #lines, false, tail)
 
       local written = require("scry.map").feature(reparse(), name)
       if not written then
