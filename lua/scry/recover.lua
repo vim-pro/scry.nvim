@@ -63,8 +63,9 @@ local M = {}
 ---@param unclaimed string[] Files no feature's footprint names.
 ---@param kindset table<string, table>? kinds in force; the draft may use no
 ---  others, because a kind scry cannot probe is a claim nothing can check.
+---@param examples table<string, string[]>? real names per kind, from disk
 ---@return { lines: string[], intent: string }
-function M.build(map_, unclaimed, kindset)
+function M.build(map_, unclaimed, kindset, examples)
   local names = {}
   for _, f in ipairs(map_.features) do
     names[#names + 1] = f.name
@@ -96,6 +97,23 @@ function M.build(map_, unclaimed, kindset)
   table.sort(kindnames)
   local kindlist = table.concat(kindnames, ", ")
 
+  -- What a name of each kind LOOKS like, shown rather than described.
+  -- Told only the kind's name, a model writes what the word means to a
+  -- person: `endpoint /index.json`, a URL. Scry substitutes that into
+  -- `src/pages/api/{name}.ts` and reports `src/pages/api//index.json.ts`
+  -- absent — accurately, about a path nobody meant. Real names settle it in
+  -- one line each.
+  local shape_lines = {}
+  for _, name in ipairs(kindnames) do
+    local ex = (examples or {})[name]
+    if ex and #ex > 0 then
+      shape_lines[#shape_lines + 1] = ("  %s: %s"):format(name, table.concat(ex, ", "))
+    end
+  end
+  shape_lines[#shape_lines + 1] = "  module: a repo-relative path, e.g. src/lib/sources.js"
+  shape_lines[#shape_lines + 1] = "  def: a repo-relative path, a colon, and a symbol"
+  local shapes = table.concat(shape_lines, "\n")
+
   local intent = table.concat({
     "Replace this block with `feature` entries in scry's map grammar,",
     "describing what the listed files make possible. Read them.",
@@ -111,6 +129,12 @@ function M.build(map_, unclaimed, kindset)
     "something someone uses; a function is how it was built. The kinds"
       .. " available in this project, and nothing else:",
     "  " .. kindlist,
+    "",
+    "A NAME IS NOT A URL. Each kind is found by a probe, and a member's name",
+    "is exactly the text the probe substitutes — nothing more. Here is what",
+    "names of each kind look like in THIS project, taken off disk; write",
+    "names of the same shape:",
+    shapes,
     "",
     "A member may carry its own one-line intent, indented under it: what THAT",
     "member is for, as distinct from what the feature is for.",
@@ -158,7 +182,17 @@ end
 ---@param unclaimed string[]
 ---@return table built
 function M.draft(root, buf, map_, unclaimed)
-  local built = M.build(map_, unclaimed, require("scry.map").kinds_for(root))
+  -- Real names per kind, off disk, so the draft can see the shape rather
+  -- than be told about it.
+  local kindset = require("scry.map").kinds_for(root)
+  local examples = {}
+  for name, spec in pairs(kindset) do
+    local ex = require("scry.kinds").examples(root, spec, 6)
+    if #ex > 0 then
+      examples[name] = ex
+    end
+  end
+  local built = M.build(map_, unclaimed, kindset, examples)
 
   -- The starter is instructions for someone with no map. A draft IS a map,
   -- so the instructions go — they were telling you to run the thing you

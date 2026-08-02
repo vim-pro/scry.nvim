@@ -99,4 +99,26 @@ require("scry.resolver").check(
 H.eq(seen.status, "unchecked", "an unknown kind is unchecked, not backed")
 H.ok(seen.label:find("config.json", 1, true) ~= nil, "and the label says the remedy: " .. seen.label)
 
+-- 7) WHAT A NAME LOOKS LIKE, taken off disk. A member's name is exactly the
+-- text the probe substitutes, and nothing said so — so a drafter wrote what
+-- the kind means to a person: `endpoint /index.json`, a URL. Scry pasted it
+-- into `src/pages/api/{name}.ts`, got `src/pages/api//index.json.ts`, and
+-- reported it absent — accurately, about a path nobody meant.
+local proj = vim.fn.tempname()
+vim.fn.mkdir(proj .. "/src/pages/api", "p")
+vim.fn.writefile({ "" }, proj .. "/src/pages/api/compile.ts")
+vim.fn.writefile({ "" }, proj .. "/src/pages/api/suggest.ts")
+vim.fn.writefile({ "" }, proj .. "/src/pages/index.astro")
+local found = kinds.examples(proj, { path = "src/pages/api/{name}.ts" }, 6)
+H.eq(#found, 2, "both endpoints are discovered")
+H.eq(found[1], "compile", "as the text that fills {name}")
+H.eq(found[2], "suggest", "and nothing else")
+-- The suffix has to match too, or every file under the prefix comes back.
+H.eq(#kinds.examples(proj, { path = "src/pages/{name}.astro" }, 6), 1, "the suffix narrows it")
+H.eq(#kinds.examples(proj, { grep = "x{name}" }, 6), 0, "a grep-probed kind has no paths to enumerate")
+
+-- And a name that round-trips: expanding a discovered name reproduces the
+-- file it came from. That is the property the draft depends on.
+H.eq(kinds.expand("src/pages/api/{name}.ts", found[1], "none"), "src/pages/api/compile.ts", "discovery and expansion agree")
+
 H.done("kinds_spec PASS")

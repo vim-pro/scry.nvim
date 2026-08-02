@@ -262,6 +262,16 @@ neither vocabulary is right for the other: >
       "command":  { "grep": "nvim_create_user_command\\(\"{name}\"" }
     }
 <
+A MEMBER'S NAME IS EXACTLY THE TEXT THE PROBE SUBSTITUTES, and nothing
+else. For `"endpoint": { "path": "src/pages/api/{name}.ts" }` the names are
+`compile` and `suggest` — not `/index.json`, which is what the endpoint
+means to a person. Scry would paste that in and report
+`src/pages/api//index.json.ts` absent: accurate, about a path nobody meant.
+
+|:ScryDraft| settles it by showing rather than telling. It lists the names
+of each kind that already exist, taken off disk, so a drafter writes names
+of the same shape.
+
 A kind is a name and a way to find one — `path` for a file at a location,
 `grep` for a pattern anywhere in the project. `{name}` is the member's name,
 escaped for the probe it enters (a route called `[slug]` is a character

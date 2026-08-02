@@ -96,6 +96,45 @@ function M.expand(pattern, name, escape)
   return (pattern:gsub("{name}", (value:gsub("%%", "%%%%"))))
 end
 
+--- Names of things that already exist for a `path`-probed kind.
+---
+--- The point is to tell a drafter what a name for this kind LOOKS like, by
+--- showing ones that are real. Without it a model writes what the kind
+--- means to a person — `endpoint /index.json`, a URL — and scry pastes that
+--- into `src/pages/api/{name}.ts` to get `src/pages/api//index.json.ts`,
+--- which is absent because it is nonsense, not because anything is missing.
+--- The name is exactly the text that fills {name}, and nothing said so.
+---@param root string
+---@param spec table
+---@param limit integer?
+---@return string[]
+function M.examples(root, spec, limit)
+  if not spec or not spec.path then
+    return {}
+  end
+  local at = spec.path:find("{name}", 1, true)
+  if not at then
+    return {}
+  end
+  local prefix = spec.path:sub(1, at - 1)
+  local suffix = spec.path:sub(at + #"{name}")
+  local res = vim.system({ "rg", "--files" }, { cwd = root, text = true }):wait()
+  local out = {}
+  for line in (res.stdout or ""):gmatch("[^\n]+") do
+    if line:sub(1, #prefix) == prefix and (suffix == "" or line:sub(-#suffix) == suffix) then
+      local name = line:sub(#prefix + 1, #line - #suffix)
+      if name ~= "" then
+        out[#out + 1] = name
+        if limit and #out >= limit then
+          break
+        end
+      end
+    end
+  end
+  table.sort(out)
+  return out
+end
+
 --- Is this a kind this project knows?
 ---@param kind string
 ---@param config table
