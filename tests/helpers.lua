@@ -2,7 +2,13 @@
 --   local H = dofile(vim.fn.fnamemodify(<spec path>, ":h") .. "/helpers.lua")
 local H = {}
 
-H.root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
+-- `:p` FIRST, or the root depends on how the spec was spelled. Invoked as
+-- `tests/foo_spec.lua` the source is relative, `:h:h` walks off the front of
+-- it, and the sibling lookup below silently finds nothing — so the same spec
+-- ran degraded from the command line and for real under scripts/test, which
+-- passes absolute paths. A suite whose result depends on the spelling of its
+-- own path is not a suite.
+H.root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h")
 vim.opt.rtp:prepend(H.root)
 
 -- stackgraphs.nvim, which reach is a consumer of, is a sibling checkout
