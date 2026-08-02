@@ -67,6 +67,12 @@ end, { desc = "Draft features for the files no feature claims (the scrying pass)
 -- great many requests. Ending it is a command rather than a prompt because
 -- the answer is almost always "keep going" and being asked every twelve
 -- files would be its own kind of tax.
+-- How the map READS, as against whether it is true. Every other check asks
+-- the code a question; this one asks nothing of the code at all.
+vim.api.nvim_create_user_command("ScryLint", function()
+  require("scry.lint").to_quickfix()
+end, { desc = "Flag feature names that are hard to read (never a verdict — the wording is yours)" })
+
 vim.api.nvim_create_user_command("ScryDraftStop", function()
   require("scry.recover").stop()
 end, { desc = "End the drafting pass after the batch in flight" })

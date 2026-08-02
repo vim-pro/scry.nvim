@@ -11,6 +11,8 @@ CONTENTS                                                       *scry-contents*
   3. The map ..................................... |scry-map|
      Altitude .................................... |scry-altitude|
      Naming a feature twice ...................... |scry-reopening|
+     How the map reads ........................... |scry-lint|
+     How the map reads ........................... |scry-lint|
      Footprint ................................... |scry-footprint|
   4. Verdicts .................................... |scry-verdicts|
      Divergence .................................. |scry-divergence|
@@ -833,7 +835,48 @@ wrote about it. `fillchars` drops the fold's dot leader, which at this
 density was eighty columns of noise per row on a page whose whole job is a
 quiet list.
 
-=====
+==============================================================================
+HOW THE MAP READS                                                  *scry-lint*
+
+|:ScryLint| reads the feature NAMES and flags the ones whose shape makes a
+map hard to read. It asks the code nothing. Nothing it reports is a verdict
+and nothing is rewritten — the map is a document you wrote, and how it is
+worded is yours.
+
+The rules come from the Quality User Story framework (Lucassen, Dalpiaz, van
+der Werf and Brinkkemper, Requirements Engineering 21(3)), which defines
+thirteen criteria for how a requirement is written and validates them
+against 1023 user stories from eighteen companies. Four are checked here:
+
+    atomic    The name joins two goals with `and` or `or`. This is the one a
+              drafted map breaks hardest — six of eleven on a real pass —
+              and it is why rows grow long enough to read as a wall. A row
+              that is two things cannot be finished, ratified or scanned.
+    uniform   The name does not start with a verb. A feature is what someone
+              DOES; Cockburn's rule for naming a use case is an active-verb
+              goal phrase, and eyetracking on scanning says the first word
+              is the one that gets read.
+    minimal   The name is long enough to have become prose. The detail
+              probably belongs in the description beneath it.
+    unique    Two names read like one capability. Exact repeats cannot occur
+              — naming a feature twice re-opens it, |scry-reopening| — so
+              what is left is two names for one thing, which is the failure
+              that took one map to 301 features over 60 files.
+
+WHAT IT DOES NOT CHECK, and why. Three of the framework's criteria —
+`problem-oriented` (the name states the problem, not the solution),
+`conceptually sound`, `unambiguous` — need understanding rather than
+parsing. The framework's own tool draws the line in the same place and for
+the same reason. So a name that encodes its mechanism passes here. That is
+honest rather than complete, and a linter that guessed at meaning would be
+wrong often enough to teach you to ignore it.
+
+IT PREFERS A FALSE FLAG TO A MISSED ONE. "Accept the terms and conditions"
+is one noun and gets flagged anyway. A finding says "if both halves are
+things a person does" rather than "this is wrong", because glancing at a
+wrong flag costs less than never seeing a real one.
+
+==============================================================================
 10. COMMANDS                                                   *scry-commands*
 
                                                                        *:Scry*
@@ -863,6 +906,13 @@ quiet list.
                         until the project is described, a batch describes
                         nothing new, a request fails, or you stop it.
                         See |scry-drafting|.
+
+                                                                   *:ScryLint*
+:ScryLint               Flag feature names that are hard to read, into the
+                        quickfix list: names joining two goals, names that
+                        do not start with a verb, names long enough to be
+                        prose, and pairs that read like one capability.
+                        Never a verdict — see |scry-lint|.
 
                                                               *:ScryDraftStop*
 :ScryDraftStop          End the drafting pass after the batch in flight. The
