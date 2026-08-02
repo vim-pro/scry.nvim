@@ -101,6 +101,64 @@ local legacy = map.parse({ "feature a", "  contains", "    x.lua:one  -- @w0zro 
 H.eq(legacy.claims[1].target, "x.lua:one", "legacy stamped claim still parses to its target")
 H.eq(legacy.claims[1].stamp.user, "w0zro", "and keeps its stamp as data")
 
+-- A FEATURE IS NAMED ONCE; ITS MEMBERS ACCUMULATE. Writing the name again
+-- re-opens it rather than starting a second feature with the same name.
+--
+-- The lookup was already inconsistent: map.claims held both blocks' claims
+-- while map.features held two entries and M.feature(name) returned only the
+-- first, so every by-name caller saw half a feature.
+--
+-- And it is the move a drafting pass did not have. A batch whose files serve
+-- a feature already in the map had no way to say so — its only legal output
+-- was a NEW feature — so it invented one, and the map fragmented a file at a
+-- time: 301 features over 60 files on a real run.
+local reopened = map.parse({
+  "feature someone can read a checklist",
+  "  contains",
+  "    src/a.lua",
+  "",
+  "Prose between the blocks, which is still prose.",
+  "",
+  "feature someone can read a checklist",
+  "  contains",
+  "    src/b.lua",
+})
+H.eq(#reopened.features, 1, "one feature, not two of the same name")
+H.eq(#reopened.features[1].claims, 2, "carrying both blocks' members")
+H.eq(#reopened.claims, 2, "and the flat claim list agrees, as it always did")
+H.eq(#map.feature(reopened, "someone can read a checklist").claims, 2, "a by-name lookup sees all of it")
+
+-- Every line it is opened on is recorded, because the glass puts a verdict
+-- beside each one and a header with nothing next to it reads as unchecked.
+H.eq(#reopened.features[1].lnums, 2, "both header lines are known")
+H.eq(reopened.features[1].lnums[1], 1, "the first")
+H.eq(reopened.features[1].lnums[2], 7, "and the one that re-opened it")
+H.eq(reopened.features[1].lnum, 1, "and `lnum` still means the first, as before")
+
+-- A different name is still a different feature. Merging is by exact name;
+-- deciding two wordings mean the same thing is the reader's call, not ours.
+local distinct = map.parse({
+  "feature someone can read a checklist",
+  "  contains",
+  "    src/a.lua",
+  "feature someone can read a checklist, quickly",
+  "  contains",
+  "    src/b.lua",
+})
+H.eq(#distinct.features, 2, "near-identical wording is two features")
+
+-- And the text is untouched: serialization is the stored lines, so a map
+-- that re-opens a feature round-trips byte for byte like any other.
+local rt = {
+  "feature f",
+  "  contains",
+  "    a.lua",
+  "feature f",
+  "  contains",
+  "    b.lua",
+}
+H.eq(table.concat(map.serialize(map.parse(rt)), "\n"), table.concat(rt, "\n"), "round-trip is unaffected")
+
 H.done("map_spec PASS")
 
 -- A `contains` target with no symbol names the FILE. This exists because

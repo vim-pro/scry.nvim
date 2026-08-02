@@ -336,4 +336,31 @@ H.eq(#casts, 1, "the batch in flight still lands, and nothing follows it")
 
 op.conjure_region = real_region
 
+-- THE DRAFT IS TOLD HOW TO ADD TO WHAT EXISTS. "Do not repeat these
+-- existing features" is a constraint on NAMES, and a model satisfies it by
+-- rewording — which is how one pass reached 301 features over 60 files. The
+-- request now carries the move that was missing: re-open a feature by name.
+local exists = map.parse({
+  "feature someone can work through a checklist",
+  "  module src/run.js",
+})
+local built2 = recover.build(exists, { "src/lib/progress.js" }, { module = true }, {}, { "lua" })
+H.ok(built2.intent:find("someone can work through a checklist", 1, true) ~= nil, "the existing feature is shown")
+H.ok(built2.intent:find("ADD TO IT", 1, true) ~= nil, "with instructions to extend it")
+H.eq(built2.intent:find("Do not repeat", 1, true), nil, "and not the constraint that invited rewording")
+H.ok(built2.intent:find("not a file", 1, true) ~= nil, "and says a feature is not a file")
+
+-- THE LIST IS CAPPED, AND SAYS SO. It grew with the map, which put three
+-- hundred names into every request. Silent truncation would read as "these
+-- are all of them" — the one thing it must not mean.
+local many = {}
+for i = 1, 90 do
+  many[#many + 1] = ("feature capability number %d"):format(i)
+  many[#many + 1] = "  module src/f.lua"
+end
+local big = recover.build(map.parse(many), { "src/z.lua" }, { module = true }, {}, { "lua" })
+H.ok(big.intent:find("40 most recent of 90", 1, true) ~= nil, "the cap is stated with both numbers")
+H.ok(big.intent:find("capability number 90", 1, true) ~= nil, "the newest is shown")
+H.eq(big.intent:find("capability number 1\n", 1, true), nil, "the oldest is dropped, not hidden")
+
 H.done("recover_spec PASS")

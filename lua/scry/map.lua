@@ -112,8 +112,31 @@ function M.parse(lines, known)
   for lnum, line in ipairs(lines) do
     local name = line:match("^feature%s+(.+)$")
     if name then
-      feature = { name = vim.trim(name), lnum = lnum, claims = {} }
-      table.insert(map.features, feature)
+      -- A FEATURE IS NAMED ONCE; ITS MEMBERS ACCUMULATE. Writing the same
+      -- name again re-opens it rather than starting a second feature with
+      -- an identical name.
+      --
+      -- Two reasons. The lookup was already inconsistent: map.claims held
+      -- both blocks' claims while map.features held two entries and
+      -- M.feature(name) returned only the first, so every by-name caller
+      -- silently saw half a feature.
+      --
+      -- And it is the move the drafter did not have. A batch whose files
+      -- serve a feature already in the map had no way to say so — its only
+      -- legal output was a NEW feature — so it invented one, and the map
+      -- fragmented a file at a time. Re-opening is how a later pass adds to
+      -- what an earlier one wrote.
+      local trimmed = vim.trim(name)
+      local existing = M.feature(map, trimmed)
+      if existing then
+        feature = existing
+        existing.lnums[#existing.lnums + 1] = lnum
+      else
+        -- `lnums` is every header line this feature is written on; `lnum` is
+        -- the first, which is what a single-block feature has always meant.
+        feature = { name = trimmed, lnum = lnum, lnums = { lnum }, claims = {} }
+        table.insert(map.features, feature)
+      end
       section, member = nil, nil
     elseif feature then
       local sec = line:match("^  (contains)%s*$")

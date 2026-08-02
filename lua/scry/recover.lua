@@ -67,10 +67,23 @@ local M = {}
 ---@param def_langs string[]? languages a `def` can actually be decided in
 ---@return { lines: string[], intent: string }
 function M.build(map_, unclaimed, kindset, examples, def_langs)
-  local names = {}
-  for _, f in ipairs(map_.features) do
-    names[#names + 1] = f.name
+  -- WHAT IS ALREADY DESCRIBED, so a batch can add to it instead of
+  -- inventing alongside it. The most recent come first: a pass works
+  -- through a project in divergence's order, so the features written last
+  -- are the ones nearest the files being described now.
+  --
+  -- Capped, and the cap is stated rather than applied quietly — a list that
+  -- grew with the map put three hundred names in every request.
+  local SHOWN = 40
+  local names, shown = {}, 0
+  for i = #map_.features, 1, -1 do
+    if shown >= SHOWN then
+      break
+    end
+    shown = shown + 1
+    names[#names + 1] = map_.features[i].name
   end
+  local more = #map_.features - #names
 
   -- The region the model rewrites. Column 0 and not `feature ...`, so every
   -- line of it is prose to the parser: if you reject the draft, or never
@@ -176,7 +189,16 @@ function M.build(map_, unclaimed, kindset, examples, def_langs)
     "- Claims describe what is THERE, not what should be. Do not draft a",
     "  claim you have not read the definition for; it would render absent and",
     "  read as work nobody asked for.",
-    "- Do not repeat these existing features: " .. (#names > 0 and table.concat(names, "; ") or "(none yet)"),
+    "- A feature is something a PERSON CAN DO, not a file. One feature",
+    "  usually takes several files. Do not write a feature per file.",
+    "- These features already exist" .. (more > 0 and (" (%d most recent of %d)"):format(#names, #map_.features) or "") .. ":",
+    (#names > 0 and ("    " .. table.concat(names, "\n    ")) or "    (none yet)"),
+    "- If a file serves one of them, ADD TO IT: write that feature's name",
+    "  again, exactly, with only the new member under it. Re-opening a",
+    "  feature is how a map grows. Do not restate its existing members.",
+    "- Only write a NEW feature for something none of the above covers. A",
+    "  different wording of the same capability is not a new feature — it is",
+    "  the same one, and belongs under the name already written.",
     "- Do not write a `never` block, or any prohibition. Those are the",
     "  reader's to decide.",
     "- Output only map text. No fences, no commentary.",

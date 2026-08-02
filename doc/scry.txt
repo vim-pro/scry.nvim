@@ -10,6 +10,7 @@ CONTENTS                                                       *scry-contents*
   2. The glass ................................... |scry-glass|
   3. The map ..................................... |scry-map|
      Altitude .................................... |scry-altitude|
+     Naming a feature twice ...................... |scry-reopening|
      Footprint ................................... |scry-footprint|
   4. Verdicts .................................... |scry-verdicts|
      Divergence .................................. |scry-divergence|
@@ -371,7 +372,25 @@ deliberately too high, then deliberately too low, then judge the middle —
 Kent Beck's Three Bears. Calibration by contrast works where a rule does
 not.
 
-                                                             *scry-footprint*
+                                                             *scry-reopening*
+NAMING A FEATURE TWICE ~
+
+A feature is named once and its members accumulate. Writing the same name
+again re-opens that feature and adds to it; it does not start a second
+feature with an identical name. Prose may sit between the blocks, and the
+stored text is untouched — the map round-trips byte for byte as ever.
+
+This is how a map grows. |:ScryDraft| works through a project a batch at a
+time, and a batch whose files serve a feature already written needs a way to
+say so; without one its only legal output is a NEW feature, and the map
+fragments a file at a time. One pass reached 301 features over 60 files that
+way.
+
+Merging is by EXACT name. Deciding that two wordings mean the same thing is
+the reader's call, not scry's — near-identical names stay two features until
+you make them one.
+
+                                                            *scry-footprint*
 FOOTPRINT — derived, never declared ~
 
 A feature's scope is the union of files its located claims name. `def`,

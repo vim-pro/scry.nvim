@@ -311,10 +311,15 @@ function M.render()
   -- a reader actually scans, so it gets the strongest rendering on the page.
   for _, feature in ipairs(state.map.features) do
     local v = feat.verdict(feature, state.report, state.root)
-    pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, feature.lnum - 1, 0, {
-      virt_text = { { pad(feature.lnum) .. v.label, FEATURE_HL[v.state] or "ScryEvidence" } },
-      virt_text_pos = "eol",
-    })
+    -- On EVERY line the feature is opened on, not just the first: a feature
+    -- may be re-opened later in the map to add members, and a header row
+    -- with no verdict beside it reads as a feature nothing checked.
+    for _, at in ipairs(feature.lnums or { feature.lnum }) do
+      pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, at - 1, 0, {
+        virt_text = { { pad(at) .. v.label, FEATURE_HL[v.state] or "ScryEvidence" } },
+        virt_text_pos = "eol",
+      })
+    end
   end
 
   for _, claim in ipairs(state.map.claims) do
