@@ -156,7 +156,9 @@ h1 em { font-style: italic; color: var(--mercury); }
 .cn { color: var(--text); font-weight: 600; }
 .kw { color: var(--faint); }
 .tgt { color: #cdd9dd; }
-.stamp { color: var(--seal); opacity: .9; }
+.hdr2 { color: var(--faint); }
+.intent { color: var(--seal); }
+.gline.cursor-line { background: rgba(143,179,189,0.07); }
 .pr { color: var(--faint); font-style: italic; }
 .vb { color: var(--clear); } .vd { color: var(--omen); }
 .vu { color: var(--seal); }  .vn { color: var(--murk); }
@@ -271,7 +273,6 @@ h2 em { font-style: italic; color: var(--mercury); }
   background: radial-gradient(ellipse 70% 100% at 50% 0%, rgba(201,169,78,0.07), rgba(201,169,78,0));
 }
 .seal-card .line { font-family: var(--mono); font-size: 14px; color: var(--text); }
-.seal-card .line .stamp { color: var(--seal); }
 .seal-card .b { margin-top: 18px; font-size: 14px; color: var(--muted); text-align: left; }
 .seal-card .b code { color: var(--text); }
 .seal-card .b strong { color: var(--text); }
@@ -454,7 +455,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <div class="depth">Done</div>
       <div class="gloss">the product does what you said it does</div>
       <div class="v"><span class="g vb">✓ done</span><span class="d">every piece of evidence under this feature holds</span></div>
-      <div class="v"><span class="g vb">✓ defined</span><span class="d">the thing exists, where you said</span></div>
+      <div class="v"><span class="g vb">✓ present (file)</span><span class="d">the route, endpoint or module is on disk</span></div>
+      <div class="v"><span class="g vb">✓ defined</span><span class="d">the named definition is there, in the file you said</span></div>
       <div class="v"><span class="g vb">✓ referenced (text)</span><span class="d">the connection you described is there</span></div>
       <div class="v"><span class="g vb">✓ no matches (rg)</span><span class="d">the rule holds</span></div>
       <div class="v"><span class="g vb">✓ passing (ran 4m ago)</span><span class="d">the behavior holds, as of moments ago</span></div>
@@ -468,7 +470,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <p class="b" style="margin-top:10px">The state you create <strong>on purpose</strong>.
       A new feature is part of the product that isn't real yet; a bug fix is a
       behavior that doesn't hold yet. Your worklist and your product are the
-      same document. <code>:Conjure</code> takes it from here.</p>
+      same document. <code>~</code> on the feature takes it from here.</p>
     </div>
     <div class="water omen">
       <div class="depth">Broken</div>
@@ -487,6 +489,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <div class="v"><span class="g vn">– unrun</span><span class="d">nobody has asked for proof yet</span></div>
       <div class="v"><span class="g vn">– stale</span><span class="d">the proof predates your latest change</span></div>
       <div class="v"><span class="g vn">– vacuous?</span><span class="d">it passes while proving nothing</span></div>
+      <div class="v"><span class="g vu">– unread 4 of 6</span><span class="d">drafted for you, and nobody has read it yet</span></div>
       <div class="v"><span class="g vn">– unscoped</span><span class="d">a rule on a feature that locates nothing yet</span></div>
     </div>
   </div>
@@ -495,7 +498,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <strong>And one number that isn't about any feature.</strong> A map whose
     features all read <code>✓ done</code> can still describe a fraction of the
     product, so the header counts the files <em>no feature claims</em> —
-    <code>12 unclaimed files</code> — and <code>:ScryUnclaimed</code> lists them.
+    <code>12 of 58 files undescribed</code> — and <code>:ScryUnclaimed</code> lists them.
     Each one is a decision: give it to the feature that owns it, or name the
     feature nobody wrote down. Without this, "everything done" would be
     unfalsifiable.
@@ -559,19 +562,33 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <!-- ============================ reference ============================ -->
 <section class="ref" id="reference">
   <div class="section-head">
-    <h2>Five <em>commands</em></h2>
+    <h2>Keys, then <em>commands</em></h2>
     <div class="s">zero config works · <code>:h scry</code> is the manual</div>
   </div>
   <div class="ref-grid">
     <div class="tbl">
       <table>
+        <thead><tr><th>In the glass</th><th>Does</th></tr></thead>
+        <tbody>
+          <tr><td><span class="hg">~</span></td><td>Cast an intent across the whole feature under the cursor. The verb.</td></tr>
+          <tr><td><span class="hg">+</span></td><td>Fill in what is missing here — again to stop a pass.</td></tr>
+          <tr><td><span class="hg">&lt;Tab&gt;</span></td><td>Show or hide what a feature is made of.</td></tr>
+          <tr><td><span class="hg">&lt;CR&gt;</span></td><td>Open what this line is about — the code, or the evidence.</td></tr>
+          <tr><td><span class="hg">]f</span> <span class="hg">[f</span></td><td>Next or previous feature that wants you.</td></tr>
+          <tr><td><span class="hg">g?</span></td><td>Explain what this buffer is telling you.</td></tr>
+        </tbody>
+      </table>
+      <table>
         <thead><tr><th>Command</th><th>Does</th></tr></thead>
         <tbody>
           <tr><td><span class="hg">:Scry</span></td><td>Open the glass. Everything is checked the moment you look.</td></tr>
           <tr><td><span class="hg">:ScryCheck</span></td><td>Look again — fresh verdicts from what's on disk.</td></tr>
-          <tr><td><span class="hg">:Conjure</span></td><td>Make the thing under the cursor real — the same verb that conjures over a motion in code.</td></tr>
+          <tr><td><span class="hg">:ScryConjure</span></td><td>What <span class="hg">~</span> does, as a command.</td></tr>
           <tr><td><span class="hg">:ScryExercise</span></td><td>Run the proofs. The only command that executes your code.</td></tr>
-          <tr><td><span class="hg">:ScryUnclaimed</span></td><td>List the files no feature claims, in the quickfix list.</td></tr>
+          <tr><td><span class="hg">:ScryUnclaimed</span></td><td>List the files no feature describes, in the quickfix list.</td></tr>
+          <tr><td><span class="hg">:ScryDiscard</span></td><td>Drop the last cast's unsaved changes.</td></tr>
+          <tr><td><span class="hg">:ScryTidy</span></td><td>Gather every block of a re-opened feature into one.</td></tr>
+          <tr><td><span class="hg">:ScryLint</span></td><td>Flag feature names that are hard to read — never a verdict, the wording is yours.</td></tr>
         </tbody>
       </table>
     </div>
@@ -675,82 +692,79 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   var modeEl = document.getElementById("termMode");
   var narEl = document.getElementById("termNarrate");
 
+  // The site's own verdict palette, reused rather than reinvented:
+  // .vb backed · .vd diverged · .vu untouched · .vn unknown.
   var V = {
-    def:  '<span class="vb">✓ defined</span>',
-    pass: '<span class="vb">✓ passing (just now)</span>',
-    fail: '<span class="vd">✗ FAILING</span>',
-    abs:  '<span class="vd">✗ absent</span>',
-    clean:'<span class="vb">✓ no matches (rg)</span>',
-    work: '<span class="vn">◴ conjuring…</span>',
-    un:   ' · <span class="vu">∅ untouched</span>',
-    // feature-level states, rolled up from the claims below them
+    file:  '<span class="vb">✓ present (file)</span>',
+    pass:  '<span class="vb">✓ passing (just now)</span>',
+    fail:  '<span class="vd">✗ FAILING</span>',
+    abs:   '<span class="vd">✗ absent (no such file)</span>',
+    unrun: '<span class="vn">– unrun (:ScryExercise)</span>',
+    clean: '<span class="vb">✓ no matches (rg)</span>',
+    work:  '<span class="vn">◴ conjuring…</span>',
+    un:    '<span class="vu"> · ∅ untouched</span>',
+    // feature verdicts, rolled up from the members below them
     fDone: '<span class="vb">✓ done</span>',
     fPart: '<span class="vu">◐ 2 of 4</span>',
     fPart3:'<span class="vu">◐ 3 of 4</span>',
     fBrok: '<span class="vd">✗ broken (1 of 4)</span>'
   };
-  var STAMP = '<span class="stamp">-- @w0zro 2026-07-26 3f9a01</span>';
 
   function gline(txt, vd, cls) {
     return '<div class="gline' + (cls ? " " + cls : "") + '"><span class="txt">' + txt + "</span>" +
       (vd ? '<span class="vd-slot">' + vd + "</span>" : "") + "</div>";
   }
   function raw(txt) { return '<div class="gline"><span class="txt">' + txt + "</span></div>"; }
-  function tgt(t, stamp, cursor) {
-    return "    " + '<span class="tgt">' + t + "</span>" +
-      (stamp ? "  " + STAMP : "") + (cursor ? '<span class="cursor-b"></span>' : "");
+  // A typed member: the kind, then the name that fills its probe.
+  function mem(kind, name, cursor) {
+    return "  " + '<span class="kw">' + kind + "</span> " + '<span class="tgt">' + name + "</span>" +
+      (cursor ? '<span class="cursor-b"></span>' : "");
+  }
+  function sub_(t, cursor) {
+    return "    " + '<span class="tgt">' + t + "</span>" + (cursor ? '<span class="cursor-b"></span>' : "");
   }
 
-  // s = { hdr, newC, newCVd, newCFresh, newE, newEVd, newEFresh, cursor }
   function render(s) {
-    var h = raw('<span class="hdr">' + s.hdr + "</span>") + raw(" ");
-    h += gline('<span class="cn">feature the model can be a local ollama</span>', s.featVd || "");
+    var h = raw('<span class="hdr">' + s.hdr + "</span>");
+    if (s.hdr2) h += raw('<span class="hdr2">' + s.hdr2 + "</span>");
     h += raw(" ");
-    h += raw('<span class="pr">  A provider turns a Request into text and calls back once.</span>');
+    h += gline('<span class="cn">feature a reader can tailor a checklist to their own situation</span>',
+               s.featVd || "", s.onFeature ? "cursor-line" : "");
+    h += raw('<span class="pr">  Copy someone else\'s list, then edit it as your own.</span>');
     h += raw(" ");
-    h += raw('<span class="kw">  contains</span>');
-    h += gline(tgt("providers/cli.lua:request", true), s.settled ? V.def : "");
-    if (s.newC !== undefined) {
-      h += gline(tgt(s.newC, s.newCStamp, s.cursor === "c"), s.newCVd, s.newCFresh ? "fresh" : "");
-    }
+    h += gline(mem("route", "c/[slug]"), s.settled ? V.file : "");
+    h += gline(mem("endpoint", "compile"), s.settled ? V.file : "");
+    h += gline(mem("route", "copy"), s.copyVd || "", s.copyFresh ? "fresh" : "");
     h += raw('<span class="kw">  never</span>');
-    h += gline(tgt("vim\\.ui\\."), s.settled ? V.clean : "");
+    h += gline(sub_("original\\.id"), s.settled ? V.clean : "");
     h += raw('<span class="kw">  exercises</span>');
-    if (s.newE !== undefined) {
-      h += gline(tgt(s.newE, s.newEStamp, s.cursor === "e"), s.newEVd, s.newEFresh ? "fresh" : "");
-    }
+    h += gline(sub_("tests/copy_spec.ts:a copy is independent"), s.specVd || "", s.specFresh ? "fresh" : "");
     body.innerHTML = h;
   }
 
-  // Features lead every header; claim counts are the evidence behind them.
-  var H_OPEN  = "scry · 1 feature — checking… ";
-  var H_2     = "scry · 1 feature · 1 done   just checked (files on disk)";
-  var H_TODO  = "scry · 1 feature · 1 building   just checked · 2 claims to go";
-  var H_SPEC  = "scry · 1 feature · 1 building   just checked · 1 claim to go";
-  var H_RED   = "scry · 1 feature · 1 broken   just checked · the spec is red";
-  var H_DONE  = "scry · 1 feature · 1 done   just checked (files on disk)";
-
-  var C_TARGET = "providers/ollama.lua:request";
-  var E_TARGET = "tests/ollama_spec.lua";
+  // Two lines, as the glass renders them: features lead, claims are the
+  // evidence behind them, and the undescribed count carries its denominator.
+  var H_OPEN = "scry · 4 features — checking… ";
+  var H_TODO = "scry · 4 features · 1 building · 12 of 58 files undescribed";
+  var H_RED  = "scry · 4 features · 1 broken · 12 of 58 files undescribed";
+  var H_DONE = "scry · 4 features · 4 done · 12 of 58 files undescribed";
+  var D_TODO = "      19 claims · 16 backed · 1 missing · 1 untouched";
+  var D_RED  = "      19 claims · 16 backed · 2 missing · 2 untouched";
+  var D_DONE = "      19 claims · 19 backed";
 
   if (reduced) {
-    render({ hdr: H_TODO, settled: true, featVd: V.fPart, newC: C_TARGET,
-             newCVd: V.abs + V.un, newE: E_TARGET, newEVd: V.abs + V.un });
-    narEl.innerHTML = "A change you haven't made yet is <b>work to do</b>, written in the same place as everything the product already does.";
+    render({ hdr: H_TODO, hdr2: D_TODO, settled: true, featVd: V.fPart,
+             copyVd: V.abs + V.un, specVd: V.unrun });
+    narEl.innerHTML = "A capability you haven't built yet is <b>work to do</b>, written in the same place as everything the product already does.";
   } else {
     var t = 0, steps = [], timers = [];
     var at = function (d, fn) { t += d; steps.push([t, fn]); };
     function say(html) { narEl.innerHTML = html; }
-    function type(target, field, cursorKey, base, per) {
+    function typeIntent(target, base, per) {
       for (var i = 1; i <= target.length; i++) {
         (function (i) {
           at(i === 1 ? base : per, function () {
-            var s = Object.assign({}, window.__st);
-            s[field] = target.slice(0, i);
-            s.cursor = cursorKey;
-            window.__st = s;
-            render(s);
-            posEl.textContent = (field === "newC" ? 9 : 13) + ":" + (4 + i);
+            actEl.innerHTML = '~ <span class="intent">' + target.slice(0, i) + '</span><span class="cursor-b"></span>';
           });
         })(i);
       }
@@ -767,118 +781,88 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         actEl.textContent = ":Scry"; noteEl.innerHTML = "&nbsp;";
         modeEl.textContent = "SCRY"; modeEl.className = "mode"; posEl.textContent = "1:1";
       });
-      at(1500, function () {
-        window.__st = { hdr: H_2, settled: true, featVd: V.fDone };
+      at(1600, function () {
+        window.__st = { hdr: H_TODO, hdr2: D_TODO, settled: true, featVd: V.fPart,
+                        copyVd: V.abs + V.un, specVd: V.unrun };
         render(window.__st);
-        noteEl.textContent = "the feature holds · 2 claims backing it";
+        noteEl.textContent = "two members hold · one names a file that isn't there";
+        say('<b>route copy</b> reads <b>✗ absent</b>. An address exists before the file does — so the work to do is already written down, at the altitude you think in.');
       });
 
-      // ─── II. describe the change ───
-      at(2400, function () {
-        say("Adding a provider? <b>Say so here</b> — not in a file. The description is where the change starts.");
-        actEl.innerHTML = "&nbsp;";
+      // ─── II. aim the operator at the capability ───
+      at(2900, function () {
+        say('Put the cursor on the <b>feature</b> and press <b>~</b>. The noun is the whole capability, not a region in a file.');
+        window.__st.onFeature = true;
+        render(window.__st);
+        posEl.textContent = "4:1";
+        actEl.innerHTML = '~<span class="cursor-b"></span>';
         modeEl.textContent = "INSERT"; modeEl.className = "mode ins";
       });
-      window.__st = window.__st || {};
-      type(C_TARGET, "newC", "c", 900, 32);
-      at(500, function () {
-        window.__st.cursor = null;
-        window.__st.newCVd = V.abs + V.un;
-        window.__st.newCFresh = true;
-        window.__st.hdr = H_TODO;
-        window.__st.featVd = V.fPart;
-        render(window.__st);
-        modeEl.textContent = "SCRY"; modeEl.className = "mode";
-        noteEl.textContent = "the feature slipped back to building";
-        say('It comes back <b>✗ absent</b> — and the feature above it drops to <b>◐ building</b>. Work you haven\'t done yet looks like this.');
-      });
+      typeIntent("let a reader copy a list and edit it as their own", 900, 26);
 
-      // ─── III. name what "done" means ───
-      at(2600, function () {
-        say("Before any code: name the proof. What would have to pass for this to be finished?");
-        modeEl.textContent = "INSERT"; modeEl.className = "mode ins";
-      });
-      type(E_TARGET, "newE", "e", 700, 32);
-      at(500, function () {
-        window.__st.cursor = null;
-        window.__st.newEVd = V.abs + V.un;
-        window.__st.newEFresh = true;
-        render(window.__st);
+      at(900, function () {
         modeEl.textContent = "SCRY"; modeEl.className = "mode";
-        noteEl.textContent = "2 pieces of evidence still missing";
-      });
-
-      // ─── IV. conjure the check ───
-      at(2100, function () {
-        say("Conjure the <em>check</em> first. You read it — it's short, and it says what done means.");
-        actEl.textContent = ":Conjure";
-        window.__st.newEVd = V.work;
-        window.__st.newEFresh = false;
+        say("The check comes first. You read it — it's short, and it says what done means.");
+        actEl.innerHTML = '<span class="intent">casting…</span>';
+        window.__st.specVd = V.work;
+        window.__st.specFresh = false;
         render(window.__st);
         noteEl.textContent = "conjurer writing the spec";
       });
       at(2200, function () {
-        window.__st.newEVd = V.def + V.un;
-        window.__st.newEFresh = true;
-        window.__st.hdr = H_SPEC;
-        window.__st.featVd = V.fPart3;
-        render(window.__st);
-        noteEl.textContent = "tests/ollama_spec.lua written";
-      });
-      at(2000, function () {
-        say("Now run it. It has to <b>fail</b> — nothing has been built. A check that passes here would be proving nothing.");
-        actEl.textContent = ":ScryExercise";
-        window.__st.newEVd = V.fail + V.un;
-        window.__st.newEFresh = true;
-        window.__st.hdr = H_RED;
+        window.__st.specVd = V.fail + V.un;
+        window.__st.specFresh = true;
         window.__st.featVd = V.fBrok;
+        window.__st.hdr = H_RED;
+        window.__st.hdr2 = D_RED;
         render(window.__st);
         noteEl.textContent = "red — as it should be";
+        say("It has to fail. Nothing has been built yet, so a check that passed here would be proving nothing.");
       });
 
-      // ─── V. conjure the code, rules withheld ───
+      // ─── III. the code, written blind ───
       at(2800, function () {
-        say("Now the code — written <b>without</b> sight of that test, or of the rules this feature must never break.");
-        actEl.textContent = ":Conjure";
-        window.__st.newCVd = V.work;
-        window.__st.newCFresh = false;
+        say("Now the code — written without sight of that check, or of the rules this feature must never break.");
+        window.__st.copyVd = V.work;
+        window.__st.copyFresh = false;
         render(window.__st);
-        noteEl.textContent = "conjuring · spec and never-rules withheld";
+        noteEl.textContent = "conjuring · the spec and the never-rules withheld";
       });
       at(2400, function () {
-        window.__st.newCVd = V.def + V.un;
-        window.__st.newCFresh = true;
+        window.__st.copyVd = V.file + V.un;
+        window.__st.copyFresh = true;
+        window.__st.featVd = V.fPart3;
         render(window.__st);
-        noteEl.textContent = "providers/ollama.lua written";
+        noteEl.textContent = "src/pages/copy.astro written";
       });
-      at(1900, function () {
-        say("It passes a test it never saw. <em>That</em> is evidence — and the rule it never saw still holds.");
+      at(2000, function () {
+        say("It passes a check it never saw. That is evidence — and the rules it never saw still hold.");
         actEl.textContent = ":ScryExercise";
-        window.__st.newEVd = V.pass + V.un;
-        window.__st.newEFresh = true;
-        window.__st.hdr = H_SPEC;
+        window.__st.specVd = V.pass + V.un;
+        window.__st.specFresh = true;
         window.__st.featVd = V.fDone;
+        window.__st.hdr = H_DONE;
+        window.__st.hdr2 = D_DONE;
         render(window.__st);
-        noteEl.textContent = "green · vim\\.ui\\. still clean";
+        noteEl.textContent = "green";
       });
 
-      // ─── VI. and it's yours ───
+      // ─── IV. and it is yours ───
       at(2600, function () {
-        say("You described it, read the proof, watched it come true. The glass saw all of that — so it knows the work is <b>yours</b>.");
+        say('You asked for it, read the check, watched fail become pass. The glass saw all of that — so it knows the work is <b>yours</b>.');
         actEl.innerHTML = "&nbsp;";
-        window.__st.newCVd = V.def;
-        window.__st.newEVd = V.pass;
-        window.__st.newCStamp = false;
-        window.__st.newEFresh = false;
-        window.__st.newCFresh = false;
-        window.__st.hdr = H_DONE;
-        window.__st.featVd = V.fDone;
+        window.__st.copyVd = V.file;
+        window.__st.specVd = V.pass;
+        window.__st.copyFresh = false;
+        window.__st.specFresh = false;
+        window.__st.onFeature = false;
         render(window.__st);
-        noteEl.textContent = "the feature is done, and it is yours";
+        noteEl.textContent = "∅ untouched cleared — the trail runs through you";
       });
       at(4200, function () { noteEl.innerHTML = "&nbsp;"; });
       at(600, build);
     }
+
     var run = function () {
       timers.forEach(clearTimeout); timers.length = 0;
       build();
