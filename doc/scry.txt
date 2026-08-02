@@ -868,22 +868,31 @@ row would mark none of them. The member count is a bar rather than a number:
 size is a magnitude, it reads faster as a length, and it is the blast radius
 of a `~`.
 
-THE SAME RULE HOLDS INSIDE A FEATURE, which is where the repetition was
-worst. An expanded feature was four members deep with every one of them
-saying `✓ present (file) · ∅` — the identical twenty-two characters, four
-times, under a header that had just said the feature was whole and unread.
-A marker that is true of every member of a feature is now printed on none of
-them; the feature's own line is what carries it. Two things are never
-withheld:
+BUT ONLY IN THE SCAN. That rule was measured on the folded view — fourteen
+features, one state between them, three hundred characters of pure texture —
+and it does not transfer down to an open row.
 
-    a lone member, which is not uniform with anything — suppressing a
-    column of one removes the only copy rather than the repetition
+EVERY OPEN ROW SAYS WHAT IT IS. At a member row you are not scanning for
+anomalies, you are VERIFYING AN ADDRESS: is that the right file, is it really
+there. Each row is a separate assertion, and a silent one makes you recall a
+rendering rule before you can read it. Having just asked a model which files
+a capability is made of, "nothing is written here, which means they all
+agreed, which means fine" is not something to make a reader reconstruct.
 
-    anything that is NOT healthy. Silence has to mean one thing and the
-    thing it means is "fine". Withholding whatever the members happened to
-    agree on meant a feature whose every file was MISSING rendered exactly
-    as blank as one where every file was there, and nothing on the row said
-    which of the two you were looking at.
+The same goes for an open feature's own line. Its state used to be withheld
+when every feature in the map read alike — which in a map with ONE feature is
+always, so the only row on the page said nothing at all.
+
+∅ IS THE EXCEPTION, and the difference is what it measures. A verdict is
+EVIDENCE about the code; ∅ is ENGAGEMENT — whether you have read this yet —
+and when nobody has read any of it, the feature's line already says `unread`
+in as many words.
+
+TWO COLUMNS, because a member row says two things: where it lands and whether
+it holds. Ragged, they read as one run-on annotation; aligned, they are
+columns you can run an eye down. The second collapses onto the first when no
+member needs a path, so a map of plain paths does not pay for a column it
+never fills.
 
 WHERE A MEMBER LANDS, when the row does not already say it. A kind names a
 thing and its probe knows the file — `route [slug]` IS

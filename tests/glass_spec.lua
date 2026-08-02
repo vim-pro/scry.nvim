@@ -110,16 +110,12 @@ local function row_of(needle)
 end
 H.ok(virt[row_of("create_session")]:find("✓ defined", 1, true) ~= nil, "backed verdict rendered")
 
--- RENDER WHAT VARIES, ONE ALTITUDE DOWN. The folded map already drops a
--- column that reads the same on every row; an EXPANDED feature did not, and
--- that is where the repetition was worst — four members deep, every one of
--- them saying `✓ present (file) · ∅`, the identical twenty-two characters
--- under a header that had just said the feature was whole and unread.
---
--- So a marker that is true of every member of a feature is not printed on
--- any of them. Nothing is lost: the feature's own line is what carries it.
--- Here no claim in the fixture has been touched, so the untouched marker is
--- exactly that kind of marker.
+-- ∅ IS THE ONE MARKER THAT STILL FOLDS, and the difference is what it
+-- measures. A verdict is EVIDENCE about the code, and every open row carries
+-- its own (below). ∅ is ENGAGEMENT — whether YOU have read this yet — and
+-- when nobody has read any of it, the feature's own line already says
+-- `unread` in as many words. Nothing in the fixture has been touched, so this
+-- is exactly that case.
 H.eq(virt[row_of("create_session")]:find("∅", 1, true), nil, "a marker true of every member is on none of them")
 
 -- Verdicts line up in a column rather than trailing whatever the line says.
@@ -489,8 +485,20 @@ for _, m in ipairs(vim.api.nvim_buf_get_extmarks(glass._state.buf, ns2, 0, -1, {
 end
 H.eq(tight_sep[2], true, "a feature the drafter left flush against the last one gets one")
 
--- AND THE MEMBERS THEMSELVES GO QUIET WHEN THEY AGREE. Same rule, applied
--- inside an expanded feature — which is where the repetition was worst.
+-- EVERY OPEN ROW SAYS WHAT IT IS.
+--
+-- A member's verdict used to be withheld when every member of a feature
+-- agreed — the same "render what varies" rule the folded scan follows. That
+-- rule was measured on the SCAN: fourteen features, one state between them,
+-- three hundred characters of pure texture. Carrying it down here was a
+-- mistake.
+--
+-- At a member row the reader is not scanning for anomalies, they are
+-- VERIFYING AN ADDRESS: is that the right file, is it really there. Each row
+-- is a separate assertion, and a silent one makes you recall a rendering rule
+-- before you can interpret it. Having just asked a model which files a
+-- capability is made of, "nothing is written here, which means they agreed,
+-- which means fine" is not a thing to make someone reconstruct.
 local mixed = staged({
   "feature agreed",
   "  module a.lua",
@@ -503,36 +511,25 @@ local mixed = staged({
 end)
 H.eq(#mixed.claims, 4, "four members staged")
 local mvirt = H.virt_by_row(glass._state.buf, ns2)
-H.eq(mvirt[1], nil, "two members that agree are annotated on neither")
-H.eq(mvirt[2], nil, "not the second one either")
-H.ok(mvirt[4] and mvirt[4]:find("x", 1, true) ~= nil, "but a member that differs from its neighbor is")
-H.ok(mvirt[5] and mvirt[5]:find("x", 1, true) ~= nil, "and so is the one it differs from")
+for row = 1, 5 do
+  if row ~= 3 then
+    H.ok(mvirt[row] and mvirt[row]:find("x", 1, true) ~= nil, "row " .. row .. " carries its own verdict")
+  end
+end
 
--- ONLY A HEALTHY VERDICT IS EVER WITHHELD, because silence has to mean one
--- thing and the thing it means is "fine". Suppressing whatever the members
--- happened to AGREE on meant a feature whose every file was missing rendered
--- exactly as blank as one where every file was there — and the reader had no
--- way to tell which of the two they were looking at.
-staged({
-  "feature nothing here exists",
-  "  module a.lua",
-  "  module b.lua",
-}, function()
-  return "missing"
-end)
-local gone = H.virt_by_row(glass._state.buf, ns2)
-H.ok(gone[1] and gone[1]:find("x", 1, true) ~= nil, "members that agree they are MISSING all say so")
-H.ok(gone[2] and gone[2]:find("x", 1, true) ~= nil, "every one of them, not none of them")
-
--- A LONE MEMBER IS NEVER UNIFORM WITH ANYTHING, so it always says what it is.
--- Suppressing a column of one is not removing repetition, it is removing the
--- only copy.
-local alone = staged({ "feature solo", "  module a.lua" }, function()
+-- AND SO DOES AN OPEN FEATURE LINE. Its state was withheld when every feature
+-- in the map read the same — which, in a map with ONE feature, is always. The
+-- only row on the page said nothing at all.
+local lone = staged({ "feature the only one here", "  module a.lua" }, function()
   return "backed"
 end)
-H.eq(#alone.claims, 1, "one member staged")
-local avirt = H.virt_by_row(glass._state.buf, ns2)
-H.ok(avirt[1] and avirt[1]:find("x", 1, true) ~= nil, "a feature's only member keeps its verdict")
+H.eq(#lone.features, 1, "one feature staged")
+local lvirt = H.virt_by_row(glass._state.buf, ns2)
+H.ok(lvirt[0] and lvirt[0]:find("%S") ~= nil, "a map of one feature still says how that feature stands")
+
+-- The folded SCAN still drops what repeats, because there the density
+-- argument is real and the header carries the fact. Two views, two jobs.
+H.eq(fold_line(1):find("unread"), nil, "the scan view is unchanged")
 
 -- ]d AND [d — MOTIONS INSTEAD OF GROUPING.
 --

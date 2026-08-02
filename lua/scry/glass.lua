@@ -435,44 +435,60 @@ function M.render()
     return (" "):rep(gap >= 2 and gap or 2)
   end
 
-  -- WHAT A FEATURE'S MEMBERS AGREE ABOUT.
+  -- The path a member resolves to, when the row does not already say it.
+  local function path_of(claim)
+    local p = mapmod.claim_path(claim, state.kinds)
+    if p and claim.target:find(p, 1, true) ~= 1 then
+      return p
+    end
+    return nil
+  end
+
+  -- A SECOND COLUMN, for the verdicts, because a member row now says two
+  -- things: where it lands, and whether it holds. Ragged, those read as one
+  -- run-on annotation; aligned, they are two columns you can run an eye
+  -- down — the same argument that put the first one in a column.
   --
-  -- The same rule the folded map already follows, applied one altitude down.
-  -- An expanded feature was four members deep and every one of them said
-  -- `✓ present (file) · ∅` — the identical twenty-two characters, four times,
-  -- under a header that had just said the feature was whole and unread.
+  -- It collapses onto the first when no member needs a path, so a map of
+  -- plain paths does not pay for a column it never fills.
+  local widest_path = 0
+  for _, claim in ipairs(state.map.claims) do
+    local p = path_of(claim)
+    if p then
+      widest_path = math.max(widest_path, COLUMN + vim.fn.strdisplaywidth(p))
+    end
+  end
+  local VERDICT_AT = widest_path > 0 and math.min(widest_path + 3, 96) or COLUMN
+
+  -- EVERY OPEN ROW SAYS WHAT IT IS.
   --
-  -- So a member's verdict is drawn where it DIFFERS from its neighbors and
-  -- withheld where it does not. Two asymmetries keep that from hiding
-  -- anything:
+  -- A member's verdict used to be withheld when every member of the feature
+  -- agreed — the same "render what varies" rule the folded map follows. That
+  -- rule was measured on the SCAN: fourteen features, one state between them,
+  -- three hundred characters of pure texture. It does not transfer down here,
+  -- and carrying it down was a mistake.
   --
-  --   A lone member is never uniform with anything, so it always shows.
+  -- At a member row the reader is not scanning for anomalies, they are
+  -- VERIFYING AN ADDRESS. Each row is a separate assertion — is that the right
+  -- file, is it really there — and a silent row makes you recall a rendering
+  -- rule before you can interpret it. You have just asked a model which files
+  -- a capability is made of; "nothing is written here, which means they all
+  -- agreed, which means fine" is not a thing to make someone reconstruct.
   --
-  --   ONLY A HEALTHY VERDICT IS EVER WITHHELD. Silence has to mean one thing,
-  --   and the thing it means is "fine". Suppressing whatever the members
-  --   agreed on meant a feature whose every file was MISSING also rendered
-  --   blank — the reader saw an unannotated list and had no way to know
-  --   which reading it was. And when a member is named by a kind rather than
-  --   a path (`route [slug]`), the row does not even say which file it is
-  --   quiet about.
-  local HEALTHY = { backed = true, clean = true }
-  local agreed, unowned_throughout = {}, {}
+  -- So: open rows always carry their verdict. The folded scan still drops what
+  -- repeats (see foldtext), because there the density argument is real.
+  --
+  -- The ∅ marker is the exception, and the difference is what it measures.
+  -- A verdict is EVIDENCE about the code; ∅ is ENGAGEMENT — whether you have
+  -- read this yet — and when nobody has read any of it the feature's own line
+  -- already says `unread` in as many words.
+  local unowned_throughout = {}
   for _, f in ipairs(state.map.features) do
-    local shared, same, owned_any = nil, true, false
-    for i, claim in ipairs(f.claims) do
-      local v = state.report and state.report.verdicts[mapmod.claim_id(claim)]
-      local status = v and v.status or "\1unchecked"
-      if i == 1 then
-        shared = status
-      elseif status ~= shared then
-        same = false
-      end
+    local owned_any = false
+    for _, claim in ipairs(f.claims) do
       if state.root and prov.owned(state.root, claim) then
         owned_any = true
       end
-    end
-    if same and #f.claims > 1 and HEALTHY[shared] then
-      agreed[f.name] = true
     end
     unowned_throughout[f.name] = #f.claims > 1 and not owned_any
   end
@@ -482,7 +498,13 @@ function M.render()
   state.survey = survey(state.map, state.report, state.root)
   for _, feature in ipairs(state.map.features) do
     local v = feat.verdict(feature, state.report, state.root)
-    local words = verdict_words(v, state.survey.uniform)
+    -- THE OPEN FEATURE LINE ALWAYS SAYS ITS STATE. It used to be withheld
+    -- when every feature in the map read the same — which, in a map with ONE
+    -- feature, is always, so the only row on the page said nothing at all.
+    -- The scan view still drops what repeats (see foldtext); an open row does
+    -- not, because a reader working a feature needs to know where it stands
+    -- without reconstructing why the space beside it is empty.
+    local words = v and v.label or ""
     -- On EVERY line the feature is opened on, not just the first: a feature
     -- may be re-opened later in the map to add members, and a header row
     -- with no verdict beside it reads as a feature nothing checked.
@@ -510,7 +532,7 @@ function M.render()
         pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, at - 1, 0, mark)
       end
       if explain.showing() then
-        gloss(at, explain.feature(v, agreed[feature.name] == true))
+        gloss(at, explain.feature(v))
         if #(feature.desc or {}) > 0 then
           gloss(at + 1, explain.description())
         end
@@ -555,29 +577,26 @@ function M.render()
     --
     -- Shown only where it differs from what is written. `def
     -- src/layouts/Layout.astro` already names its file, and printing the
-    -- path beside a row that IS the path is the texture this whole rule
-    -- exists to remove.
-    -- The first thing to say gets the column; anything after it joins on.
-    local function say(text, hl)
-      parts[#parts + 1] = { (#parts > 0 and " · " or pad(claim.lnum)) .. text, hl }
+    -- path beside a row that IS the path is texture. Not merely "different
+    -- from the target" either: `def lua/auth.lua:create_session` resolves to
+    -- `lua/auth.lua`, which the row already opens with.
+    local used = width_of(claim.lnum)
+    local path = path_of(claim)
+    if path then
+      parts[#parts + 1] = { pad(claim.lnum) .. path, "ScryPath" }
+      used = COLUMN + vim.fn.strdisplaywidth(path)
     end
 
-    local path = mapmod.claim_path(claim, state.kinds)
-    -- Not merely "different from the target" — `def lua/auth.lua:create_session`
-    -- resolves to `lua/auth.lua`, which the row already opens with. Only a
-    -- target that does not START with its own path is hiding where it lands,
-    -- and that is exactly the kind-probed case this is for.
-    if path and claim.target:find(path, 1, true) ~= 1 then
-      say(path, "ScryPath")
-    end
-
-    if v and not agreed[claim.feature] then
+    -- The verdict lands in its own column whether or not a path came first,
+    -- so the two read as columns rather than as one run-on annotation.
+    if v then
       local hl = (v.status == "backed" or v.status == "clean") and "ScryBacked"
         or (v.status == "unchecked" and "ScryUnchecked" or "ScryDiverged")
-      say(v.label, hl)
+      local gap = VERDICT_AT - used
+      parts[#parts + 1] = { (" "):rep(gap >= 2 and gap or 2) .. v.label, hl }
     end
     if not (state.root and prov.owned(state.root, claim)) and not unowned_throughout[claim.feature] then
-      say("∅", "ScryUntouched")
+      parts[#parts + 1] = { (#parts > 0 and " · ∅" or pad(claim.lnum) .. "∅"), "ScryUntouched" }
     end
     if explain.showing() then
       gloss(claim.lnum, explain.member(v))
