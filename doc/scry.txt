@@ -509,6 +509,27 @@ resolver)` forever, which on an Astro/TypeScript project meant the strongest
 claim available was "this file is on disk". A tool that can only describe lua
 is a lua tool.
 
+SCRY TELLS YOU ITS CEILING RATHER THAN WAITING TO BE ASKED. It knows exactly
+what is limiting your answers — which claims stopped at the text rung and for
+which languages, that nothing here has been run so `✓ done` is unreachable —
+and it used to say none of that unless you went looking. Once per project per
+session, it says the ONE thing that would help most, counted from your own
+claims:
+>
+    [scry] 12 claims stop at `defined (text)` — no grammar here for astro
+           typescript · install nvim-treesitter, then :TSInstall astro typescript
+<
+One thing, not a list: a list of five is a list nobody reads, and the
+second-best suggestion is noise until the best one is done. It never names a
+grammar that does not exist, and a project with nothing limiting it hears
+nothing at all.
+
+AND WHAT IT CANNOT WORK WITHOUT, IT REFUSES TO PRETEND ABOUT. `:Scry` will
+not open without ripgrep. Every prohibition, reference and divergence check
+runs through it, and a glass full of `– resolver error` reads as a broken
+project rather than a missing tool — while a `never` that has quietly stopped
+being checked is the most dangerous state this thing has.
+
 `:checkhealth scry` names the languages that get the parsed rung on your
 machine. Adding one is a query in scry/defs.lua, and only queries that have
 been RUN against their grammar are shipped: a query nobody executed is a

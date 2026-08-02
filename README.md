@@ -243,6 +243,11 @@ full. In short:
   there for files that define nothing nameable, so an unclaimed file always
   has a remedy. It renders `✓ present (file)` — a map of
   bare paths is a list of files, which is what features exist to prevent.
+- **Scry tells you its own ceiling.** Once per project it names the one thing
+  that would most improve your answers, counted from your own claims —
+  *"12 claims stop at `defined (text)` — no grammar here for astro
+  typescript"* — and refuses to open at all without ripgrep, because a
+  prohibition that has quietly stopped being checked is worse than no glass.
 - **A `def` is answerable in every language, at one of two rungs.** Where a
   treesitter grammar is installed you get `✓ defined` — a definition node.
   Everywhere else you get `✓ defined (text)`: a line that looks like one,

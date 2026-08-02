@@ -1006,6 +1006,11 @@ function M.check(cb)
     if cb then
       cb()
     end
+    -- THE CEILING COMES TO YOU. Scry knows exactly what is limiting these
+    -- answers — which claims stopped at the text rung, that nothing has been
+    -- run — and used to say none of it unless you went looking. Once per
+    -- project per session, ranked by what it would buy here.
+    require("scry.advice").offer(state.root, m, report, require("scry.project").resolve(state.root))
     -- REACH, IN THE BACKGROUND. Divergence counts a file undescribed when no
     -- member names it, but a file a feature's entry points REACH is described
     -- by that feature — so until this has run, the unclaimed number is an
@@ -1030,6 +1035,17 @@ end
 ---@param root string?
 function M.open(root)
   root = root or vim.fn.getcwd()
+
+  -- WHAT SCRY CANNOT WORK WITHOUT, before anything opens. Without ripgrep
+  -- every prohibition, reference and divergence check errors, and the glass
+  -- fills with `– resolver error` — which reads as a broken project rather
+  -- than a missing tool. A `never` that has silently stopped being checked is
+  -- the most dangerous state this thing has, so it refuses instead.
+  local missing, how = require("scry.advice").crucial()
+  if missing then
+    error(("[scry] %s\n        %s"):format(missing, how), 0)
+  end
+
   local config = require("scry.project").resolve(root or state.root)
 
   local function focus(buf)

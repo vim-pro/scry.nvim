@@ -28,6 +28,14 @@ function M.check()
   -- WHICH RUNG A `def` GETS, per language. A `def` is answerable everywhere
   -- now; the question health can settle is whether it will be GROUNDED in a
   -- definition node or read off a line that looks like one.
+  -- The same one thing the glass offers, so health and the buffer can never
+  -- disagree about what would help most.
+  local advice = require("scry.advice")
+  local missing, fix = advice.crucial()
+  if missing then
+    health.error(missing, { fix })
+  end
+
   local defs = require("scry.defs")
   local parsed, missing = defs.available()
   if #parsed > 0 then
