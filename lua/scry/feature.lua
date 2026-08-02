@@ -19,7 +19,7 @@
 -- "unread" outranks "done", and it exists because the evidence axis and the
 -- engagement axis are different questions. Every claim under a feature can
 -- hold while nobody has read a word of it — which is precisely the state a
--- drafting pass produces, and dogfooding :ScryDraft produced it immediately:
+-- drafting pass produces, and dogfooding the pass produced it immediately:
 -- two features, both `✓ done`, one of them written by a machine thirty
 -- seconds earlier. The untouched count said so on the second line, and the
 -- second line is not the line anybody scans.

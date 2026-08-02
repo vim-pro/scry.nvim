@@ -144,7 +144,7 @@ function M.unclaimed(root, map_, config)
       claimed[path] = true
     end
     -- ...and whatever this feature's entry points genuinely REACH, when
-    -- |:ScryReach| has computed it and the files have not moved since.
+    -- reach has computed it and the files have not moved since.
     --
     -- This is the point of reach. A file a feature's defs bind to is
     -- described by that feature whether or not anyone typed its name, and

@@ -386,13 +386,13 @@ end
 --- accurately, on its own placeholder. Accurate and useless: nothing there
 --- was a belief anyone held, so nothing there was worth checking.
 ---
---- It leads with :ScryDraft because that is the honest answer to an empty map
+--- It leads with `+` because that is the honest answer to an empty map
 --- over a full repository, and its example is written at sea level (see
 --- |scry-altitude|) so the shape you copy is the right shape.
 ---@return string[]
 function M.starter()
   return {
-      "-- No map yet. :ScryDraft asks a conjurer to write the first pass over",
+      "-- No map yet. Press + to have a conjurer write the first pass over",
       "-- the files nothing describes; everything it writes lands unread, and",
       "-- stays unread until you have read it.",
       "--",

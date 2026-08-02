@@ -240,6 +240,18 @@ local starter = require("scry.map").parse(glass.starter())
 H.eq(#starter.features, 0, "the starter map claims nothing")
 H.eq(#starter.claims, 0, "so there is nothing to render a verdict against")
 local joined = table.concat(glass.starter(), "\n")
-H.ok(joined:find(":ScryDraft", 1, true) ~= nil, "and it points at the way out of an empty map")
+H.ok(joined:find("+", 1, true) ~= nil, "and it points at the way out of an empty map")
+
+-- IT MAY NOT POINT AT SOMETHING THAT IS NOT THERE. The starter is the first
+-- thing anyone reads, and it told new users to run :ScryDraft for a while
+-- after that command was removed in favor of `+` — the one screen whose
+-- whole job is to say what to do next, naming something that does nothing.
+--
+-- So rather than pinning a string, this checks the promise: every command
+-- the starter mentions has to exist.
+require("scry")
+for name in joined:gmatch(":(Scry%a*)") do
+  H.eq(vim.fn.exists(":" .. name), 2, "the starter names :" .. name .. ", so it had better exist")
+end
 
 H.done("glass_spec PASS")

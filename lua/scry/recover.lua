@@ -222,7 +222,7 @@ local function claim_ids(buf, root)
   return out
 end
 
--- THE PASS. One :ScryDraft is not one request — it is a pass over
+-- THE PASS. One `+` is not one request — it is a pass over
 -- everything undescribed, twelve files at a time, each batch issued when
 -- the last one lands.
 --
@@ -338,7 +338,7 @@ function M.draft(root, buf, map_, unclaimed)
   vim.api.nvim_buf_set_lines(buf, first, first, false, insert)
   if remaining > 0 then
     vim.notify(
-      ("[scry] drafting %d of %d undescribed files — the next %d follow when this lands (:ScryDraftStop to end)"):format(
+      ("[scry] drafting %d of %d undescribed files — the next %d follow when this lands (+ to stop)"):format(
         #batch,
         #batch + remaining,
         math.min(remaining, BATCH)
@@ -389,11 +389,11 @@ function M.draft(root, buf, map_, unclaimed)
         pass.active = false
         -- WHAT YOU STILL HAVE. A pass that dies on its fourth batch has
         -- already written three batches' worth of features, and they are
-        -- kept — so the next :ScryDraft resumes from what is undescribed
+        -- kept — so the next `+` resumes from what is undescribed
         -- NOW rather than starting the project over. Saying only "failed"
         -- reads as losing the lot.
         local kept = pass.claims > 0
-          and (" — %d claim(s) from %d earlier batch(es) are kept; :ScryDraft resumes from there"):format(
+          and (" — %d claim(s) from %d earlier batch(es) are kept; + resumes from there"):format(
             pass.claims,
             pass.batches - 1
           )
@@ -585,7 +585,7 @@ function M.next_batch(root, buf, begin)
     vim.notify(
       ("[scry] draft pass ended: %d file(s) still undescribed after a batch that changed nothing — "):format(
         #unclaimed
-      ) .. ("read what it wrote, then :ScryDraft again (%d claims over %d batches)"):format(
+      ) .. ("read what it wrote, then + again (%d claims over %d batches)"):format(
         pass.claims,
         pass.batches
       ),
