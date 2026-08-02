@@ -317,6 +317,19 @@ function M.at_cursor()
   return found and found.feature or nil, state
 end
 
+-- THE INTENT YOU ALREADY GAVE. `:Scry {intent}` aims you at a capability
+-- (|scry-aim|) and then stops, so you read the address before anything is
+-- cast at it. Making you retype the intent at that point would be asking the
+-- same question twice — so `~` comes up pre-filled, and agreeing costs one
+-- keystroke while disagreeing costs an edit.
+local pending = nil
+
+--- Remember an intent for the next `~`.
+---@param intent string?
+function M.remember(intent)
+  pending = intent
+end
+
 --- Cast an intent across a whole feature.
 function M.start()
   local feature, state = M.at_cursor()
@@ -328,7 +341,12 @@ function M.start()
     error("[scry] conjurer.nvim is required — install vim-pro/conjurer.nvim", 0)
   end
 
-  vim.ui.input({ prompt = ("Conjure %s: "):format(feature.name) }, function(intent)
+  -- Cleared on use, not on success. A remembered intent that survived a
+  -- cancelled prompt would come back on an unrelated feature later, which is
+  -- the worst way for a convenience to behave.
+  local prefill = pending
+  pending = nil
+  vim.ui.input({ prompt = ("Conjure %s: "):format(feature.name), default = prefill }, function(intent)
     if not intent or vim.trim(intent) == "" then
       return
     end

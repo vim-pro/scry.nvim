@@ -12,6 +12,7 @@ CONTENTS                                                       *scry-contents*
      Altitude .................................... |scry-altitude|
      Naming a feature twice ...................... |scry-reopening|
      How the map reads ........................... |scry-lint|
+     Aiming an intent ............................ |scry-aim|
      Giving a capability an address .............. |scry-address|
      Programming a capability .................... |scry-compose|
      Footprint ................................... |scry-footprint|
@@ -1017,6 +1018,41 @@ things a person does" rather than "this is wrong", because glancing at a
 wrong flag costs less than never seeing a real one.
 
 ==============================================================================
+AIMING AN INTENT                                                    *scry-aim*
+
+Nobody sits down wanting to look at a map. You sit down wanting to DO
+something, and the map is how scry finds the address for it. So the intent
+is the front door:
+>
+    :Scry add a PDF export
+<
+The cursor lands on the capability that work is about. If a feature already
+covers it, that one. If none does, scry writes one at sea level and gives it
+an address (|scry-address|), so the noun exists by the time you look at it.
+
+IT AIMS, IT DOES NOT FIRE. The cursor lands and it stops. You read the
+address before anything is cast at it — that is the shape of this whole
+tool, and a step that skipped the looking would be a different product.
+
+What it does do is REMEMBER. `~` comes up pre-filled with the intent you
+already gave, so agreeing costs one keystroke and disagreeing costs an edit.
+The memory is cleared when the prompt OPENS, not when a cast succeeds: an
+intent that survived a cancelled prompt would come back later on an
+unrelated feature, which is the worst way for a convenience to behave.
+
+MATCHING IS BIASED TOWARD THE FEATURE YOU HAVE. Two names for one capability
+is the worst outcome available here — it is the failure that took one map to
+301 features — and it is far cheaper to widen an existing capability than to
+notice months later that two rows mean one thing.
+
+A name that comes back as a MATCH but is not in the map is treated as NEW.
+A paraphrase resolved to the nearest feature is how an intent gets cast at
+the wrong capability, so it is never resolved to something near it.
+
+Bare `:Scry` opens the glass and asks nothing. Looking at the map is still a
+thing you do, and it should not cost a prompt.
+
+==============================================================================
 GIVING A CAPABILITY AN ADDRESS                                  *scry-address*
 
 Type the sentence. That is all you should ever have to type:
@@ -1128,7 +1164,14 @@ hands — but the list IS that hand, and not printing to it was the mistake.
 10. COMMANDS                                                   *scry-commands*
 
                                                                        *:Scry*
-:Scry                   Open (or focus) the glass and check every claim.
+:Scry [{intent}]        Open (or focus) the glass and check every claim.
+
+                        With an intent — `:Scry add a PDF export` — aim at
+                        the capability that work is about: an existing
+                        feature if one covers it, otherwise a new one
+                        written at sea level and addressed. The cursor
+                        lands there and stops; `~` is then pre-filled with
+                        what you said. See |scry-aim|.
 
                                                                   *:ScryCheck*
 :ScryCheck              Re-check every claim against the files on disk.

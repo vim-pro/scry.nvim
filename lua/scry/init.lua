@@ -42,9 +42,25 @@ function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 end
 
-vim.api.nvim_create_user_command("Scry", function()
-  require("scry.glass").open()
-end, { desc = "Open the glass: the project's belief map, checked against the code" })
+-- WITH AN INTENT, IT AIMS. Nobody sits down wanting to look at a map; you
+-- sit down wanting to do something, and the map is how scry finds the
+-- address for it. `:Scry add a PDF export` puts the cursor on the capability
+-- that is about — an existing one if there is one, a new one written at sea
+-- level and addressed if there is not — and stops there. You read the
+-- address before anything is cast at it. See |scry-aim|.
+--
+-- Bare, it opens the glass, because looking at the map is still a thing you
+-- do and it should not cost a prompt.
+vim.api.nvim_create_user_command("Scry", function(a)
+  if a.args ~= "" then
+    require("scry.aim").start(vim.fn.getcwd(), a.args)
+  else
+    require("scry.glass").open()
+  end
+end, {
+  nargs = "*",
+  desc = "Open the glass; with an intent, aim it at the capability that is about",
+})
 
 vim.api.nvim_create_user_command("ScryCheck", function()
   require("scry.glass").check(function()

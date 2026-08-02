@@ -28,8 +28,21 @@ opened one.
 across every capability that matches. Nothing new to learn — you already
 know the grammar; scry just gives it a bigger noun.
 
-The sentence is the only thing you type. Write what someone can do, press
-`+` on it, and scry goes and finds the files it's made of:
+You don't sit down wanting to look at a map. You sit down wanting to do
+something, and the map is how scry finds the address for it — so say what
+you want and it aims you:
+
+```
+:Scry add a PDF export
+```
+
+The cursor lands on the capability that work is about, matching a feature
+you already have or writing one and addressing it. Then it **stops**. You
+read the address before anything is cast at it, and `~` comes up pre-filled
+with what you already said.
+
+Or write the sentence yourself and press `+` on it, and scry finds the files
+it's made of:
 
 ```
 feature Read a checklist as markdown or JSON instead of a web page
