@@ -25,6 +25,15 @@ local HL = {
   ScryHeader = "Title",
   ScryEvidence = "Comment",
   ScryProse = "Comment",
+  -- The feature's own description is the one piece of writing a reader most
+  -- needs and it was dimmed like everything else. Normal, not Comment: it
+  -- is not an aside, it is the sentence the feature is.
+  ScryDescription = "Normal",
+  -- A member's intent is a note about one member — quieter than the
+  -- feature's sentence, louder than nothing.
+  ScryIntent = "Comment",
+  -- The kind word leads a member line and says what sort of thing it is.
+  ScryKind = "Type",
   ScryStamp = "NonText",
 
   -- the grammar
@@ -312,6 +321,13 @@ function M.render()
       pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, claim.lnum - 1, 0, mark)
     end
   end
+
+  -- A winbar expression is only re-evaluated on redraw, and a check settles
+  -- asynchronously — so the counts appeared only once some keypress
+  -- happened to force one. On a fast machine that looks like a missing
+  -- header; on a slow one it looks like a header that arrives when you
+  -- touch the keyboard.
+  pcall(vim.cmd, "redrawstatus!")
 end
 
 --- The winbar's content for the window this is evaluated in.
@@ -325,7 +341,14 @@ function M.winbar()
   if not (state.buf and vim.api.nvim_get_current_buf() == state.buf and state.debt) then
     return ""
   end
-  return require("scry.debt").winbar(state.debt, state.report and state.report.at)
+  -- vim.fn.winwidth, not nvim_win_get_width. A winbar expression is
+  -- evaluated in a restricted context where the API call fails, and a
+  -- failing expression renders as NOTHING — the option was set, the
+  -- function returned a correct string when called by hand, and the bar was
+  -- blank. pcall on top so a future restriction degrades to an unfitted
+  -- line rather than to an empty one.
+  local ok, width = pcall(vim.fn.winwidth, 0)
+  return require("scry.debt").winbar(state.debt, state.report and state.report.at, ok and width or nil)
 end
 
 --- The starter map, for a project that has none.
@@ -388,13 +411,25 @@ function M.foldexpr(lnum)
   return "0"
 end
 
---- The fold's one line, when it is closed: the feature, and its verdict is
---- already an extmark on that line, so a closed fold still reports state.
+--- The fold's one line when it is closed.
+---
+--- It carries the feature's STATE, because a closed fold is the normal way
+--- to look at a map now and an extmark's end-of-line virtual text is not
+--- drawn on one. Rendering the feature name alone would hide the single
+--- thing the line exists to tell you.
 ---@return string
 function M.foldtext()
   local line = vim.fn.getline(vim.v.foldstart)
   local n = vim.v.foldend - vim.v.foldstart
-  return ("%s   (%d line%s)"):format(line, n, n == 1 and "" or "s")
+  local label = ""
+  if state.map and state.report then
+    for _, f in ipairs(state.map.features) do
+      if f.lnum == vim.v.foldstart then
+        label = "   " .. require("scry.feature").verdict(f, state.report, state.root).label
+      end
+    end
+  end
+  return ("%s%s   ▸ %d line%s"):format(line, label, n, n == 1 and "" or "s")
 end
 
 --- Window-local options for a window showing the glass. Window-local, so
@@ -409,9 +444,11 @@ function M.window_options(buf)
     vim.wo.foldmethod = "expr"
     vim.wo.foldexpr = "v:lua.require'scry.glass'.foldexpr(v:lnum)"
     vim.wo.foldtext = "v:lua.require'scry.glass'.foldtext()"
-    -- Open on arrival. Folding is here to be reached for, not to hide the
-    -- map from someone who just asked to see it.
-    vim.wo.foldlevel = 99
+    -- CLOSED on arrival. A map's features are the thing you scan; their
+    -- members are what you open one for. Fifty claims in view at once is
+    -- the same wall of detail the altitude work was about, just rendered
+    -- instead of authored.
+    vim.wo.foldlevel = 0
     vim.wo.foldenable = true
     vim.wo.winbar = "%{%v:lua.require'scry.glass'.winbar()%}"
   end
@@ -510,6 +547,15 @@ function M.open(root)
     vim.bo[buf].buftype = "acwrite"
     vim.bo[buf].bufhidden = "hide"
     vim.bo[buf].swapfile = false
+    -- The syntax cannot tell a member from a description by shape, so it
+    -- is handed the kinds in force — the same set map.parse takes, and for
+    -- the same reason. Set BEFORE filetype, since that is what sources it.
+    local names = {}
+    for name in pairs(require("scry.map").kinds_for(root)) do
+      names[#names + 1] = vim.pesc and name or name
+    end
+    table.sort(names)
+    vim.b[buf].scry_kinds = table.concat(names, "\\|")
     vim.bo[buf].filetype = "scry"
     vim.api.nvim_create_autocmd("BufWriteCmd", {
       buffer = buf,
@@ -529,8 +575,15 @@ function M.open(root)
     -- what a feature line is about is its own body. Nothing else is bound:
     -- this is a normal, writable buffer and its editing keys have to stay
     -- exactly the editing keys.
+    -- <Tab> opens and closes a feature. Features are what you scan and
+    -- their members are what you open one FOR, so the map arrives closed
+    -- and this is how it lets you in.
+    vim.keymap.set("n", "<Tab>", function()
+      pcall(vim.cmd, "normal! za")
+    end, { buffer = buf, desc = "scry: expand or collapse this feature" })
+
     vim.keymap.set("n", "<CR>", function()
-      if vim.fn.getline(".") :match("^feature%s") then
+      if vim.fn.getline("."):match("^feature%s") then
         pcall(vim.cmd, "normal! za")
         return
       end
@@ -550,9 +603,11 @@ function M.open(root)
   vim.bo[buf].modified = false
   state.buf = buf
   state.root = root
-  M.window_options(buf)
-
+  -- focus FIRST. window_options only applies to a window already showing
+  -- the glass, so applying before the buffer is in one silently did
+  -- nothing on the very first :Scry — the run everyone sees.
   focus(buf)
+  M.window_options(buf)
   M.check()
 end
 

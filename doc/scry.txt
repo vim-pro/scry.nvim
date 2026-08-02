@@ -670,8 +670,9 @@ The glass is a normal, writable buffer, so it keeps every editing key it
 has. One mapping is added, and it means "take me to what this line is
 about":
 
+    <Tab>       expand or collapse the feature under the cursor
     <CR>        on a CLAIM, open the code it points at
-                on a FEATURE line, toggle its fold
+                on a FEATURE line, the same as <Tab>
 
 WHERE A CLAIM TAKES YOU, in order. Evidence first, always: if the last check
 found a line for this claim, that is somewhere an engine actually looked, so
@@ -702,10 +703,14 @@ cut off rather than as absent.
 
 FOLDING is per feature: everything under a feature, prose and claims alike,
 belongs to it. Lines above the first feature fold into nothing, so a
-drafting block (|scry-drafting|) or a stale header is never swallowed. Folds
-start open — folding is here to be reached for, not to hide the map from
-someone who just asked to see it. A closed fold still shows its feature's
-verdict, since that is an extmark on the feature line.
+drafting block (|scry-drafting|) or a stale header is never swallowed.
+
+THE MAP ARRIVES CLOSED. Features are what you scan; their members are what
+you open one FOR, and fifty claims in view at once is the same wall of
+detail the altitude work was about, rendered instead of authored. A closed
+fold carries its feature's state and its size, because an extmark's
+end-of-line text is not drawn on a folded line and the state is the one
+thing that line exists to tell you.
 
 =====
 10. COMMANDS                                                   *scry-commands*

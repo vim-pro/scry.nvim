@@ -103,10 +103,15 @@ H.ok(wb:find("\n", 1, true) == nil, "one line — a winbar is one line")
 -- `%<` is where Vim cuts a too-long winbar. It sits after the feature counts
 -- so a narrow window gives up the claim-level evidence first and shows `<`,
 -- which reads as cut off rather than as absent.
-local cut = wb:find("%%<")
-H.ok(cut ~= nil, "carries a truncation point")
-H.ok(cut > wb:find("1 features", 1, true), "which comes after the features")
-H.ok(cut < wb:find("3 claims", 1, true), "and before the claims")
+-- FITTED, not truncated by Vim. `%<` was tried in the middle (it keeps the
+-- tail and eats the words before it: `(files on disk)<issing`) and at the
+-- end (the bar renders EMPTY). So the segments are joined only when they
+-- fit, and a narrow window keeps the features and drops the claim counts.
+H.eq(wb:find("%%<"), nil, "no Vim truncation marker; the fitting is ours")
+local narrow = debt.winbar(d, report.at, 40)
+H.ok(vim.fn.strdisplaywidth(narrow:gsub("%%#%w+#", ""):gsub("%%%*", "")) <= 40, "a narrow window gets a line that fits: " .. narrow)
+H.ok(narrow:find("features", 1, true) ~= nil, "and keeps the features")
+H.eq(narrow:find("3 claims", 1, true), nil, "dropping the claim counts, which are the evidence beneath them")
 -- Literal percent signs in the text would be read as statusline items.
 H.ok(select(2, debt.winbar(d, nil):gsub("%%%%", "")) >= 0, "percent-escaping applied")
 

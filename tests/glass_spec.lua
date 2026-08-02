@@ -132,8 +132,16 @@ for _, m in ipairs(vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, { details = tru
   end
 end
 H.eq(above, 0, "no virtual header above line 1, where Neovim could not draw it")
-H.ok(glass.winbar():find("claims", 1, true) ~= nil, "the counts are in the winbar: " .. glass.winbar())
-H.ok(glass.winbar():find("files on disk", 1, true) ~= nil, "and so does the disk caveat")
+-- The glass's own winbar fits itself to the window, so what survives at a
+-- spec's window width is the features half. That it is populated at all is
+-- the property under test; debt.winbar owns which half.
+H.ok(glass.winbar():find("features", 1, true) ~= nil, "the counts are in the winbar: " .. glass.winbar())
+-- The caveat travels with the counts, at whatever width the line was fitted
+-- to; debt.winbar's own spec pins what a narrow window drops.
+H.ok(
+  require("scry.debt").winbar(glass._state.debt, nil):find("files on disk", 1, true) ~= nil,
+  "and so does the disk caveat"
+)
 
 -- 4) ownership is inferred from the work: record an authored event for the
 -- cursor claim and the marker clears on the next render — no command, no stamp

@@ -149,19 +149,37 @@ end
 --- stays put while you scroll, so the counts are readable from anywhere in a
 --- long map rather than only from the top.
 ---
---- One line instead of two, so `%<` marks where to truncate: features are
---- what a reader scans, so the claim-level evidence is what a narrow window
---- gives up first. A truncated line shows Vim's `<`, which reads as cut off
---- rather than as absent — the distinction the fourth column exists for.
+--- One line instead of two, FITTED rather than truncated.
+---
+--- `%<` was tried both ways and neither works here. In the middle, Vim keeps
+--- the tail and eats the words before it: a real window rendered
+--- `(files on disk)<issing · 0 violated`, the counts sliced in half. At the
+--- end, the winbar renders EMPTY — the option was set and the function
+--- returned a full string, and the bar was blank.
+---
+--- So the segments are joined only if they fit. Features first, because that
+--- is what a reader scans, and the claim-level evidence is what a narrow
+--- window gives up. The ellipsis says it was cut, since cut off must not read
+--- as absent — the distinction the unchecked column exists for.
 ---@param d scry.Debt
 ---@param at integer? report timestamp
+---@param width integer? columns available; unlimited when nil
 ---@return string
-function M.winbar(d, at)
+function M.winbar(d, at, width)
   local lines = vim.split(M.header(d, at), "\n", { plain = true })
+  local head, tail = vim.trim(lines[1] or ""), vim.trim(lines[2] or "")
   local function esc(s)
-    return (vim.trim(s or ""):gsub("%%", "%%%%"))
+    return (s:gsub("%%", "%%%%"))
   end
-  return "%#ScryHeader#" .. esc(lines[1]) .. "%<  ·  " .. esc(lines[2]) .. "%*"
+  local joined = head .. "  ·  " .. tail
+  if width and width > 2 and vim.fn.strdisplaywidth(joined) > width then
+    if vim.fn.strdisplaywidth(head) > width then
+      joined = vim.fn.strcharpart(head, 0, width - 1) .. "…"
+    else
+      joined = head .. " …"
+    end
+  end
+  return "%#ScryHeader#" .. esc(joined) .. "%*"
 end
 
 --- Compact string for the user's own statusline. Plain function, no
