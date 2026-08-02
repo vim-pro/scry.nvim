@@ -553,6 +553,23 @@ function M.check(cb)
     if cb then
       cb()
     end
+    -- REACH, IN THE BACKGROUND. Divergence counts a file undescribed when no
+    -- member names it, but a file a feature's entry points REACH is described
+    -- by that feature — so until this has run, the unclaimed number is an
+    -- upper bound. It used to require putting the cursor on each feature and
+    -- running a command, which meant in practice it never ran at all.
+    --
+    -- Asynchronous and cached: it never blocks looking, a second look costs
+    -- nothing, and the header says `reach pending` until the answer is in
+    -- rather than presenting the reach-free count as the whole truth.
+    local reach = require("scry.reach")
+    if state.root and reach.progress.state ~= "done" then
+      reach.refresh(state.root, m, function(changed)
+        if changed and state.buf and vim.api.nvim_buf_is_valid(state.buf) then
+          M.render()
+        end
+      end)
+    end
   end)
 end
 

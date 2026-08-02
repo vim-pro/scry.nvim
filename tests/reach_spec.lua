@@ -133,6 +133,38 @@ if sg.languages().typescript then
   local after = select(1, divergence.unclaimed(work, map_, config))
   H.eq(#after, 1, "one file left unclaimed, from one named entry point")
   H.eq(after[1], "src/orphan.ts", "and it is the one nothing reaches")
+
+  -- 5) REACH IS COMPUTED FOR THE WHOLE MAP, not one feature at a time.
+  --
+  -- The cache divergence reads was only ever written by putting the cursor on
+  -- a feature and running :ScryReach. So for anyone who did not know to make
+  -- that per-feature gesture — which is everyone — the unclaimed count was
+  -- computed as though reach did not exist. The command is gone and this runs
+  -- in the background on every check.
+  local whole = mapmod.parse({
+    "feature someone can run an entry",
+    "  def src/entry.ts:entry",
+    "feature something else entirely",
+    "  module src/orphan.ts",
+  }, { module = true, def = true })
+
+  local refreshed
+  reach.refresh(work, whole, function(changed)
+    refreshed = { changed = changed }
+  end)
+  H.ok(H.wait(function()
+    return refreshed ~= nil
+  end, 300000), "refresh answers for a whole map")
+  H.eq(reach.progress.state, "done", "and says it is done")
+
+  local cache = reach.cache_load(work)
+  H.ok(cache["someone can run an entry"] ~= nil, "the feature with entry points is recorded")
+  H.ok(#cache["someone can run an entry"].files >= 3, "with what it reaches")
+  H.ok(cache["someone can run an entry"].fingerprint ~= nil, "and a fingerprint, so a stale answer is discarded")
+
+  -- PROGRESS IS READABLE, because the header uses it to say whether the
+  -- unclaimed count is an answer or an upper bound.
+  H.ok(reach.progress.state ~= "off", "progress is legible to the header")
 else
   print("  (no typescript engine provisioned — divergence-shrink NOT exercised)")
 end

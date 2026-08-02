@@ -173,12 +173,21 @@ A feature's members are its ENTRY POINTS. The code behind them is not
 something anyone should have to list, and listing it is what made a map of a
 real project run to eighty-six members.
 
-TWO DIRECTIONS, and they are different questions. On a `def`, |:ScryReach|
-reports its CALLERS — everything that binds to it, which is "who uses
-this". On a FEATURE line it reports the opposite: everything the feature's
-entry points REACH, transitively, which is its footprint. An entry point
-nobody calls has no callers and a large footprint, and that is exactly what
-an entry point is.
+WHAT REACH ANSWERS is one direction of two, and scry uses only that one:
+everything a feature's entry points REACH, transitively, which is its
+footprint. The opposite question — everything that binds to a definition,
+"who uses this" — is a real question and a different one, and scry does not
+ask it. An entry point nobody calls has no callers and a large footprint,
+and that is exactly what an entry point is.
+
+IT RUNS BY ITSELF. Reach is computed for the whole map in the background
+whenever the glass checks, and cached with a fingerprint so a second look
+costs nothing and a stale answer is discarded rather than trusted. It used
+to be a command run one feature at a time, which meant that for anyone who
+did not know to make that gesture the unclaimed count was computed as
+though reach did not exist. Until it is in, the header says so: `48
+unclaimed files (reach pending)`, or `(no reach)` where no engine can
+answer.
 
 THE FOOTPRINT IS WHY THIS EXISTS. A file a feature's entry points genuinely
 reach is described by that feature whether or not anyone typed its name, so
@@ -226,7 +235,7 @@ more. Scry says which kind of answer it has every time it gives one.
 
 REACH IS OPTIONAL. Without stackgraphs.nvim installed, every verdict scry
 gives still works — kinds are probed by path and grep, `def` by treesitter
-— and only |:ScryReach| and the divergence shrink go away. |:checkhealth|
+— and only the divergence shrink goes away. |:checkhealth|
 says so rather than scry failing to load.
 
     https://github.com/vim-pro/stackgraphs.nvim
@@ -964,50 +973,6 @@ worse than the one already in your hands.
                                                                   *:ScryCheck*
 :ScryCheck              Re-check every claim against the files on disk.
 
-                                                                  *:ScryReach*
-:ScryReach              Everything that binds to the `def` under the cursor,
-                        into the quickfix list. Indexes first, so it is slow
-                        the first time; the title says whether the answer
-                        was resolved by an engine or is a name match. See
-                        |scry-reach|.
-
-                                                              *:ScryUnclaimed*
-:ScryUnclaimed[!]       Where the code nothing describes is, in the quickfix
-                        list. See |scry-divergence|.
-
-                                                                  *:ScryDraft*
-:ScryDraft              Ask a conjurer to draft features for the files no
-                        feature claims, into the glass. Drafts land untouched
-                        — they are inventory until you edit them. Nothing
-                        reaches the map file until you |:write|.
-
-                        A pass, not one request: batches follow each other
-                        until the project is described, a batch describes
-                        nothing new, a request fails, or you stop it.
-                        See |scry-drafting|.
-
-                                                                *:ScryConjure*
-:ScryConjure            Cast an intent across the whole feature under the
-                        cursor — every file it is made of, in one request.
-                        Bound to `~` in the glass. Results land in buffers,
-                        unsaved. See |scry-compose|.
-
-                                                                   *:ScryTidy*
-:ScryTidy               Gather every block of a re-opened feature into
-                        one. Drafting does this as each batch lands;
-                        this is for a map written before it did.
-
-                                                                   *:ScryLint*
-:ScryLint               Flag feature names that are hard to read, into the
-                        quickfix list: names joining two goals, names that
-                        do not start with a verb, names long enough to be
-                        prose, and pairs that read like one capability.
-                        Never a verdict — see |scry-lint|.
-
-                                                              *:ScryDraftStop*
-:ScryDraftStop          End the drafting pass after the batch in flight. The
-                        request already running is left to land — it is paid
-                        for, and its result is a draft worth keeping. To kill
                         it outright, |:ConjureCancel|.
 
                                                                     *:ScryExercise*

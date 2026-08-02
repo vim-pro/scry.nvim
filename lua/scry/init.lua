@@ -90,14 +90,6 @@ vim.api.nvim_create_user_command("ScryDraftStop", function()
   require("scry.recover").stop()
 end, { desc = "End the drafting pass after the batch in flight" })
 
--- Reach is asked for, never rendered on every check. Indexing a project is
--- the slowest thing scry can do, and the rule everywhere else here is that
--- looking is cheap and only a command may be expensive — :ScryExercise runs
--- specs, :ScryDraft calls a model, this one indexes.
-vim.api.nvim_create_user_command("ScryReach", function()
-  require("scry.reach").show()
-end, { desc = "Everything that binds to the definition under the cursor" })
-
 vim.api.nvim_create_user_command("ScryExercise", function(a)
   require("scry.run").start({ feature = a.args ~= "" and a.args or nil })
 end, { nargs = "?", desc = "Run the specs behind this map's exercises claims, then re-check" })

@@ -62,6 +62,7 @@ function M.count(map_, report, root)
     todo = counts.absent + counts.unevidenced,
     unknown = counts.unknown,
     unclaimed = 0,
+    reach = "off",
   }
   -- Divergence needs the filesystem, so it is best-effort: a repo without
   -- ripgrep, or a root that has gone away, must not take the whole header
@@ -73,6 +74,11 @@ function M.count(map_, report, root)
     if ok then
       d.unclaimed = #div
     end
+    -- The count is computed as though reach does not exist until it has
+    -- run. Saying so is the difference between a number and a claim: a
+    -- file a feature REACHES is described by that feature, and until the
+    -- closure is in, this number is an upper bound rather than an answer.
+    d.reach = require("scry.reach").progress.state
   end
 
   for _, claim in ipairs(map_.claims) do
@@ -148,7 +154,16 @@ function M.parts(d, at)
   add(d.broken, "broken", "ScryBroken")
   add(d.todo, "to do", "ScryTodo")
   add(d.unknown, "unknown", "ScryUnchecked")
-  add(d.unclaimed, "unclaimed files", "ScryTodo")
+  -- QUALIFIED, because until reach has run this is computed as though reach
+  -- does not exist — a file a feature REACHES is described by that feature,
+  -- so the number is an upper bound rather than an answer. Saying which it
+  -- is costs four words and is the difference between a count and a claim.
+  add(
+    d.unclaimed,
+    "unclaimed files"
+      .. ((d.reach == "running" and " (reach pending)") or (d.reach == "unavailable" and " (no reach)") or ""),
+    "ScryTodo"
+  )
   line1[#line1 + 1] = { "   " .. when .. " (files on disk)", "ScryHeaderDim" }
 
   -- The unchecked column is shown whenever it is non-zero, between violated

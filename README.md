@@ -166,8 +166,10 @@ scry conjures through it. [quickfix-pro.nvim](https://quickfix.vim.pro) is
 optional polish for the list.
 
 [stackgraphs.nvim](https://stackgraphs.vim.pro) is optional and does the name
-resolution behind `:ScryReach` — what a feature's entry points actually reach,
-so you don't hand-enumerate it. It resolves through a **language server** when
+resolution behind reach — what a feature's entry points actually reach, so you
+don't hand-enumerate it. It runs by itself, in the background, whenever the
+glass checks; until it lands the header says `unclaimed files (reach pending)`
+rather than reporting a count computed as though reach did not exist. It resolves through a **language server** when
 one is installed for the language, so scry's own Lua map is reachable by the
 same machinery as a TypeScript project. Without it every verdict still works
 and only reach goes away.
