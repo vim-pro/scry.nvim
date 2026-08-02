@@ -27,7 +27,7 @@ local function gate_vacuity(map_, report)
   local structural, exercised = {}, {}
   for _, claim in ipairs(map_.claims) do
     local v = report.verdicts[mapmod.claim_id(claim)]
-    if claim.kind == "contains" then
+    if claim.kind == "def" or claim.kind == "module" then
       structural[claim.feature] = structural[claim.feature] or { total = 0, absent = 0 }
       local s = structural[claim.feature]
       s.total = s.total + 1
@@ -81,13 +81,16 @@ function M.run(map_, opts, cb)
   -- from the claims it describes — and empty when a feature locates
   -- nothing, which the resolver reports rather than papering over by
   -- searching the whole project.
+  -- The kinds in force, so the resolver can check a declared kind by the
+  -- probe the project wrote for it.
+  local kindset = require("scry.map").kinds_for(opts.root)
   local scope = {}
   for _, feature in ipairs(map_.features) do
     scope[feature.name] = mapmod.footprint(feature)
   end
 
   for _, claim in ipairs(claims) do
-    local ctx = { root = opts.root, globs = scope[claim.feature] or {} }
+    local ctx = { root = opts.root, globs = scope[claim.feature] or {}, kinds = kindset }
     require("scry.resolver").check(resolver, ctx, claim, function(verdict)
       report.verdicts[mapmod.claim_id(claim)] = verdict
       pending = pending - 1

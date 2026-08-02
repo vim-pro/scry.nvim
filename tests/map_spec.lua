@@ -46,7 +46,7 @@ H.eq(#m.features[2].claims, 0, "prose-only feature has no claims")
 
 -- 3) claim details
 local c1, c2, c3, c4 = m.claims[1], m.claims[2], m.claims[3], m.claims[4]
-H.eq(c1.kind, "contains", "claim 1 kind")
+H.eq(c1.kind, "def", "claim 1 kind")
 H.eq(c1.target, "lua/conjurer/providers/cli.lua:request", "stamped claim target excludes the stamp")
 H.eq(c1.stamp.user, "michael", "stamp user (without @)")
 H.eq(c1.stamp.date, "2026-07-26", "stamp date")

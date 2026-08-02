@@ -125,7 +125,7 @@ function M.compose(map_lines, holdout_lines)
   end
 
   local out = {}
-  local m = mapmod.parse(map_lines)
+  local m = mapmod.parse(map_lines, mapmod.kinds_for(root))
   local emitted = {}
   for i, line in ipairs(map_lines) do
     -- before the NEXT feature header (or EOF), flush the current feature's nevers
@@ -216,7 +216,8 @@ end
 -- ---------------------------------------------------------------------------
 
 local function combined_map()
-  return require("scry.map").parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false))
+  local mapmod = require("scry.map")
+  return mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), mapmod.kinds_for(state.root))
 end
 
 --- Render report verdicts into the glass buffer as extmarks.

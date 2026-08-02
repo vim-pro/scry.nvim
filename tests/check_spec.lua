@@ -20,7 +20,7 @@ local m = map.parse(SRC)
 local calls = {}
 local fake = {
   name = "fake",
-  check_contains = function(ctx, claim, cb)
+  check_def = function(ctx, claim, cb)
     table.insert(calls, { claim = claim, cb = cb, globs = ctx.globs })
   end,
   check_never = function(ctx, claim, cb)

@@ -55,12 +55,12 @@ local function v(kind, target)
 end
 
 -- contains
-H.eq(v("contains", "lua/auth.lua:create_session").status, "backed", "create_session defined")
-H.eq(v("contains", "lua/auth.lua:create_session").label, "✓ defined", "contains label")
-H.eq(v("contains", "lua/auth.lua:create_session").fidelity, "ts-def", "contains fidelity")
-H.eq(v("contains", "lua/auth.lua:validate_token").status, "backed", "validate_token defined")
-H.eq(v("contains", "lua/auth.lua:refresh_token").status, "missing", "refresh_token absent")
-H.eq(v("contains", "lua/auth.lua:refresh_token").label, "✗ absent", "absent label")
+H.eq(v("def", "lua/auth.lua:create_session").status, "backed", "create_session defined")
+H.eq(v("def", "lua/auth.lua:create_session").label, "✓ defined", "contains label")
+H.eq(v("def", "lua/auth.lua:create_session").fidelity, "ts-def", "contains fidelity")
+H.eq(v("def", "lua/auth.lua:validate_token").status, "backed", "validate_token defined")
+H.eq(v("def", "lua/auth.lua:refresh_token").status, "missing", "refresh_token absent")
+H.eq(v("def", "lua/auth.lua:refresh_token").label, "✗ absent", "absent label")
 
 -- calls: backed / absent / unreferenced are three distinct outcomes
 H.eq(v("calls", "store.lua::put").status, "backed", "store.put referenced")
@@ -85,7 +85,7 @@ H.eq(clean.label, "✓ no matches (rg)", "clean label states rg fidelity")
 
 -- non-lua contains → unchecked, never ✓
 local unch = {}
-resolver.check(ts_rg, ctx, { kind = "contains", target = "src/main.rs:run", feature = "a user can start a session" }, function(x)
+resolver.check(ts_rg, ctx, { kind = "def", target = "src/main.rs:run", feature = "a user can start a session" }, function(x)
   unch = x
 end)
 H.ok(H.wait(function()

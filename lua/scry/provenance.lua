@@ -156,7 +156,7 @@ function M.watch(buf, root, snapshot)
       for _, c in ipairs(prev.claims) do
         before[mapmod.claim_id(c)] = true
       end
-      local now = mapmod.parse(vim.api.nvim_buf_get_lines(buf, 0, -1, false))
+      local now = mapmod.parse(vim.api.nvim_buf_get_lines(buf, 0, -1, false), mapmod.kinds_for(root()))
       for _, c in ipairs(now.claims) do
         local id = mapmod.claim_id(c)
         if not before[id] and not M.drafted[id] then

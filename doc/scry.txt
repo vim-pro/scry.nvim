@@ -150,6 +150,55 @@ one of them is still a claim. Only a dedented non-blank line ends a block.
 the rest of a `never` block to prose, which both stops checking those patterns
 and routes them into the repository on the next |:write|.)
 
+                                                                 *scry-kinds*
+A MEMBER NAMES A TYPED OBJECT ~
+
+A feature's members say what the product is MADE of, and each carries a
+KIND: >
+
+    feature a reader can follow a link someone sent them
+      route [slug]
+        The run view. #done= carries progress to a friend.
+      module src/lib/run.js
+      def src/lib/run.js:initChecklist
+<
+The kind is the difference between a map of the product and a map of the
+filesystem. It carries what a bare path never could — how to find one of
+these, and what one of these IS — and a member may carry its own one-line
+intent, indented under it: what THAT member is for, as against what the
+feature is for.
+
+Two kinds need no declaring. `module` needs no parser, since a file is on
+disk or it is not, which makes it the one kind that works in every
+language; `def` needs a grammar and says so when it has none.
+
+Every other kind is declared by the project, in |scry-project-config|,
+because what a product is made of is the most project-shaped fact there is —
+routes and endpoints describe a web app, commands describe a plugin, and
+neither vocabulary is right for the other: >
+
+    "kinds": {
+      "route":    { "path": "src/pages/{name}.astro" },
+      "endpoint": { "path": "src/pages/api/{name}.ts" },
+      "command":  { "grep": "nvim_create_user_command\\(\"{name}\"" }
+    }
+<
+A kind is a name and a way to find one — `path` for a file at a location,
+`grep` for a pattern anywhere in the project. `{name}` is the member's name,
+escaped for the probe it enters (a route called `[slug]` is a character
+class to ripgrep, and unescaped would match the wrong thing). A kind the
+project has not declared is PROSE, never a claim: scry has no business
+pretending to check something it has no probe for.
+
+Prose and a member are the same shape — `route /a` and `Prose here.` are
+both two words at two spaces — so what makes a line a member is that its
+kind is one this project has. That is why the parser takes the kinds.
+
+`contains` and `calls` still parse, and always will. `contains` was doing
+two jobs and its shape said which: with a symbol a definition, without one a
+file. Reading it as `def` and `module` is a renaming, not a
+reinterpretation, so no map anyone wrote changes meaning.
+
 Claim targets differ by kind, because the claims differ in kind:
 
     contains   path:symbol            a definition exists at a location

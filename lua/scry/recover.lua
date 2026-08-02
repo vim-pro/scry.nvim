@@ -61,8 +61,10 @@ local M = {}
 --- and the names alone answer the only question the model needs answered.
 ---@param map_ scry.Map
 ---@param unclaimed string[] Files no feature's footprint names.
+---@param kindset table<string, table>? kinds in force; the draft may use no
+---  others, because a kind scry cannot probe is a claim nothing can check.
 ---@return { lines: string[], intent: string }
-function M.build(map_, unclaimed)
+function M.build(map_, unclaimed, kindset)
   local names = {}
   for _, f in ipairs(map_.features) do
     names[#names + 1] = f.name
@@ -79,6 +81,17 @@ function M.build(map_, unclaimed)
     lines[#lines + 1] = "--   " .. path
   end
 
+  -- The vocabulary the draft is allowed. Listing it is the difference
+  -- between a map of the product and a map of the filesystem: asked for
+  -- "the files", a model returns eighty-six paths, which is the
+  -- implementation wearing a product's clothes one rung up.
+  local kindnames = {}
+  for name in pairs(kindset or require("scry.kinds").BUILTIN) do
+    kindnames[#kindnames + 1] = name
+  end
+  table.sort(kindnames)
+  local kindlist = table.concat(kindnames, ", ")
+
   local intent = table.concat({
     "Replace this block with `feature` entries in scry's map grammar,",
     "describing what the listed files make possible. Read them.",
@@ -86,9 +99,17 @@ function M.build(map_, unclaimed)
     "GRAMMAR (indentation is the grammar):",
     "  feature <a statement of something the user can accomplish>",
     "    two-space-indented prose: one short paragraph, what it does and why",
-    "    contains",
-    "      path/to/file.lua:symbol     -- a definition that EXISTS right now",
-    "      path/to/file.lua            -- when the file defines nothing nameable",
+    "    <kind> <name>",
+    "    <kind> <name>",
+    "",
+    "A MEMBER NAMES A TYPED OBJECT. Reach for the kinds that describe the",
+    "PRODUCT before the ones that describe the code — a route or a command is",
+    "something someone uses; a function is how it was built. The kinds"
+      .. " available in this project, and nothing else:",
+    "  " .. kindlist,
+    "",
+    "A member may carry its own one-line intent, indented under it: what THAT",
+    "member is for, as distinct from what the feature is for.",
     "",
     "ALTITUDE is the whole point. A feature is one thing a user can",
     "accomplish in one sitting, and it must matter that they can do many of",
@@ -113,10 +134,10 @@ end
 --- Claim ids present in `buf` right now.
 ---@param buf integer
 ---@return table<string, boolean>
-local function claim_ids(buf)
+local function claim_ids(buf, root)
   local mapmod = require("scry.map")
   local out = {}
-  for _, c in ipairs(mapmod.parse(vim.api.nvim_buf_get_lines(buf, 0, -1, false)).claims) do
+  for _, c in ipairs(mapmod.parse(vim.api.nvim_buf_get_lines(buf, 0, -1, false), mapmod.kinds_for(root)).claims) do
     out[mapmod.claim_id(c)] = true
   end
   return out
@@ -130,7 +151,7 @@ end
 ---@param unclaimed string[]
 ---@return table built
 function M.draft(root, buf, map_, unclaimed)
-  local built = M.build(map_, unclaimed)
+  local built = M.build(map_, unclaimed, require("scry.map").kinds_for(root))
 
   -- Append the region, then hand conjurer exactly those lines to rewrite.
   local first = vim.api.nvim_buf_line_count(buf)
@@ -139,7 +160,7 @@ function M.draft(root, buf, map_, unclaimed)
   vim.api.nvim_buf_set_lines(buf, first, first, false, insert)
   local srow = first + 1 -- 0-based, past the blank separator
 
-  local before = claim_ids(buf)
+  local before = claim_ids(buf, root)
 
   require("conjurer.operator").conjure_region(buf, {
     kind = "line",
@@ -163,7 +184,7 @@ function M.draft(root, buf, map_, unclaimed)
         return
       end
       local drafted = {}
-      for id in pairs(claim_ids(buf)) do
+      for id in pairs(claim_ids(buf, root)) do
         if not before[id] then
           drafted[#drafted + 1] = id
         end
@@ -195,7 +216,7 @@ function M.start()
   end
 
   local mapmod = require("scry.map")
-  local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false))
+  local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), mapmod.kinds_for(state.root))
   local config = require("scry.project").resolve(state.root)
   local unclaimed, total = require("scry.divergence").unclaimed(state.root, map_, config)
   if #unclaimed == 0 then

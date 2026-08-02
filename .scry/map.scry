@@ -3,11 +3,14 @@ feature you can see what the product does and where it stands
   moment you look. Features carry the state their evidence adds up to; the
   header leads with them and puts claim counts underneath as the evidence.
 
-  contains
-    lua/scry/glass.lua:open
-    lua/scry/glass.lua:render
-    lua/scry/feature.lua:verdict
-    lua/scry/debt.lua:header
+  command Scry
+    The surface itself. Opening it is the whole gesture — everything else
+    here is what it renders.
+  command ScryCheck
+  def lua/scry/glass.lua:open
+  def lua/scry/glass.lua:render
+  def lua/scry/feature.lua:verdict
+  def lua/scry/debt.lua:header
   calls
     feature.lua::tally
   exercises
@@ -19,9 +22,8 @@ feature you can describe a change before you make it
   fault — it is the work, named, in the same vocabulary as everything already
   true. If you cannot state it, you do not know what you are asking for yet.
 
-  contains
-    lua/scry/map.lua:parse
-    lua/scry/map.lua:footprint
+  def lua/scry/map.lua:parse
+  def lua/scry/map.lua:footprint
   exercises
     tests/map_spec.lua
     tests/feature_spec.lua:a feature may be named with no evidence
@@ -31,10 +33,9 @@ feature the description can be edited without losing anything
   to the holdout and the rest to the map, and a parse/serialize round trip is
   byte-identical, so editing beliefs can never quietly drop one.
 
-  contains
-    lua/scry/glass.lua:compose
-    lua/scry/glass.lua:split
-    lua/scry/map.lua:serialize
+  def lua/scry/glass.lua:compose
+  def lua/scry/glass.lua:split
+  def lua/scry/map.lua:serialize
   exercises
     tests/glass_spec.lua:compose∘split is identity on composed input
 
@@ -43,9 +44,8 @@ feature you can conjure a change you described
   conjurer. The check is conjured before the code, and the code request never
   sees the check or this feature's prohibitions.
 
-  contains
-    lua/scry/cascade.lua:build
-    lua/scry/cascade.lua:seed
+  def lua/scry/cascade.lua:build
+  def lua/scry/cascade.lua:seed
   calls
     holdout.lua::assert_clean
   exercises
@@ -56,9 +56,8 @@ feature a rule the model never saw still holds afterwards
   request, then checked once the code lands. A prohibition the generator was
   shown proves nothing by being satisfied; one it never saw is evidence.
 
-  contains
-    lua/scry/holdout.lua:assert_clean
-    lua/scry/holdout.lua:path
+  def lua/scry/holdout.lua:assert_clean
+  def lua/scry/holdout.lua:path
   exercises
     tests/cascade_spec.lua:assert_clean errors when a never-pattern appears
 
@@ -67,10 +66,9 @@ feature you can prove a change works, and know when the proof goes stale
   run depended on. Checking never executes anything, and a pass whose
   dependencies have moved degrades rather than lying.
 
-  contains
-    lua/scry/run.lua:specs
-    lua/scry/runs.lua:stale
-    lua/scry/runs.lua:fingerprint
+  def lua/scry/run.lua:specs
+  def lua/scry/runs.lua:stale
+  def lua/scry/runs.lua:fingerprint
   exercises
     tests/exercises_spec.lua:checking did NOT run the test command
 
@@ -79,9 +77,8 @@ feature you can find what the description does not cover
   product. :ScryUnclaimed lists the files no feature claims, which is what
   makes "everything done" falsifiable.
 
-  contains
-    lua/scry/divergence.lua:unclaimed
-    lua/scry/divergence.lua:to_quickfix
+  def lua/scry/divergence.lua:unclaimed
+  def lua/scry/divergence.lua:to_quickfix
   exercises
     tests/divergence_spec.lua
 
@@ -90,10 +87,9 @@ feature you can tell which parts nobody has engaged with
   then green. A claim with no trail keeps its untouched marker, which is
   exactly the state of machine-drafted description nobody has read.
 
-  contains
-    lua/scry/provenance.lua:owned
-    lua/scry/provenance.lua:record
-    lua/scry/provenance.lua:sync
+  def lua/scry/provenance.lua:owned
+  def lua/scry/provenance.lua:record
+  def lua/scry/provenance.lua:sync
   exercises
     tests/map_spec.lua
 
@@ -103,12 +99,11 @@ feature the glass can check any language it has an engine for
   every verdict, so the glass can never render a stronger word than the engine
   that produced it — and a language with no engine reads unchecked, not passed.
 
-  contains
-    lua/scry/resolver.lua:check
-    lua/scry/resolver.lua:register
-    lua/scry/check.lua:run
-    lua/scry/resolvers/ts_rg.lua:check_contains
-    lua/scry/resolvers/ts_rg.lua:check_never
+  def lua/scry/resolver.lua:check
+  def lua/scry/resolver.lua:register
+  def lua/scry/check.lua:run
+  def lua/scry/resolvers/ts_rg.lua:check_contains
+  def lua/scry/resolvers/ts_rg.lua:check_never
   exercises
     tests/resolver_spec.lua
     tests/check_spec.lua
@@ -118,9 +113,8 @@ feature a project carries its own settings
   repo rather than about you. A repo states them in .scry/config.json and
   wins — except for the two keys it must never set, which are refused aloud.
 
-  contains
-    lua/scry/project.lua:load
-    lua/scry/project.lua:resolve
+  def lua/scry/project.lua:load
+  def lua/scry/project.lua:resolve
   exercises
     tests/project_spec.lua
 
@@ -129,10 +123,9 @@ feature you can find out whether scry can actually see your project
   and holdout live, and whether conjurer is installed — before a missing
   dependency shows up as a wall of unchecked verdicts.
 
-  contains
-    lua/scry/health.lua:check
-    lua/scry/init.lua:setup
-    plugin/scry.lua
+  def lua/scry/health.lua:check
+  def lua/scry/init.lua:setup
+  module plugin/scry.lua
 
 feature you can have the features drafted for you
   :ScryDraft sends the files no feature claims to a conjurer and the features
@@ -140,10 +133,9 @@ feature you can have the features drafted for you
   unread rather than done — inventory until you have been through it. The
   machine types; you decide.
 
-  contains
-    lua/scry/recover.lua:build
-    lua/scry/recover.lua:draft
-    lua/scry/feature.lua:engaged
-    lua/scry/provenance.lua:mark_drafted
+  def lua/scry/recover.lua:build
+  def lua/scry/recover.lua:draft
+  def lua/scry/feature.lua:engaged
+  def lua/scry/provenance.lua:mark_drafted
   exercises
     tests/recover_spec.lua

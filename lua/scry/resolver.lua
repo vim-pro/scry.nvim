@@ -54,9 +54,25 @@ end
 ---@param claim scry.Claim
 ---@param cb fun(v: scry.Verdict)
 function M.check(resolver, ctx, claim, cb)
+  local kinds = require("scry.kinds")
   local fn = resolver["check_" .. claim.kind]
+  if not fn and not kinds.RELATION[claim.kind] then
+    -- A declared kind has no method of its own: it is checked by the probe
+    -- the project wrote for it. One entry point for every kind scry did not
+    -- ship means adding a kind never means adding code.
+    local spec = ((ctx or {}).kinds or {})[claim.kind]
+    if spec then
+      fn = function(c, cl, done)
+        resolver.check_kind(c, cl, spec, done)
+      end
+    end
+  end
   if not fn then
-    cb({ status = "error", fidelity = "none", label = "– unknown claim kind" })
+    cb({
+      status = "unchecked",
+      fidelity = "none",
+      label = ("– unknown kind %q (declare it in .scry/config.json)"):format(claim.kind),
+    })
     return
   end
   local ok, err = pcall(fn, ctx, claim, cb)

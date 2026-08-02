@@ -42,7 +42,7 @@ end
 ---@return { kind: string, items: table[], intent: string, file: string, symbol: string? }
 function M.build(claim, intent)
   local file, symbol, text
-  if claim.kind == "contains" then
+  if claim.kind == "def" then
     file, symbol = claim.target:match("^(.-):([%w_.]+)$")
     if not file then
       -- The file-level form names a path and no symbol, so there is nothing
@@ -59,7 +59,7 @@ function M.build(claim, intent)
     text = symbol and ("scry: %s needs a spec asserting: %s"):format(claim.feature, symbol)
       or ("scry: %s needs a spec"):format(claim.feature)
   else
-    error("[scry] :Conjure works on contains and exercises claims (got " .. claim.kind .. ")", 0)
+    error("[scry] :Conjure works on def and exercises claims (got " .. claim.kind .. ")", 0)
   end
   return {
     kind = claim.kind,
@@ -140,7 +140,7 @@ function M.start()
     return
   end
   local mapmod = require("scry.map")
-  local m = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false))
+  local m = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), mapmod.kinds_for(state.root))
   local lnum = vim.api.nvim_win_get_cursor(0)[1]
   local claim
   for _, c in ipairs(m.claims) do
@@ -153,15 +153,15 @@ function M.start()
     vim.notify("[scry] no claim on this line", vim.log.levels.WARN)
     return
   end
-  if claim.kind ~= "contains" and claim.kind ~= "exercises" then
+  if claim.kind ~= "def" and claim.kind ~= "exercises" then
     vim.notify(
-      "[scry] :Conjure works on contains and exercises claims (this is a " .. claim.kind .. " claim)",
+      "[scry] :Conjure works on def and exercises claims (this is a " .. claim.kind .. " claim)",
       vim.log.levels.WARN
     )
     return
   end
 
-  if claim.kind == "contains" and not claim.target:match("^(.-):([%w_.]+)$") then
+  if claim.kind == "def" and not claim.target:match("^(.-):([%w_.]+)$") then
     vim.notify(
       "[scry] `" .. claim.target .. "` names a file, not a symbol — there is nothing to conjure from it",
       vim.log.levels.WARN
@@ -170,7 +170,7 @@ function M.start()
   end
 
   local default
-  if claim.kind == "contains" then
+  if claim.kind == "def" then
     default = "define " .. (claim.target:match(":([%w_.]+)$") or claim.target)
   else
     local label = claim.target:match("^[^:]+:(.+)$")
@@ -215,7 +215,7 @@ function M.seed(root, claim, intent, handoff)
   -- thing an acceptance check must not be written to do. Withholding the
   -- path is all scry can enforce — the spec itself lives in the tree and a
   -- generator that reads the repo will find it (see |scry-independence|).
-  if claim.kind == "contains" then
+  if claim.kind == "def" then
     local m = require("scry.map").load(root .. "/" .. config.map_path)
     for _, c in ipairs(m.claims) do
       if c.kind == "exercises" and c.feature == claim.feature then

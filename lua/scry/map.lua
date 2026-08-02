@@ -47,8 +47,12 @@ local M = {}
 ---@field hash string  6 hex chars of sha256(target).
 
 ---@class scry.Claim
----@field kind "contains"|"calls"|"never"|"exercises"
+---@field kind string An object kind (`module`, `def`, or one the project
+---  declared) or a relation (`never`, `exercises`). See scry.kinds.
 ---@field target string Trimmed claim text, stamp excluded.
+---@field desc string[] The member's OWN intent, indented under it. What a
+---  member is for, as distinct from what the feature is for — and the only
+---  thing a re-conjure could regenerate a member FROM.
 ---@field stamp scry.Stamp?
 ---@field lnum integer 1-based line in the parsed lines array.
 ---@field feature string Name of the feature this claim is evidence for.
@@ -68,38 +72,83 @@ local M = {}
 -- would collide, and the docs say so.
 local STAMP_PAT = "^(.-)%s+%-%- (@%S+) (%d%d%d%d%-%d%d%-%d%d) (%x%x%x%x%x%x)%s*$"
 
+--- Parse a map.
+---
+--- `known` is the set of kinds this project has (scry.kinds.all). It is a
+--- parameter rather than a lookup because a kind is project-shaped, and
+--- because without it a member cannot be told from prose — see the loop.
+--- Omitted, only the builtins and relations are grammar, which is the
+--- right default: those are the ones that hold everywhere.
 ---@param lines string[]
+---@param known table<string, any>? kind name -> anything truthy
 ---@return scry.Map
-function M.parse(lines)
+function M.parse(lines, known)
   local map = { lines = lines, features = {}, claims = {} }
+  local kinds = require("scry.kinds")
+  if known then
+    known = vim.tbl_extend("keep", known, kinds.BUILTIN)
+  else
+    known = vim.deepcopy(kinds.BUILTIN)
+  end
   local feature = nil
-  local section = nil -- current claim kind, or nil
+  local section = nil -- current legacy section, or nil
+  local member = nil -- the typed member a description would belong to
+
+  local function claim_at(lnum, body, kind)
+    local target, user, date, hash = body:match(STAMP_PAT)
+    local claim = {
+      kind = kind,
+      target = target and vim.trim(target) or body,
+      desc = {},
+      stamp = user and { user = user:sub(2), date = date, hash = hash } or nil,
+      lnum = lnum,
+      feature = feature.name,
+    }
+    table.insert(feature.claims, claim)
+    table.insert(map.claims, claim)
+    return claim
+  end
 
   for lnum, line in ipairs(lines) do
     local name = line:match("^feature%s+(.+)$")
     if name then
       feature = { name = vim.trim(name), lnum = lnum, claims = {} }
       table.insert(map.features, feature)
-      section = nil
+      section, member = nil, nil
     elseif feature then
       local sec = line:match("^  (contains)%s*$")
         or line:match("^  (calls)%s*$")
         or line:match("^  (never)%s*$")
         or line:match("^  (exercises)%s*$")
+      -- A TYPED MEMBER: `<kind> <name>` where a section header would be.
+      --
+      -- The kind must be one this project KNOWS, which is why parse takes a
+      -- kind set. Without that test there is no telling a member from
+      -- prose: `route /checklists/[slug]` and `Feature prose.` have the
+      -- same shape, and guessing by shape alone silently turned the second
+      -- word of a sentence into a claim. Prose is the default, as always —
+      -- a line is grammar only when it demonstrably is.
+      local mkind, mname = line:match("^  ([%w_]+)%s+(%S.*)$")
+      local is_member = mkind ~= nil and known[mkind] ~= nil
+
       if sec then
-        section = sec
+        section, member = sec, nil
+      elseif is_member then
+        section, member = nil, claim_at(lnum, vim.trim(mname), mkind)
       elseif section and line:match("^    %S") then
+        -- A claim under a legacy section header. `contains` was always
+        -- doing two jobs and its shape said which, so reading it as the
+        -- kind it meant is a renaming, not a reinterpretation.
         local body = line:match("^    (.-)%s*$")
-        local target, user, date, hash = body:match(STAMP_PAT)
-        local claim = {
-          kind = section,
-          target = target and vim.trim(target) or body,
-          stamp = user and { user = user:sub(2), date = date, hash = hash } or nil,
-          lnum = lnum,
-          feature = feature.name,
-        }
-        table.insert(feature.claims, claim)
-        table.insert(map.claims, claim)
+        local kind = section
+        if section == "contains" then
+          kind = kinds.of_contains(body:match(STAMP_PAT) or body)
+        end
+        member = claim_at(lnum, body, kind)
+      elseif member and line:match("^    %S") then
+        -- Indented under a member with no section open: the member's own
+        -- intent — what THIS member is for, as against what the feature is.
+        member.desc[#member.desc + 1] = vim.trim(line)
       elseif not line:match("^%s*$") and not line:match("^    ") then
         -- A DEDENTED non-blank line ends the section; the line is prose.
         --
@@ -108,7 +157,7 @@ function M.parse(lines)
         -- to prose — never checked, never rendered, and for a never-block,
         -- routed into the repo by glass.split. Indentation is the grammar;
         -- vertical space is layout.
-        section = nil
+        section, member = nil, nil
       end
       -- anything else: prose, preserved in lines, no model entry needed
     end
@@ -129,12 +178,27 @@ end
 ---@param claim scry.Claim
 ---@return string?
 function M.claim_path(claim)
-  if claim.kind == "contains" then
+  if claim.kind == "def" then
     return claim.target:match("^(.-):[%w_.]+$") or claim.target
+  elseif claim.kind == "module" then
+    return claim.target
   elseif claim.kind == "exercises" then
     return claim.target:match("^([^:]+):") or claim.target
   end
+  -- A declared kind locates itself only once something has found it, so its
+  -- path comes from evidence rather than from the name. `never` is a
+  -- pattern and `calls` a hint; neither is a place.
   return nil
+end
+
+--- The kinds in force for a project — builtins plus whatever it declared.
+--- Every caller that parses a real project's map needs this, or a declared
+--- kind reads as prose.
+---@param root string?
+---@return table<string, table>
+function M.kinds_for(root)
+  local config = root and require("scry.project").resolve(root) or {}
+  return require("scry.kinds").all(config)
 end
 
 --- A feature's footprint: the files its located claims name, in order of

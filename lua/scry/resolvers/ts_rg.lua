@@ -160,25 +160,74 @@ local function glob_args(globs)
 end
 
 --- contains: `path:symbol` — a definition node named `symbol` in that file.
-function M.check_contains(ctx, claim, cb)
-  local path, symbol = claim.target:match("^(.-):([%w_.]+)$")
-  if not path then
-    -- FILE-LEVEL contains: the target names a file and no symbol. Checked
-    -- before the lua guard on purpose — a file with no definitions to name
-    -- is exactly the case this form exists for, and it is not lua-only.
-    --
-    -- `present` is a deliberately thinner word than `defined`, and the
-    -- feature rollup counts it the same, because the claim really is
-    -- satisfied: it only ever said the file is part of this feature. The
-    -- weakness lives in the claim, not in the checking, so the label is
-    -- where it has to show.
-    local stat = vim.uv.fs_stat(ctx.root .. "/" .. claim.target)
-    if not stat or stat.type ~= "file" then
-      cb({ status = "missing", fidelity = "file", label = "✗ absent (no such file)" })
+--- module: the file is on disk. No parser, so it holds for any language —
+--- the one kind that always works, and the reason a map of a JavaScript
+--- project is checkable at all today.
+function M.check_module(ctx, claim, cb)
+  local stat = vim.uv.fs_stat(ctx.root .. "/" .. claim.target)
+  if stat and stat.type == "file" then
+    cb({ status = "backed", fidelity = "file", label = "✓ present (file)" })
+  else
+    cb({ status = "missing", fidelity = "file", label = "✗ absent (no such file)" })
+  end
+end
+
+--- A kind the PROJECT declared, checked by the probe it declared with.
+---
+--- Two probes, because two questions cover the ground: is there a file at
+--- this path (`path`), and does this pattern occur anywhere in the project
+--- (`grep`). A route is usually the first, an endpoint or a command the
+--- second. The verdict names the probe, so nobody has to guess how strong
+--- an answer they are looking at.
+function M.check_kind(ctx, claim, spec, cb)
+  local kinds = require("scry.kinds")
+  if spec.path then
+    local rel = kinds.expand(spec.path, claim.target, "none")
+    local stat = vim.uv.fs_stat(ctx.root .. "/" .. rel)
+    if stat and stat.type == "file" then
+      cb({
+        status = "backed",
+        fidelity = "file",
+        label = "✓ present (file)",
+        evidence = { { path = rel, lnum = 1, text = rel } },
+      })
     else
-      cb({ status = "backed", fidelity = "file", label = "✓ present (file)" })
+      cb({ status = "missing", fidelity = "file", label = ("✗ absent (no %s)"):format(rel) })
     end
     return
+  end
+  if spec.grep then
+    local pattern = kinds.expand(spec.grep, claim.target, "regex")
+    rg({ "-e", pattern }, ctx.root, function(lines, code)
+      if code == 2 then
+        cb({ status = "error", fidelity = "none", label = "– rg error" })
+      elseif lines and #lines > 0 then
+        cb({
+          status = "backed",
+          fidelity = "rg-text",
+          label = "✓ present (text)",
+          evidence = to_evidence(lines, 3),
+        })
+      else
+        cb({ status = "missing", fidelity = "rg-text", label = "✗ absent (no match)" })
+      end
+    end)
+    return
+  end
+  cb({
+    status = "unchecked",
+    fidelity = "none",
+    label = ("– unprobed (kind %q declares no path or grep)"):format(claim.kind),
+  })
+end
+
+--- def: a named definition exists in that file.
+function M.check_def(ctx, claim, cb)
+  local path, symbol = claim.target:match("^(.-):([%w_.]+)$")
+  if not path then
+    -- A `def` with no symbol is a `module` that took the wrong word. Rather
+    -- than error, answer the question it plainly meant.
+    return M.check_module(ctx, claim, cb)
   end
   if not path:match("%.lua$") then
     cb({ status = "unchecked", fidelity = "none", label = "– unchecked (no lua resolver)" })

@@ -19,7 +19,7 @@ vim.fn.writefile(vim.fn.readfile(H.fixture .. "/holdout.scry"), work .. "/holdou
 -- 1) A `contains` claim lands on the DEFINITION, not line 1 and not the
 -- first textual mention. The line comes from the same treesitter query that
 -- decides `✓ defined`, so "where" can never disagree with "whether".
-local claim = { kind = "contains", target = "lua/auth.lua:create_session", feature = "f" }
+local claim = { kind = "def", target = "lua/auth.lua:create_session", feature = "f" }
 local t = locate.target(claim, nil, work)
 H.eq(t.path, "lua/auth.lua", "the claim's own file")
 H.eq(t.why, "definition", "resolved as a definition")
@@ -49,7 +49,7 @@ H.eq(runout.path, "lua/auth.lua", "lnum 0 is not a destination")
 H.eq(runout.why, "definition", "so it falls back to the claim")
 
 -- 4) A file-level claim has no symbol to find: line 1, honestly labeled.
-local filelevel = locate.target({ kind = "contains", target = "lua/store.lua", feature = "f" }, nil, work)
+local filelevel = locate.target({ kind = "def", target = "lua/store.lua", feature = "f" }, nil, work)
 H.eq(filelevel.path, "lua/store.lua", "the file itself")
 H.eq(filelevel.lnum, 1, "line 1")
 H.eq(filelevel.why, "file", "not claiming to be a definition")
@@ -69,7 +69,7 @@ H.eq(violated.path, "lua/logging.lua", "a violation jumps to the violation")
 H.eq(violated.lnum, 3, "at its line")
 
 -- 6) A symbol that is not defined does not fabricate a line.
-local absent = locate.target({ kind = "contains", target = "lua/auth.lua:no_such_fn", feature = "f" }, nil, work)
+local absent = locate.target({ kind = "def", target = "lua/auth.lua:no_such_fn", feature = "f" }, nil, work)
 H.eq(absent.lnum, 1, "an absent symbol falls back to the file")
 H.eq(absent.why, "file", "and does not claim to have found a definition")
 

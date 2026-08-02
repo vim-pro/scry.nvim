@@ -87,7 +87,8 @@ function M.start(opts)
     return
   end
   local config = require("scry.project").resolve(state.root)
-  local map_ = require("scry.map").parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false))
+  local mapmod = require("scry.map")
+  local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), mapmod.kinds_for(state.root))
   local specs = M.specs(map_, opts.feature)
   if #specs == 0 then
     vim.notify("[scry] no exercises claims to run")

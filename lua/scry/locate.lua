@@ -43,7 +43,7 @@ function M.target(claim, verdict, root)
   end
 
   -- 3) The symbol's line, from the query that decided the verdict.
-  if claim.kind == "contains" then
+  if claim.kind == "def" then
     local symbol = claim.target:match("^.-:([%w_.]+)$")
     if symbol then
       -- No pcall. ts_rg.locate already answers nil for an unreadable or
@@ -87,7 +87,7 @@ function M.open()
   end
   local mapmod = require("scry.map")
   local lnum = vim.api.nvim_win_get_cursor(0)[1]
-  local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false))
+  local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), mapmod.kinds_for(state.root))
 
   local claim
   for _, c in ipairs(map_.claims) do

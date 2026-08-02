@@ -6,13 +6,17 @@
 -- right one for the next, and how to run one project's specs has nothing
 -- to do with how to run another's.
 --
--- So the repo may carry `.scry/config.json`, and exactly four keys are
+-- So the repo may carry `.scry/config.json`, and exactly five keys are
 -- honored from it:
 --
 --   sources    which files count as claimable (divergence)
 --   test       how to run ONE spec
 --   resolver   which checking engine this project's languages need
 --   map_path   where in the repo the map lives
+--   kinds      what this product is MADE of — routes, endpoints, commands.
+--              The most project-shaped fact there is: scry ships `module`
+--              and `def` because they hold in every language, and every
+--              kind above those describes one product and no other.
 --
 -- Two keys are deliberately REFUSED, and the refusals matter more than the
 -- permissions:
@@ -38,7 +42,7 @@ local M = {}
 -- Only these may come from the repo. Anything else in the file is ignored
 -- rather than errored on: a newer scry writing a key this one does not know
 -- should not break the older one.
-local HONORED = { sources = true, test = true, resolver = true, map_path = true }
+local HONORED = { sources = true, test = true, resolver = true, map_path = true, kinds = true }
 
 --- Read `.scry/config.json`, if any. Malformed JSON is reported once and
 --- treated as absent — a broken config file must not stop you opening the

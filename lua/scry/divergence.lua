@@ -98,7 +98,8 @@ function M.to_quickfix()
     vim.notify("[scry] open the glass first (:Scry)", vim.log.levels.WARN)
     return
   end
-  local map_ = require("scry.map").parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false))
+  local mapmod = require("scry.map")
+  local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), mapmod.kinds_for(state.root))
   local files, total = M.unclaimed(state.root, map_, require("scry.project").resolve(state.root))
   if #files == 0 then
     vim.notify(("[scry] every one of %d files is claimed by a feature"):format(total))

@@ -32,7 +32,16 @@ for _, path in ipairs(UNCLAIMED) do
   H.ok(worklist:find(path, 1, true) ~= nil, "the worklist names " .. path)
 end
 H.ok(built.intent:find("feature <a statement", 1, true) ~= nil, "the grammar goes out")
-H.ok(built.intent:find("path/to/file.lua", 1, true) ~= nil, "including the file-level contains form")
+-- THE VOCABULARY IS IN THE PROMPT, and it is closed. Asked for "the files",
+-- a model returns a list of files: the first real draft came back with
+-- eighty-six paths, which is the implementation wearing a product's clothes
+-- one rung up from the ninety-seven functions. Asked for the kinds this
+-- product HAS, it names routes and commands.
+H.ok(built.intent:find("<kind> <name>", 1, true) ~= nil, "the member shape goes out")
+H.ok(built.intent:find("TYPED OBJECT", 1, true) ~= nil, "and what a member is")
+local typed = recover.build(m, UNCLAIMED, { route = true, command = true, module = true, def = true })
+H.ok(typed.intent:find("command, def, module, route", 1, true) ~= nil, "the kinds in force are listed")
+H.ok(typed.intent:find("PRODUCT before", 1, true) ~= nil, "product kinds before code kinds")
 
 -- Altitude is the whole reason this pass can be useful rather than noise: a
 -- machine left to itself drafts subfunctions, which is the failure the
@@ -40,7 +49,7 @@ H.ok(built.intent:find("path/to/file.lua", 1, true) ~= nil, "including the file-
 H.ok(built.intent:find("one sitting", 1, true) ~= nil, "the sea-level test goes out")
 H.ok(built.intent:find("the auth system", 1, true) ~= nil, "with the grouping it must not produce")
 H.ok(built.intent:find("validate the token", 1, true) ~= nil, "and the subfunction it must not produce")
-H.ok(built.intent:find("EXISTS right now", 1, true) ~= nil, "claims must describe what is there")
+H.ok(built.intent:find("what is THERE", 1, true) ~= nil, "claims must describe what is there")
 
 -- A drafting pass must not write prohibitions. One lands outside the repo,
 -- unversioned, and narrows every future cascade; one nobody read is worse
