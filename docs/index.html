@@ -1125,12 +1125,34 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     resizeT = setTimeout(size, 150);
   });
 
+  // Bounded: the pointer can produce drops faster than eight a frame drains
+  // them, and a queue that only grows would spend a long session delivering
+  // ripples for movements you made minutes ago.
   var drops = [];
-  function drop(x, y, amp) { drops.push([x, y, amp]); }
+  function drop(x, y, amp) { if (drops.length < 64) drops.push([x, y, amp]); }
 
-  // rain, and the first few drops so the surface is alive immediately
+  // the first few drops, so the surface is alive immediately
   for (var s0 = 0; s0 < 6; s0++) drop(Math.random(), Math.random(), 0.34);
-  var lastRain = 0;
+
+  // RAIN — and it is what keeps this water.
+  //
+  // The sim damps hard: v *= 0.984 twice a frame is about 86% of the wave
+  // energy gone within a second and effectively all of it within three. So
+  // without something touching the surface, the field goes flat and the only
+  // motion left is the draw shader's procedural swell — a fixed sum of five
+  // cosines, which reads as a regular shimmer rather than as water. Fluid at
+  // first, then not, unless you happen to be moving the pointer.
+  //
+  // Small enough that no single drop announces itself, irregular enough that
+  // it never reads as a metronome, and often enough that ripples are always
+  // crossing something.
+  var calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var nextRain = 0;
+  function rain(ts) {
+    if (calm || ts < nextRain) return;
+    nextRain = ts + 380 + Math.random() * 900;
+    drop(Math.random(), Math.random(), 0.05 + Math.random() * 0.07);
+  }
 
   // the pointer is a thing trailing through the water
   var px = -1, py = -1;
@@ -1174,15 +1196,19 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     { fx: 0.016, fy: 0.011, px: 2.2, py: 0.6 }
   ];
 
+  // Reused rather than reallocated: two typed arrays a frame is sixty a
+  // second of garbage for values that are overwritten immediately.
+  var lights = new Float32Array(6);
+  var flat = new Float32Array(24);
+
   function stepAndDraw(ts) {
     var wt = ts * 0.001;
-    var lights = new Float32Array(6);
     for (var c = 0; c < LIGHTS.length; c++) {
       lights[c * 2] = 0.5 + 0.42 * Math.sin(wt * LIGHTS[c].fx * 6.283 + LIGHTS[c].px);
       lights[c * 2 + 1] = 0.5 + 0.40 * Math.sin(wt * LIGHTS[c].fy * 6.283 + LIGHTS[c].py);
     }
     var batch = drops.splice(0, 8);
-    var flat = new Float32Array(24);
+    flat.fill(0);
     for (var i = 0; i < batch.length; i++) {
       flat[i * 3] = batch[i][0]; flat[i * 3 + 1] = batch[i][1]; flat[i * 3 + 2] = batch[i][2];
     }
@@ -1225,6 +1251,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
   function frame(ts) {
     if (!running || !fields) return;
+    rain(ts);
     stepAndDraw(ts);
     requestAnimationFrame(frame);
   }
