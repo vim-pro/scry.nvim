@@ -213,7 +213,7 @@ end
 -- a request fails, or when you say so. The no-progress rule is the one that
 -- matters: without it a file the model declines to describe is asked about
 -- forever.
-local pass = { active = false, batches = 0, claims = 0 }
+local pass = { active = false, batches = 0, claims = 0, unclaimed = nil }
 
 --- Stop the pass after the batch in flight.
 ---
@@ -399,6 +399,19 @@ function M.draft(root, buf, map_, unclaimed)
       -- one is issued from what is undescribed NOW — recomputed from the
       -- buffer rather than sliced off the old list, because the draft just
       -- claimed files and may well have claimed some outside its batch.
+      --
+      -- PROGRESS IS FILES DESCRIBED, NOT CLAIMS WRITTEN. This counted new
+      -- claim ids, and a claim's id carries its feature name — so writing a
+      -- second feature about a file already described produced a brand new
+      -- id and read as progress. Paired with a kind that located nothing
+      -- (see map.claim_path), that made the pass unable to finish: the same
+      -- eleven pages came back undescribed every round, and the drafter,
+      -- asked not to repeat existing feature NAMES, obliged by rewording.
+      -- It ran to 301 features over 60 targets before it was stopped by
+      -- hand.
+      --
+      -- The worklist is the only number that has to reach zero, so it is
+      -- the one the guard watches.
       if pass.active then
         if #drafted == 0 then
           pass.active = false
@@ -428,7 +441,7 @@ end
 ---@param begin boolean? Start a pass, rather than continue one.
 function M.next_batch(root, buf, begin)
   if begin then
-    pass.active, pass.batches, pass.claims = true, 0, 0
+    pass.active, pass.batches, pass.claims, pass.unclaimed = true, 0, 0, nil
   end
   if not (pass.active and vim.api.nvim_buf_is_valid(buf)) then
     pass.active = false
@@ -451,6 +464,25 @@ function M.next_batch(root, buf, begin)
     end
     return
   end
+  -- THE WORKLIST HAS TO SHRINK. A batch that leaves as many files
+  -- undescribed as it found them described nothing, whatever it wrote — and
+  -- writing is what the old guard measured, which is how a pass reached 301
+  -- features while eleven pages stayed on the list the whole time.
+  if pass.unclaimed and #unclaimed >= pass.unclaimed then
+    pass.active = false
+    vim.notify(
+      ("[scry] draft pass ended: %d file(s) still undescribed after a batch that changed nothing — "):format(
+        #unclaimed
+      ) .. ("read what it wrote, then :ScryDraft again (%d claims over %d batches)"):format(
+        pass.claims,
+        pass.batches
+      ),
+      vim.log.levels.WARN
+    )
+    return
+  end
+  pass.unclaimed = #unclaimed
+
   if pass.batches == 0 then
     vim.notify(("[scry] scrying %d undescribed file(s) of %d"):format(#unclaimed, total))
   end

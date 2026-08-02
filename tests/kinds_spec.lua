@@ -121,4 +121,48 @@ H.eq(#kinds.examples(proj, { grep = "x{name}" }, 6), 0, "a grep-probed kind has 
 -- file it came from. That is the property the draft depends on.
 H.eq(kinds.expand("src/pages/api/{name}.ts", found[1], "none"), "src/pages/api/compile.ts", "discovery and expansion agree")
 
+-- 8) A PATH-PROBED KIND LOCATES ITS FILE. This returned nil, on the reasoning
+-- that a declared kind is found by evidence rather than named outright — but
+-- the probe is a path template and the member's name is what fills it, which
+-- is the same substitution `examples` above runs in reverse.
+--
+-- Measured cost of the nil, on a real drafting pass: `route c/[slug]` located
+-- nothing, so src/pages/c/[slug].astro was never counted as described, so it
+-- stayed on the undescribed worklist, so every batch was asked about it
+-- again. The drafter — told not to reuse existing feature NAMES — reworded
+-- instead, and since a claim's id carries its feature name, each rewording
+-- read as progress. It reached 301 features over 60 distinct targets, one
+-- route claimed by 73 of them, and reported 24 files unclaimed while eleven
+-- of those were claimed dozens of times over.
+local located = kinds.all({ kinds = { route = { path = "src/pages/{name}.astro" } } })
+H.eq(
+  mapmod.claim_path({ kind = "route", target = "c/[slug]" }, located),
+  "src/pages/c/[slug].astro",
+  "a route names the page it is"
+)
+H.eq(mapmod.claim_path({ kind = "module", target = "src/lib/db.js" }, located), "src/lib/db.js", "module is unchanged")
+H.eq(mapmod.claim_path({ kind = "def", target = "lua/a.lua:sym" }, located), "lua/a.lua", "and so is def")
+
+-- Without the kinds in force there is nothing to expand against, so the old
+-- answer stands rather than a guess.
+H.eq(mapmod.claim_path({ kind = "route", target = "c/[slug]" }), nil, "no kinds, no location")
+
+-- A GREP-PROBED KIND STILL LOCATES NOTHING. A pattern can match anywhere; it
+-- is not a place, and pretending otherwise would claim files at random.
+local grepped = kinds.all({ kinds = { command = { grep = 'command%("{name}"' } } })
+H.eq(mapmod.claim_path({ kind = "command", target = "ScryDraft" }, grepped), nil, "a pattern is not a path")
+H.eq(mapmod.claim_path({ kind = "never", target = "print%(" }, located), nil, "nor is a prohibition")
+
+-- And the feature's footprint follows, which is what divergence counts.
+local withroutes = mapmod.parse({
+  "feature someone can open a checklist",
+  "  route c/[slug]",
+  "  module src/lib/db.js",
+}, located)
+local fp = mapmod.footprint(withroutes.features[1], located)
+table.sort(fp)
+H.eq(#fp, 2, "both members are places")
+H.eq(fp[1], "src/lib/db.js", "the module")
+H.eq(fp[2], "src/pages/c/[slug].astro", "and the page the route is")
+
 H.done("kinds_spec PASS")

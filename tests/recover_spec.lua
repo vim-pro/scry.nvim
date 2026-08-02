@@ -278,6 +278,30 @@ H.eq(recover.passing(), false, "a failure ends the pass")
 -- that dies five minutes in has cost the wait and given nothing back.
 H.ok(casts[1].opts.timeout_ms and casts[1].opts.timeout_ms > 300000, "a drafting batch gets longer than the default")
 
+-- A BATCH THAT DESCRIBES NO NEW FILE ENDS THE PASS, whatever it wrote.
+-- The guard used to count new claim ids, and a claim's id carries its
+-- feature name — so a second feature about an already-described file
+-- produced a fresh id and read as progress. On a real run that made the
+-- pass unable to finish: eleven pages stayed on the worklist every round
+-- while the drafter reworded around them, to 301 features over 60 targets.
+casts = {}
+local sbuf2 = vim.api.nvim_create_buf(false, true)
+recover.next_batch(proj, sbuf2, true)
+H.eq(recover.passing(), true, "a pass opens")
+-- The model writes a feature, but one that claims nothing on the worklist —
+-- the shape that used to loop forever.
+vim.api.nvim_buf_set_lines(sbuf2, 0, -1, false, {
+  "feature a feature about nothing on disk",
+  "  module src/nowhere.lua",
+})
+casts[1].opts.on_done(nil)
+H.ok(H.wait(function()
+  return not recover.passing()
+end, 5000), "and ends when the worklist did not shrink")
+local n2 = #casts
+vim.wait(200)
+H.eq(#casts, n2, "with no further batch")
+
 -- A pass that dies partway has still written every batch before it, and
 -- those are kept — so what it says has to be "resume", not "failed".
 casts = {}

@@ -37,7 +37,7 @@ function M.target(claim, verdict, root)
   end
 
   -- 2) The claim's own path, if it names one.
-  local path = require("scry.map").claim_path(claim)
+  local path = require("scry.map").claim_path(claim, require("scry.map").kinds_for(root))
   if not path then
     return nil
   end

@@ -86,7 +86,9 @@ function M.run(map_, opts, cb)
   local kindset = require("scry.map").kinds_for(opts.root)
   local scope = {}
   for _, feature in ipairs(map_.features) do
-    scope[feature.name] = mapmod.footprint(feature)
+    -- With the kinds in force, so a never-claim's scope covers the pages
+    -- and endpoints the feature is made of and not just its .lua files.
+    scope[feature.name] = mapmod.footprint(feature, kindset)
   end
 
   for _, claim in ipairs(claims) do

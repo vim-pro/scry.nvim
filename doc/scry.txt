@@ -374,10 +374,22 @@ not.
                                                              *scry-footprint*
 FOOTPRINT — derived, never declared ~
 
-A feature's scope is the union of files its located claims name: `contains`
-(both forms) and `exercises` contribute their paths, `calls` carries a hint
-rather than a path, and `never` is a pattern. Nothing declares it, so it
-cannot drift from the claims it describes.
+A feature's scope is the union of files its located claims name. `def`,
+`module` and `exercises` contribute their paths. A declared kind probed by
+`path` contributes the file its name expands to — `route c/[slug]` under
+`src/pages/{name}.astro` is `src/pages/c/[slug].astro`, the same
+substitution read backwards to discover names in the first place. A kind
+probed by `grep` contributes nothing, because a pattern can match anywhere
+and is not a place; neither is `calls`, which carries a hint, nor `never`.
+Nothing declares a footprint, so it cannot drift from the claims it
+describes.
+
+A path-probed kind used to contribute nothing either, and the cost was not
+cosmetic: divergence never counted those pages as described, so they stayed
+on the undescribed worklist and |:ScryDraft| was asked about them on every
+pass. Since a claim's identity includes its feature name, each rewording
+looked like new work. One run reached 301 features over 60 files before it
+was stopped by hand.
 
 An empty footprint is meaningful, not a bug. A feature that locates nothing
 yet has nowhere for a prohibition to look, and `never` renders

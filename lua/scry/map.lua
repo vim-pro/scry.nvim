@@ -177,7 +177,7 @@ end
 --- makes is correspondingly weak, and the verdict says which one it is.
 ---@param claim scry.Claim
 ---@return string?
-function M.claim_path(claim)
+function M.claim_path(claim, kinds)
   if claim.kind == "def" then
     return claim.target:match("^(.-):[%w_.]+$") or claim.target
   elseif claim.kind == "module" then
@@ -185,9 +185,26 @@ function M.claim_path(claim)
   elseif claim.kind == "exercises" then
     return claim.target:match("^([^:]+):") or claim.target
   end
-  -- A declared kind locates itself only once something has found it, so its
-  -- path comes from evidence rather than from the name. `never` is a
-  -- pattern and `calls` a hint; neither is a place.
+  -- A PATH-PROBED DECLARED KIND NAMES ITS FILE, and this used to say it
+  -- could not: `route c/[slug]` located nothing, so divergence never counted
+  -- src/pages/c/[slug].astro as described.
+  --
+  -- What that cost, on a real run: the page stayed in the undescribed
+  -- worklist, so the next batch was asked about it again, so the drafter
+  -- wrote another feature about it — and a claim's id carries its feature
+  -- name, so the pass read each rewording as progress and never converged.
+  -- 301 features over 60 targets, one route claimed by 73 of them, and a
+  -- header reporting 24 files unclaimed while eleven of them were claimed
+  -- dozens of times over.
+  --
+  -- The probe is a path template and the name is what fills it — the same
+  -- substitution kinds.examples runs in reverse to discover names in the
+  -- first place. A grep-probed kind still locates nothing, because a pattern
+  -- is not a place; so do `never` and `calls`.
+  local spec = kinds and kinds[claim.kind]
+  if spec and spec.path then
+    return require("scry.kinds").expand(spec.path, claim.target, "none")
+  end
   return nil
 end
 
@@ -207,10 +224,10 @@ end
 --- rather than searching the whole project.
 ---@param feature scry.Feature
 ---@return string[]
-function M.footprint(feature)
+function M.footprint(feature, kinds)
   local out, seen = {}, {}
   for _, claim in ipairs(feature.claims) do
-    local path = M.claim_path(claim)
+    local path = M.claim_path(claim, kinds)
     if path and not seen[path] then
       seen[path] = true
       out[#out + 1] = path

@@ -73,7 +73,7 @@ function M.unclaimed(root, map_, config)
   local reach = require("scry.reach")
   local claimed = {}
   for _, feature in ipairs(map_.features) do
-    for _, path in ipairs(mapmod.footprint(feature)) do
+    for _, path in ipairs(mapmod.footprint(feature, require("scry.kinds").all(config))) do
       claimed[path] = true
     end
     -- ...and whatever this feature's entry points genuinely REACH, when

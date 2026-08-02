@@ -15,8 +15,10 @@ local M = {}
 --- other's result.
 ---@param map_ scry.Map
 ---@param only_feature string? Restrict to one feature.
+---@param kinds table? The kinds in force, so a feature's pages and endpoints
+---       count toward the scope its specs run against.
 ---@return { spec: string, globs: string[] }[]
-function M.specs(map_, only_feature)
+function M.specs(map_, only_feature, kinds)
   local mapmod = require("scry.map")
   local out, index = {}, {}
   for _, claim in ipairs(map_.claims) do
@@ -29,7 +31,7 @@ function M.specs(map_, only_feature)
         out[#out + 1] = entry
       end
       local feature = mapmod.feature(map_, claim.feature)
-      for _, g in ipairs(feature and mapmod.footprint(feature) or {}) do
+      for _, g in ipairs(feature and mapmod.footprint(feature, kinds) or {}) do
         if not entry._seen[g] then
           entry._seen[g] = true
           entry.globs[#entry.globs + 1] = g
@@ -89,7 +91,7 @@ function M.start(opts)
   local config = require("scry.project").resolve(state.root)
   local mapmod = require("scry.map")
   local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), mapmod.kinds_for(state.root))
-  local specs = M.specs(map_, opts.feature)
+  local specs = M.specs(map_, opts.feature, require("scry.map").kinds_for(opts.root))
   if #specs == 0 then
     vim.notify("[scry] no exercises claims to run")
     return
