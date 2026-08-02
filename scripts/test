@@ -3,6 +3,26 @@
 set -u
 root="$(cd "$(dirname "$0")/.." && pwd)"
 pattern="${1:-}"
+
+# SPECS WRITE REAL STATE. They index projects, record runs, cache reach —
+# all of it through stdpath(), which is the user's own cache and state. The
+# fixtures are temp directories that vanish, so what is left behind is
+# unreachable forever: this suite had put 21M of orphaned sqlite in one
+# cache and 1269 files in one state directory, and nothing would ever have
+# collected them.
+#
+# Point the XDG surface at a scratch dir for the run instead. From inside
+# nvim these ARE stdpath(), so the specs still exercise the real code paths
+# — they just stop billing the user for it.
+#
+# NOT XDG_DATA_HOME. stdpath("data") is where provisioned engines live, and
+# redirecting it would hide them, which does not fail: the end-to-end specs
+# would skip themselves and the suite would still go green.
+sandbox="$(mktemp -d)"
+trap 'rm -rf "$sandbox"' EXIT INT TERM
+XDG_CACHE_HOME="$sandbox/cache"
+XDG_STATE_HOME="$sandbox/state"
+export XDG_CACHE_HOME XDG_STATE_HOME
 fail=0
 for spec in "$root"/tests/*_spec.lua; do
   case "$spec" in *"$pattern"*) ;; *) continue ;; esac
