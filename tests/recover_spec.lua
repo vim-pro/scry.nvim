@@ -272,6 +272,32 @@ H.eq(recover.passing(), true, "running again")
 casts[1].opts.on_done("canceled")
 H.eq(recover.passing(), false, "a failure ends the pass")
 
+-- AND A BATCH IS BOUNDED IN TIME by what the caller knows, not by a global
+-- default. Twelve files came back in 51s, 55s, 84s, 89s and 265s across
+-- real runs — conjurer's 300s default sits inside that spread, and a pass
+-- that dies five minutes in has cost the wait and given nothing back.
+H.ok(casts[1].opts.timeout_ms and casts[1].opts.timeout_ms > 300000, "a drafting batch gets longer than the default")
+
+-- A pass that dies partway has still written every batch before it, and
+-- those are kept — so what it says has to be "resume", not "failed".
+casts = {}
+local rbuf = vim.api.nvim_create_buf(false, true)
+recover.next_batch(proj, rbuf, true)
+vim.api.nvim_buf_set_lines(rbuf, 0, -1, false, { "feature x", "  module src/mod01.lua" })
+casts[1].opts.on_done(nil)
+H.ok(H.wait(function()
+  return #casts >= 2
+end, 5000), "a second batch went out")
+local said
+local real_notify = vim.notify
+vim.notify = function(msg)
+  said = msg
+end
+casts[2].opts.on_done("timed out")
+vim.notify = real_notify
+H.ok(said and said:find("resumes", 1, true) ~= nil, "the failure says how to pick it up: " .. tostring(said))
+H.ok(said:find("kept", 1, true) ~= nil, "and that the earlier batches survived")
+
 -- :ScryDraftStop leaves the request in flight alone — it is already paid
 -- for, and its result is a draft worth keeping.
 casts = {}

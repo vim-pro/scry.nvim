@@ -338,6 +338,13 @@ function M.draft(root, buf, map_, unclaimed)
     -- it: from anywhere else the model got nine paths that resolve to
     -- nothing and handed the placeholder straight back.
     cwd = root,
+    -- MEASURED, not guessed. Twelve files came back in 51s, 55s, 84s, 89s
+    -- and 265s across real runs — the spread is the model's, not the
+    -- batch's, and conjurer's 300s default sits inside it. A pass that dies
+    -- five minutes in has cost you the wait and given you nothing, so the
+    -- ceiling here is loose enough that only a genuinely stuck request
+    -- reaches it.
+    timeout_ms = 900000,
     -- The status line shows the intent's first line unless told otherwise,
     -- and the drafting request opens by telling the model to discard the
     -- placeholder — which read, on screen, as scry conjuring a sentence
@@ -358,7 +365,18 @@ function M.draft(root, buf, map_, unclaimed)
         -- which is what makes :ConjureCancel stop the whole thing and not
         -- just the batch you were looking at.
         pass.active = false
-        vim.notify("[scry] draft failed: " .. err .. " — `u` clears the block", vim.log.levels.WARN)
+        -- WHAT YOU STILL HAVE. A pass that dies on its fourth batch has
+        -- already written three batches' worth of features, and they are
+        -- kept — so the next :ScryDraft resumes from what is undescribed
+        -- NOW rather than starting the project over. Saying only "failed"
+        -- reads as losing the lot.
+        local kept = pass.claims > 0
+          and (" — %d claim(s) from %d earlier batch(es) are kept; :ScryDraft resumes from there"):format(
+            pass.claims,
+            pass.batches - 1
+          )
+          or " — `u` clears the block"
+        vim.notify("[scry] draft failed: " .. err .. kept, vim.log.levels.WARN)
         return
       end
       if not vim.api.nvim_buf_is_valid(buf) then
