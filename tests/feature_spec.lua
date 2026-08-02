@@ -60,12 +60,15 @@ H.eq(#map.footprint(m.features[3]), 0, "a feature with no located claims has no 
 
 -- 3) THE ROLLUP. Nothing here is authored; a feature's state is whatever its
 -- evidence currently says.
-local function report_of(pairs_)
+local function report_of(pairs_, fidelity)
   local verdicts = {}
   for target, status in pairs(pairs_) do
     for _, c in ipairs(m.claims) do
       if c.target == target then
-        verdicts[map.claim_id(c)] = { status = status, fidelity = "ts-def", label = status }
+        -- An exercised claim is the only one that can carry `run`, which is
+        -- the only rung that means something was EXECUTED.
+        local f = fidelity or (c.kind == "exercises" and "run" or "ts-def")
+        verdicts[map.claim_id(c)] = { status = status, fidelity = f, label = status }
       end
     end
   end
@@ -79,9 +82,59 @@ local all_backed = report_of({
   ["token.*log"] = "clean",
   ["tests/reset_spec.lua:the link burns on use"] = "backed",
 })
+-- A FEATURE IS ONLY AS STRONG AS ITS WEAKEST CLAIM, and `done` costs a RUN.
+--
+-- This rolled everything that held up to `✓ done`, whatever held. Measured on
+-- a real map: three members, each a `module <path>` claim asserting a file is
+-- on disk — all three files predating the capability by months — and the
+-- feature read `✓ done`. A reader asked whether that meant the feature
+-- already existed. It did not: three files existed, and nothing had looked
+-- inside any of them.
 local v = feat.verdict(m.features[1], all_backed)
-H.eq(v.state, "done", "every claim holding makes the feature done")
+H.eq(v.state, "done", "every claim holding AND a spec that ran makes it done")
 H.eq(v.label, "✓ done", "and says so plainly")
+H.eq(v.rung, "run", "because something under it was actually executed")
+
+-- A RUN PROMOTES; IT IS NOT AVERAGED IN. "Was any of this executed" and "how
+-- well is the rest established" are the two axes the map is built on, and
+-- they do not combine into a single minimum: taking one would mean a feature
+-- could never be `done` unless every member were itself an execution. Here
+-- four structural claims sit beside one passing spec, and the spec is the
+-- point.
+H.eq(#m.features[1].claims, 5, "four structural claims and one exercised one")
+
+-- Take the run away and the same five holding claims are structure, not
+-- proof. The word has to change with them.
+local structural = report_of({
+  ["lua/auth/reset.lua:request_reset"] = "backed",
+  ["lua/auth/reset.lua:consume_link"] = "backed",
+  ["mailer::send"] = "backed",
+  ["token.*log"] = "clean",
+  ["tests/reset_spec.lua:the link burns on use"] = "backed",
+}, "ts-def")
+local st = feat.verdict(m.features[1], structural)
+H.eq(st.state, "in_place", "nothing executed: in place, not done")
+H.ok(st.label:find("defined", 1, true) ~= nil, "and the label says which rung it got: " .. st.label)
+
+-- THE WEAKEST CLAIM SETS THE WORD. One member asserting only that a file is
+-- on disk drags the whole feature down to that, because a feature cannot be
+-- better established than its least-established part.
+local weak = report_of({
+  ["lua/auth/reset.lua:request_reset"] = "backed",
+  ["lua/auth/reset.lua:consume_link"] = "backed",
+  ["mailer::send"] = "backed",
+  ["token.*log"] = "clean",
+  ["tests/reset_spec.lua:the link burns on use"] = "backed",
+}, "ts-def")
+for _, c in ipairs(m.claims) do
+  if c.target == "mailer::send" then
+    weak.verdicts[map.claim_id(c)].fidelity = "file"
+  end
+end
+local wv = feat.verdict(m.features[1], weak)
+H.eq(wv.rung, "file", "one file-existence claim is the weakest link")
+H.ok(wv.label:find("files exist", 1, true) ~= nil, "and the feature says so: " .. wv.label)
+H.eq(wv.label:find("done"), nil, "never `done`, which is the overclaim this exists to stop")
 
 -- a clean prohibition counts as holding — it is evidence, and the rollup
 -- must not treat "nothing matched" as an unanswered question
@@ -174,13 +227,13 @@ local all_backed = { at = os.time(), verdicts = {} }
 for _, c in ipairs(drafted.claims) do
   all_backed.verdicts[map.claim_id(c)] = { status = "backed", fidelity = "ts-def", label = "✓ defined" }
 end
-H.eq(feat.verdict(drafted.features[1], all_backed).state, "done", "every claim holding is done")
+H.eq(feat.verdict(drafted.features[1], all_backed).state, "in_place", "two definitions holding is `in place`")
 -- A root used to switch on the engagement axis. It is accepted and ignored,
 -- so no caller has to change shape and none of them can reintroduce it.
 local anywhere = vim.fn.tempname()
 vim.fn.mkdir(anywhere, "p")
-H.eq(feat.verdict(drafted.features[1], all_backed, anywhere).state, "done", "and a root changes nothing")
-H.eq(feat.tally(drafted, all_backed, anywhere).done, 1, "the header counts it as done")
+H.eq(feat.verdict(drafted.features[1], all_backed, anywhere).state, "in_place", "and a root changes nothing")
+H.eq(feat.tally(drafted, all_backed, anywhere).in_place, 1, "the header counts it as in place")
 H.eq(feat.tally(drafted, all_backed, anywhere).unread, nil, "and has no count for a state that is gone")
 H.eq(feat.engaged, nil, "the engagement test is gone, not merely unused")
 

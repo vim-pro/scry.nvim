@@ -43,7 +43,8 @@ local RUNG = {
 
 -- What a feature's rolled-up state means for you.
 local FEATURE = {
-  done = "every claim under this holds, against the files on disk",
+  done = "every claim holds AND something was run to prove it. the only state that means `works`",
+  in_place = "every claim holds and NOTHING RAN. the structure is there; whether it works is unproven",
   broken = "something that used to hold does not. the most urgent row on the page",
   partial = "some of it holds. the rest is the work",
   absent = "nothing holds yet. a capability you have described and not built — this is on purpose",

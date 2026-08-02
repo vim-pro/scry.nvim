@@ -123,20 +123,43 @@ claims no engine ever answered. See |scry-debt|.
 Each feature carries the state its own evidence adds up to — nothing here is
 authored:
 
-    ✓ done             every claim holds, and you have read this
+    ✓ done             every claim holds AND something was run to prove it
+    ✓ 4 files exist    every claim holds and NOTHING RAN — the rung it got
     ✗ broken (1 of 5)  a claim regressed; outranks everything else
     ◐ 2 of 5           real progress: some evidence holds
     ✗ not yet          nothing holds — the state you create on purpose
     – unchecked (n)    nothing has answered yet; NOT progress
     – no evidence yet  named, with nothing checkable under it
 
-THERE IS ONE AXIS HERE, AND IT IS EVIDENCE. There used to be a second: an
-`unread` state, meaning every claim held and nobody had recorded reading the
-description. It came with a per-machine trail, an `∅` marker on every row, and
-a word on the line you scan — and none of it said anything about your code.
-`– unread 4 of 4`, beside four members each already showing its own verdict,
-taught a reader nothing they could act on. It was the last of the ratification
-design, and it is gone.
+A FEATURE IS ONLY AS STRONG AS ITS WEAKEST CLAIM, and `done` costs a RUN.
+
+The rollup used to turn everything that held into `✓ done`, whatever it was
+that held. Measured on a real map: three members, each a `module <path>`
+claim asserting a file is on disk — all three files predating the capability
+by months — and the feature read `✓ done`. Asked whether that meant the
+feature already existed, the honest answer was no: three files exist, and
+nothing has looked inside any of them.
+
+So the label carries the rung the engine actually reached:
+
+    ✓ done             something was executed and passed
+    ✓ 4 defined        definitions by those names exist
+    ✓ 4 referenced     those names appear in the feature's files
+    ✓ 4 files exist    the files are on disk, and that is all
+
+A RUN PROMOTES; IT IS NOT AVERAGED IN. "Was any of this executed" and "how
+well is the rest established" are the two axes (|scry-exercised|) and they do
+not combine into one minimum — taking one would mean a feature could never be
+`done` unless every member were itself an execution. With nothing executed,
+the FLOOR is what you have: a feature cannot be better established than its
+least-established part, so one `module <path>` member drags the whole line
+down to `files exist`. That is the point.
+
+THERE IS ONE OTHER AXIS, AND IT IS GONE. `unread` meant every claim held and
+nobody had recorded reading the description. It came with a per-machine
+trail, an `∅` marker on every row, and a word on the line you scan — and none
+of it said anything about your code. It was the last of the ratification
+design.
 
 ==============================================================================
 3. THE MAP                                                          *scry-map*
@@ -1406,7 +1429,14 @@ FEATURE STATES ~
 The column a reader scans first, and there are seven states rather than
 four, so they get their own groups.
                                                                 *hl-ScryDone*
-ScryDone                ✓ done. Default: DiagnosticOk.
+ScryDone                ✓ done — every claim holds AND something ran.
+                        Default: DiagnosticOk.
+
+                                                             *hl-ScryInPlace*
+ScryInPlace             Every claim holds and nothing ran. Default:
+                        DiagnosticOk. Its own group because "the structure is
+                        there" and "a spec passed" are different facts, and a
+                        colorscheme should be able to say so.
                                                               *hl-ScryBroken*
 ScryBroken              ✗ broken. Default: DiagnosticError.
                                                             *hl-ScryBuilding*

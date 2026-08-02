@@ -14,7 +14,10 @@ local M = {}
 ---  verdict at all. NOT a pass — the fourth column exists so this can never
 ---  be inferred by subtraction.
 ---@field features integer
----@field done integer      features whose every claim holds.
+---@field done integer      features whose every claim holds AND something was
+---  executed to prove it — the only rung that means "works".
+---@field in_place integer  features whose every claim holds and nothing ran:
+---  the structure is there. See scry.feature.
 ---@field building integer  features with some evidence, none broken.
 ---@field broken integer    features with a violated or failing claim.
 ---@field todo integer      features with no evidence holding yet.
@@ -46,6 +49,7 @@ function M.count(map_, report, root)
     unchecked = 0,
     features = #map_.features,
     done = counts.done,
+    in_place = counts.in_place,
     building = counts.partial,
     broken = counts.broken,
     todo = counts.absent + counts.unevidenced,
@@ -147,7 +151,7 @@ function M.parts(d, at)
   -- features · 14 done` says the same number twice; `14 features, all done`
   -- says it once and reads as the sentence it is. The folded scan follows
   -- this rule too — see glass.foldtext.
-  local states = { { d.done, "done", "ScryDone" },
+  local states = { { d.done, "done", "ScryDone" }, { d.in_place, "in place", "ScryInPlace" },
     { d.building, "building", "ScryBuilding" }, { d.broken, "broken", "ScryBroken" },
     { d.todo, "to do", "ScryTodo" }, { d.unknown, "unknown", "ScryUnchecked" } }
   local only, folded = nil, false
@@ -163,6 +167,7 @@ function M.parts(d, at)
 
   if not folded then
     add(d.done, "done", "ScryDone")
+    add(d.in_place, "in place", "ScryInPlace")
     -- Immediately after done, and before anything else: this is the number
     -- that keeps "N done" from being read as "N finished".
     add(d.building, "building", "ScryBuilding")

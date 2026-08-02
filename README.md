@@ -243,10 +243,12 @@ full. In short:
   there for files that define nothing nameable, so an unclaimed file always
   has a remedy. It renders `✓ present (file)` — a map of
   bare paths is a list of files, which is what features exist to prevent.
-- **A feature's state is only as good as its claims.** `✓ done` means every
-  claim under it holds, not that the feature works. Four claims that each say
-  "the file is on disk" roll up to `✓ done` and nothing has looked inside any
-  of them — press `g?` in the glass and it will tell you so.
+- **A feature is only as strong as its weakest claim, and `done` costs a
+  run.** Four claims that each say "the file is on disk" roll up to
+  `✓ 4 files exist`, never `✓ done` — a feature cannot be better established
+  than its least-established part. `✓ done` requires an `exercises` claim
+  that actually ran. Press `g?` in the glass and it will say which rung you
+  got and what it does not assert.
 
 ## Development
 

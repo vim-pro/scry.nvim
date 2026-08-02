@@ -66,6 +66,11 @@ local HL = {
   -- feature states, which get their own groups because a reader scans this
   -- column first and the seven states are not four
   ScryDone = "DiagnosticOk",
+  -- Everything a feature's claims assert HOLDS, and none of it was executed.
+  -- Its own group rather than ScryDone's, because "the structure is there"
+  -- and "a spec ran and passed" are different facts and a colorscheme should
+  -- be able to tell them apart.
+  ScryInPlace = "DiagnosticOk",
   ScryBroken = "DiagnosticError",
   ScryBuilding = "DiagnosticWarn",
   ScryUnread = "DiagnosticInfo",
@@ -90,6 +95,7 @@ end
 -- reader spends most of their time in.
 local FEATURE_HL = {
   done = "ScryDone",
+  in_place = "ScryInPlace",
   broken = "ScryBroken",
   partial = "ScryBuilding",
   absent = "ScryTodo",
