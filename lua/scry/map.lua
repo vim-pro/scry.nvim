@@ -14,7 +14,7 @@
 -- a user of this system can accomplish, named the way they would name it.
 -- His tests — one person, one place, one sitting; can you go to lunch when
 -- it is done; does your standing depend on how many you do — separate it
--- from the two neighbouring altitudes that ruin a map. Above are summaries
+-- from the two neighboring altitudes that ruin a map. Above are summaries
 -- ("the auth system"), which are groupings, not work. Below are
 -- subfunctions ("validate the token"), and those are exactly what claims
 -- already are. Cockburn's warning is the one this grammar is built to

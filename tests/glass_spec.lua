@@ -96,13 +96,18 @@ local function row_of(needle)
   end
 end
 H.ok(virt[row_of("create_session")]:find("✓ defined", 1, true) ~= nil, "backed verdict rendered")
--- The untouched marker is the glyph alone. It used to read "∅ untouched",
--- which is twelve characters repeated down every line of a freshly drafted
--- map — the state EVERY claim starts in. As a column it is a marker you
--- scan past; as a word it was the loudest thing on a page about something
--- else. The manual carries the meaning (|scry-ownership|).
-H.ok(virt[row_of("create_session")]:find("∅", 1, true) ~= nil, "untouched marker rendered")
-H.eq(virt[row_of("create_session")]:find("untouched", 1, true), nil, "as the glyph, not the word")
+
+-- RENDER WHAT VARIES, ONE ALTITUDE DOWN. The folded map already drops a
+-- column that reads the same on every row; an EXPANDED feature did not, and
+-- that is where the repetition was worst — four members deep, every one of
+-- them saying `✓ present (file) · ∅`, the identical twenty-two characters
+-- under a header that had just said the feature was whole and unread.
+--
+-- So a marker that is true of every member of a feature is not printed on
+-- any of them. Nothing is lost: the feature's own line is what carries it.
+-- Here no claim in the fixture has been touched, so the untouched marker is
+-- exactly that kind of marker.
+H.eq(virt[row_of("create_session")]:find("∅", 1, true), nil, "a marker true of every member is on none of them")
 
 -- Verdicts line up in a column rather than trailing whatever the line says.
 -- Two claims of very different lengths must start their verdict at the same
@@ -121,17 +126,18 @@ H.eq(
 H.ok(virt[row_of("refresh_token")]:find("✗ absent", 1, true) ~= nil, "absent verdict rendered")
 H.ok(virt[row_of("logging\\.debug")]:find("VIOLATED", 1, true) ~= nil, "violation rendered")
 H.ok(virt[row_of("logging\\.debug")]:find("lua/auth.lua:9", 1, true) ~= nil, "evidence line rendered")
--- The header is NOT an extmark. It was virt_lines above line 1 and Neovim
--- never draws those — there is no room above a buffer's first line — so the
--- counts were invisible on exactly the map a new user opens first, while
--- this spec passed because the extmark existed. Existing is not drawing.
-local above = 0
+-- NOTHING VIRTUAL ABOVE LINE 1. Neovim has no room to draw there, so a mark
+-- placed above the first line exists without ever appearing — which is
+-- precisely how this buffer's header was invisible for a while, with a spec
+-- passing because the extmark existed. Existing is not drawing.
+--
+-- The breathing-room separators between features are virt_lines_above too
+-- (below), so this is about row 0 rather than about the whole buffer.
 for _, m in ipairs(vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, { details = true })) do
-  if m[4].virt_lines and m[4].virt_lines_above then
-    above = above + 1
+  if m[2] == 0 then
+    H.eq(m[4].virt_lines_above, nil, "no virtual line above line 1, where Neovim could not draw it")
   end
 end
-H.eq(above, 0, "no virtual header above line 1, where Neovim could not draw it")
 -- The glass's own winbar fits itself to the window, so what survives at a
 -- spec's window width is the features half. That it is populated at all is
 -- the property under test; debt.winbar owns which half.
@@ -166,7 +172,18 @@ end
 prov.record(work, target_claim, "authored")
 require("scry.glass").render()
 local virt2 = H.virt_by_row(buf, ns)
-H.ok(virt2[row_of("create_session")]:find("∅ untouched", 1, true) == nil, "a claim with a trail loses the marker")
+H.eq(virt2[row_of("create_session")]:find("∅", 1, true), nil, "a claim with a trail carries no marker")
+-- ...and now that ONE member of that feature has been read, the marker
+-- discriminates, so it comes back on the ones that have not. This is the
+-- same rule in the other direction: the column earns its place the moment
+-- the rows stop agreeing.
+H.ok(virt2[row_of("validate_token")]:find("∅", 1, true) ~= nil, "and its untouched neighbor gets one")
+-- The marker is the glyph alone. It used to read "∅ untouched", twelve
+-- characters repeated down every line of a freshly drafted map — the state
+-- EVERY claim starts in. As a column it is a marker you scan past; as a word
+-- it was the loudest thing on a page about something else. The manual
+-- carries the meaning (|scry-ownership|).
+H.eq(virt2[row_of("validate_token")]:find("untouched", 1, true), nil, "as the glyph, not the word")
 
 -- 5) write: split-save both files + notification
 local notified
@@ -321,6 +338,102 @@ H.eq(healthy:sub(1, 3), "   ", "and one that does not carries nothing")
 -- The mark is not also spelled out on the right: it moved, it was not copied.
 local _, glyphs = varied:gsub("◐", "")
 H.ok(glyphs <= 1, "the glyph appears once, not once per column")
+
+-- THE DEFAULT VIEW SHOWS WHAT A FEATURE IS, NOT JUST ITS NAME.
+--
+-- With one fold per feature, everything under the name was inside it, so the
+-- only closed view was a stack of bare titles — and a title is the part a
+-- reader can already guess. The description is the one piece of writing they
+-- most need, and it was the first thing hidden.
+--
+-- Two levels fix it without a mode: the name and its sentence are level 1,
+-- the members are level 2. `zM` still gives the dense scan, the default gives
+-- titles AND sentences, `zR` gives the files. Vim already had the control.
+local desc = staged({
+  "feature Read a checklist as markdown or JSON",
+  "  Every checklist is fetchable as its source markdown.",
+  "  module a.lua",
+  "  module b.lua",
+  "  module c.lua",
+  "",
+  "feature Work through a checklist",
+  "  module d.lua",
+}, function()
+  return "backed"
+end)
+H.eq(glass.foldexpr(2), "1", "the sentence saying what a feature is stays out of the members fold")
+H.eq(glass.foldexpr(3), ">2", "which the members open for themselves")
+
+-- The closed members fold is the blast radius and nothing else. The feature's
+-- own line four rows up has already printed its state, so repeating the
+-- fraction here would be the same defect one altitude down.
+local members = ""
+for _, c in ipairs(glass.foldtext(3, 5)) do
+  members = members .. c[1]
+end
+H.ok(members:find("▍", 1, true) ~= nil, "the members row carries the size")
+H.eq(members:find("%d"), nil, "and not a count the feature line already gave")
+
+-- BREATHING ROOM IS RENDERED, NOT WRITTEN. A drafting pass emits features
+-- with no blank line between them, and scry does not get to edit someone's
+-- file to add whitespace — so the separator is virtual, and only where the
+-- author has not already left one.
+local ns2 = vim.api.nvim_get_namespaces()["scry.glass"]
+local sep = {}
+for _, m in ipairs(vim.api.nvim_buf_get_extmarks(glass._state.buf, ns2, 0, -1, { details = true })) do
+  if m[4].virt_lines_above then
+    sep[m[2]] = true
+  end
+end
+H.eq(#desc.features, 2, "two features staged")
+H.eq(sep[0], nil, "no separator above the first feature, where Neovim cannot draw one")
+H.eq(sep[6], nil, "nor above one the author already spaced")
+
+local tight = staged({
+  "feature one",
+  "  module a.lua",
+  "feature two",
+  "  module b.lua",
+}, function()
+  return "backed"
+end)
+H.eq(#tight.features, 2, "two adjacent features staged")
+local tight_sep = {}
+for _, m in ipairs(vim.api.nvim_buf_get_extmarks(glass._state.buf, ns2, 0, -1, { details = true })) do
+  if m[4].virt_lines_above then
+    tight_sep[m[2]] = true
+  end
+end
+H.eq(tight_sep[2], true, "a feature the drafter left flush against the last one gets one")
+
+-- AND THE MEMBERS THEMSELVES GO QUIET WHEN THEY AGREE. Same rule, applied
+-- inside an expanded feature — which is where the repetition was worst.
+local mixed = staged({
+  "feature agreed",
+  "  module a.lua",
+  "  module b.lua",
+  "feature split",
+  "  module c.lua",
+  "  module d.lua",
+}, function(i)
+  return i == 4 and "missing" or "backed"
+end)
+H.eq(#mixed.claims, 4, "four members staged")
+local mvirt = H.virt_by_row(glass._state.buf, ns2)
+H.eq(mvirt[1], nil, "two members that agree are annotated on neither")
+H.eq(mvirt[2], nil, "not the second one either")
+H.ok(mvirt[4] and mvirt[4]:find("x", 1, true) ~= nil, "but a member that differs from its neighbor is")
+H.ok(mvirt[5] and mvirt[5]:find("x", 1, true) ~= nil, "and so is the one it differs from")
+
+-- A LONE MEMBER IS NEVER UNIFORM WITH ANYTHING, so it always says what it is.
+-- Suppressing a column of one is not removing repetition, it is removing the
+-- only copy.
+local alone = staged({ "feature solo", "  module a.lua" }, function()
+  return "backed"
+end)
+H.eq(#alone.claims, 1, "one member staged")
+local avirt = H.virt_by_row(glass._state.buf, ns2)
+H.ok(avirt[1] and avirt[1]:find("x", 1, true) ~= nil, "a feature's only member keeps its verdict")
 
 -- ]d AND [d — MOTIONS INSTEAD OF GROUPING.
 --

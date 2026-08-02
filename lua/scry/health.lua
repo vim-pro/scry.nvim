@@ -86,7 +86,7 @@ function M.check()
     health.info("no exercises claims (set test.cmd to use them)")
   end
 
-  -- Optional neighbours.
+  -- Optional neighbors.
   -- Both directions of the arrow go through conjurer: :Conjure casts a claim
   -- into code, and drafting casts the code back into claims.
   if pcall(require, "conjurer.quickfix") and pcall(require, "conjurer.operator") then

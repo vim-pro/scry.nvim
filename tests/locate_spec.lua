@@ -73,8 +73,18 @@ local absent = locate.target({ kind = "def", target = "lua/auth.lua:no_such_fn",
 H.eq(absent.lnum, 1, "an absent symbol falls back to the file")
 H.eq(absent.why, "file", "and does not claim to have found a definition")
 
--- 7) FOLDING is per feature, and lines above the first feature belong to no
--- fold — a stale header or a drafting block must not be swallowed.
+-- 7) FOLDING HAS TWO LEVELS, because the map has two altitudes: what a
+-- feature IS (its name and the sentence under it) and what it is MADE OF.
+--
+-- That is the whole reason the default view can show a description at all.
+-- With one level per feature, everything under the name was inside the fold,
+-- so the only closed view was a stack of bare titles — and the titles are
+-- the part a reader can already guess. Splitting it means `zM` still gives
+-- that scan, the default gives titles AND their sentences, and `zR` gives
+-- the files. The outline is a zoom, and vim already had the control for it.
+--
+-- Lines above the first feature belong to no fold — a stale header or a
+-- drafting block must not be swallowed.
 local buf = vim.api.nvim_create_buf(false, true)
 vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
   "-- a drafting block",
@@ -82,14 +92,34 @@ vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
   "  prose",
   "  contains",
   "    a.lua:x",
+  "",
   "feature two",
   "  prose",
+  "  never",
+  "    print%(",
+  "",
+  "    io%.write",
 })
 vim.api.nvim_win_set_buf(0, buf)
 H.eq(glass.foldexpr(1), "0", "above the first feature: no fold")
 H.eq(glass.foldexpr(2), ">1", "a feature opens a fold")
-H.eq(glass.foldexpr(4), "1", "its body is inside")
-H.eq(glass.foldexpr(6), ">1", "the next feature starts its own")
-H.eq(glass.foldexpr(7), "1", "and takes the rest")
+H.eq(glass.foldexpr(3), "1", "the sentence saying what it is stays with it")
+H.eq(glass.foldexpr(4), ">2", "and its members open a second, deeper one")
+H.eq(glass.foldexpr(5), "2", "which the rest of the run continues")
+H.eq(glass.foldexpr(7), ">1", "the next feature starts its own")
+
+-- THE BLANK BEFORE A FEATURE IS THE AUTHOR'S, and it is the only blank a
+-- reader put there on purpose. Taking the level of the line above it — the
+-- rule for every other blank — swallowed it into the member fold, so it
+-- vanished whenever the members were closed and the default view went back
+-- to features stacked with nothing between them: the render deleting the
+-- layout of the file it is showing.
+H.eq(glass.foldexpr(6), "1", "the blank before a feature stays out of the member fold")
+
+-- Every other blank takes the level above it. A paragraph break inside a
+-- never-block is layout, not a terminator — the parser's rule, and a fold
+-- that disagreed with it would hide half a prohibition.
+H.eq(glass.foldexpr(11), "=", "a blank inside a member run does not cut the run in two")
+H.eq(glass.foldexpr(12), "2", "so the pattern after it is still in the same fold")
 
 H.done("locate_spec PASS")

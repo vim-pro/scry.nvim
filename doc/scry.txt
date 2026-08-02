@@ -362,7 +362,7 @@ tests, which transfer almost unchanged:
 summary of what a system does is the list of its sea-level statements, and
 that is exactly what the map's feature lines are for.
 
-Two neighbouring altitudes ruin a map, and the grammar is built to keep
+Two neighboring altitudes ruin a map, and the grammar is built to keep
 them out:
 
 ABOVE — "the auth system", "billing". These are groupings, not work. They
@@ -818,7 +818,7 @@ MOVING AROUND ~
 The glass is a normal, writable buffer, so it keeps every editing key it
 has. Four mappings are added:
 
-    <Tab>       expand or collapse the feature under the cursor
+    <Tab>       show or hide what the feature under the cursor is made of
     <CR>        on a CLAIM, open the code it points at
                 on a FEATURE line, the same as <Tab>
     ~           cast an intent across the whole feature under the cursor,
@@ -851,6 +851,21 @@ scan reads the first characters of a line and little else, so marking every
 row would mark none of them. The member count is a bar rather than a number:
 size is a magnitude, it reads faster as a length, and it is the blast radius
 of a `~`.
+
+THE SAME RULE HOLDS INSIDE A FEATURE, which is where the repetition was
+worst. An expanded feature was four members deep with every one of them
+saying `✓ present (file) · ∅` — the identical twenty-two characters, four
+times, under a header that had just said the feature was whole and unread.
+A marker that is true of every member of a feature is now printed on none of
+them; the feature's own line is what carries it. Two things are never
+withheld:
+
+    a lone member, which is not uniform with anything — suppressing a
+    column of one removes the only copy rather than the repetition
+
+    a VIOLATION, which carries evidence, and evidence is proof — the same
+    asymmetry |scry-honesty| draws between a violated prohibition and a
+    clean one
 
 WHY THOSE TWO KEYS. `~` is conjurer's operator, at a coarser noun. `+` is
 only a synonym for <CR>'s motion, which the glass has already taken, so
@@ -893,13 +908,41 @@ line now, with Vim's truncation point after the feature counts — a narrow
 window gives up the claim-level evidence first and shows `<`, which reads as
 cut off rather than as absent.
 
-FOLDING is per feature: everything under a feature, prose and claims alike,
-belongs to it. Lines above the first feature fold into nothing, so a
-drafting block (|scry-drafting|) or a stale header is never swallowed.
+FOLDING HAS TWO LEVELS, because the map has two altitudes. Level 1 is the
+feature — its name and the sentence saying what it is for. Level 2 is what it
+is MADE OF: the members, their notes, the prohibitions. Lines above the first
+feature fold into nothing, so a drafting block (|scry-drafting|) or a stale
+header is never swallowed.
 
-THE MAP ARRIVES CLOSED. Features are what you scan; their members are what
-you open one FOR, and fifty claims in view at once is the same wall of
-detail the altitude work was about, rendered instead of authored.
+So the outline is a ZOOM, and vim already had the control for it:
+>
+    zM      one row per feature — the densest scan
+    (default)   every feature open, every file list closed
+    zR      everything
+<
+`zm` and `zr` step between them. There is no view switch here and no mode:
+the levels ARE the outline, and every fold key you already know works on it.
+
+THE MAP ARRIVES AT LEVEL 1, which is titles and the sentences under them.
+The two neighbors were both tried and both are worse. Level 0 is a stack of
+bare names, and a name is the part a reader can already guess — the
+description is the one piece of writing they most need, and it was the first
+thing the old single-level fold hid. Level 2 is fifty claims in view at once,
+which is the wall of detail the altitude work was about, rendered instead of
+authored.
+
+A ONE-LINE FOLD CLOSES TOO ('foldminlines' is 0). Vim leaves those open by
+default, which made a feature with one member look structurally unlike a
+feature with four, on no better reason than how many members it happened to
+have.
+
+BREATHING ROOM IS RENDERED, NOT WRITTEN. A drafting pass emits features flush
+against each other, and scry does not get to edit your file to add
+whitespace — so the blank line between features is virtual, and appears only
+where you have not already left one. The blank YOU wrote before a feature
+stays out of the members fold for the same reason: swallowed into it, it
+vanished whenever the members were closed, and the render was deleting the
+layout of the file it was showing.
 
 The closed map KEEPS ITS COLORS. A folded line is normally drawn in one
 highlight, so the whole thing came out a single gray — most of what a reader
@@ -908,14 +951,19 @@ chunks instead, so the name, the state and the count render as they do when
 the fold is open and the state column can be read by color before it is read
 by word: amber is building, cyan is unread, green is done, red is broken.
 
-It is one feature per row, and built to be read as a column: the states line up at a common cell, so they can be run down rather
-than hunted for. Each row drops the `feature` keyword, which repeated eight
-columns down the page and told a reader nothing they could not see, and
-carries the state and a MEMBER count — how much of the product the feature
-is made of, where a line count would only measure how much prose someone
-wrote about it. `fillchars` drops the fold's dot leader, which at this
-density was eighty columns of noise per row on a page whose whole job is a
-quiet list.
+At `zM` it is one feature per row, and built to be read as a column: the
+states line up at a common cell, so they can be run down rather than hunted
+for. Each row drops the `feature` keyword, which repeated eight columns down
+the page and told a reader nothing they could not see, and carries the state
+and a MEMBER count — how much of the product the feature is made of, where a
+line count would only measure how much prose someone wrote about it.
+`fillchars` drops the fold's dot leader, which at this density was eighty
+columns of noise per row on a page whose whole job is a quiet list.
+
+A CLOSED FILE LIST is the blast radius and nothing else — the bar, and words
+only when a feature is written as several runs and the runs differ. The
+feature's own line a few rows up has already printed its state, and printing
+it again under the description would be the same defect one altitude down.
 
 ==============================================================================
 HOW THE MAP READS                                                  *scry-lint*

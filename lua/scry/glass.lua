@@ -158,6 +158,57 @@ local function bar(n)
   return ("▍"):rep(math.min(n, BAR_MAX)) .. (n > BAR_MAX and "…" or "")
 end
 
+--- The verdict's words, or nothing, under the same rule everywhere.
+---
+--- Two edits to the engine's own wording, and no wording of its own — the
+--- glass may not say something stronger than the verdict said.
+---
+--- The whole label goes when the map does not discriminate: if every feature
+--- reads `unread`, the header has already said so once and fourteen more
+--- copies are texture. A trailing `N of N` goes when nothing is missing:
+--- "3 of 3" is a longer way of writing what the absence of a fraction
+--- already writes.
+---@param verdict table?
+---@param uniform boolean whether every feature in the map reads the same
+---@return string
+local function verdict_words(verdict, uniform)
+  if not verdict then
+    return ""
+  end
+  local partial = verdict.total and verdict.backed and verdict.backed < verdict.total
+  if not partial and uniform then
+    return ""
+  end
+  if partial then
+    return verdict.label
+  end
+  return (verdict.label:gsub("%s*%(?%d+ of %d+%)?$", ""))
+end
+
+-- WHICH LINES ARE MEMBERS, as against the sentence a feature is.
+--
+-- The same test the parser makes, and it has to be: a fold that disagrees
+-- with the grammar hides a line the grammar checks. Shape alone cannot
+-- decide it — `  module src/page.tsx` and `  Search published checklists.`
+-- have the same shape — so the kinds in force are handed in, exactly as
+-- map.parse takes them.
+local SECTIONS = { contains = true, calls = true, never = true, exercises = true }
+
+---@param line string
+---@param kinds table<string, any>?
+---@return boolean
+function M.is_member_line(line, kinds)
+  if line:match("^    %S") then
+    return true -- a claim under a section, a never-pattern, a member's note
+  end
+  local sec = line:match("^  (%a+)%s*$")
+  if sec and SECTIONS[sec] then
+    return true
+  end
+  local kind = line:match("^  ([%w_]+)%s+%S")
+  return kind ~= nil and (kinds or {})[kind] ~= nil
+end
+
 -- Session state: one glass per project root.
 local state = {
   root = nil,
@@ -165,6 +216,9 @@ local state = {
   map = nil, -- combined (map + holdout) parsed view of the glass buffer
   report = nil,
   debt = nil,
+  -- The kinds in force. The FOLD needs them for the same reason the parser
+  -- and the syntax file do: without them a member cannot be told from prose.
+  kinds = nil,
 }
 
 M._state = state -- exposed for specs
@@ -313,7 +367,8 @@ end
 
 local function combined_map()
   local mapmod = require("scry.map")
-  return mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), mapmod.kinds_for(state.root))
+  state.kinds = mapmod.kinds_for(state.root)
+  return mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), state.kinds)
 end
 
 --- Render report verdicts into the glass buffer as extmarks.
@@ -364,31 +419,86 @@ function M.render()
     return (" "):rep(gap >= 2 and gap or 2)
   end
 
+  -- WHAT A FEATURE'S MEMBERS AGREE ABOUT.
+  --
+  -- The same rule the folded map already follows, applied one altitude down.
+  -- An expanded feature was four members deep and every one of them said
+  -- `✓ present (file) · ∅` — the identical twenty-two characters, four times,
+  -- under a header that had just said the feature was whole and unread.
+  --
+  -- So a member's verdict is drawn where it DIFFERS from its neighbors and
+  -- withheld where it does not. Two asymmetries keep that from hiding
+  -- anything:
+  --
+  --   A lone member is never uniform with anything, so it always shows.
+  --   A violation always shows, because it carries evidence and evidence is
+  --   proof — the same asymmetry the honesty ledger draws between a violated
+  --   prohibition and a clean one (|scry-honesty|).
+  local agreed, unowned_throughout = {}, {}
+  for _, f in ipairs(state.map.features) do
+    local shared, same, owned_any = nil, true, false
+    for i, claim in ipairs(f.claims) do
+      local v = state.report and state.report.verdicts[mapmod.claim_id(claim)]
+      local status = v and v.status or "\1unchecked"
+      if i == 1 then
+        shared = status
+      elseif status ~= shared then
+        same = false
+      end
+      if state.root and prov.owned(state.root, claim) then
+        owned_any = true
+      end
+    end
+    if same and #f.claims > 1 and shared ~= "violated" then
+      agreed[f.name] = true
+    end
+    unowned_throughout[f.name] = #f.claims > 1 and not owned_any
+  end
+
   -- Each feature carries the state its evidence adds up to. This is the line
   -- a reader actually scans, so it gets the strongest rendering on the page.
   state.survey = survey(state.map, state.report, state.root)
   for _, feature in ipairs(state.map.features) do
     local v = feat.verdict(feature, state.report, state.root)
+    local words = verdict_words(v, state.survey.uniform)
     -- On EVERY line the feature is opened on, not just the first: a feature
     -- may be re-opened later in the map to add members, and a header row
     -- with no verdict beside it reads as a feature nothing checked.
     for _, at in ipairs(feature.lnums or { feature.lnum }) do
-      pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, at - 1, 0, {
-        virt_text = { { pad(at) .. v.label, FEATURE_HL[v.state] or "ScryEvidence" } },
-        virt_text_pos = "eol",
-      })
+      local mark = {}
+      if words ~= "" then
+        mark.virt_text = { { pad(at) .. words, FEATURE_HL[v.state] or "ScryEvidence" } }
+        mark.virt_text_pos = "eol"
+      end
+      -- BREATHING ROOM, rendered rather than written. Features arrive from a
+      -- drafting pass with no blank line between them, and a map is not
+      -- improved by scry editing someone's file to add whitespace — so the
+      -- separator is a virtual line, and the file stays exactly what its
+      -- author typed.
+      --
+      -- Not above line 1: Neovim has no room to draw there, and a mark that
+      -- exists without drawing is the bug this buffer's header once had.
+      -- Not where the author already left a blank line either — two blank
+      -- rows is not twice the breathing room, it is a gap.
+      if at > 1 and vim.trim(lines[at - 1] or "") ~= "" then
+        mark.virt_lines = { { { "", "NonText" } } }
+        mark.virt_lines_above = true
+      end
+      if mark.virt_text or mark.virt_lines then
+        pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, at - 1, 0, mark)
+      end
     end
   end
 
   for _, claim in ipairs(state.map.claims) do
     local parts = {}
     local v = state.report and state.report.verdicts[mapmod.claim_id(claim)]
-    if v then
+    if v and not agreed[claim.feature] then
       local hl = (v.status == "backed" or v.status == "clean") and "ScryBacked"
         or (v.status == "unchecked" and "ScryUnchecked" or "ScryDiverged")
       parts[#parts + 1] = { pad(claim.lnum) .. v.label, hl }
     end
-    if not (state.root and prov.owned(state.root, claim)) then
+    if not (state.root and prov.owned(state.root, claim)) and not unowned_throughout[claim.feature] then
       parts[#parts + 1] = { (#parts > 0 and " · ∅" or pad(claim.lnum) .. "∅"), "ScryUntouched" }
     end
     if #parts > 0 then
@@ -471,14 +581,45 @@ function M.starter()
     }
 end
 
---- Fold expression: one fold per feature.
+-- The first `feature` line, memoized per change. The fold expression is
+-- evaluated once per line per redraw, and the "is there a feature above me"
+-- question used to walk backwards from every one of them — quadratic in the
+-- length of the map, on the hot path.
+local first_feature = { tick = -1, lnum = nil }
+local function first_feature_lnum()
+  local tick = vim.b.changedtick
+  if first_feature.tick ~= tick then
+    first_feature.tick, first_feature.lnum = tick, nil
+    for i = 1, vim.fn.line("$") do
+      if vim.fn.getline(i):match("^feature%s") then
+        first_feature.lnum = i
+        break
+      end
+    end
+  end
+  return first_feature.lnum
+end
+
+--- Fold expression: TWO levels, because the map has two altitudes.
 ---
---- A real map is long — scry's own is 12 features over 130 lines — and the
---- reason you opened it is usually one of them. Features are the fold level
---- because features are the unit: everything under one, prose and claims
---- alike, belongs to it. Lines before the first feature are level 0, which
---- keeps a stale header or a drafting block from being swallowed into the
---- first feature's fold.
+--- Level 1 is the feature — its name and the sentence saying what it is for.
+--- Level 2 is what it is MADE OF: the members, their notes, the prohibitions.
+---
+--- That split is the whole point. A feature's description is the one piece of
+--- writing a reader most needs and it used to be inside the fold, so the
+--- default view was fourteen bare names stacked with no space between them —
+--- a block of text that answered "what is in this project" with a list of
+--- titles. Now the default view answers it with titles AND the sentences
+--- under them, and the file lists — which are what you open a feature FOR —
+--- stay one quiet row each.
+---
+--- And because they are fold LEVELS rather than a mode, the outline is a
+--- zoom and vim already has the control: `zM` gives one row per feature (the
+--- densest scan), `zm`/`zr` step through, `zR` opens everything. Nothing here
+--- had to invent a view switch.
+---
+--- Lines before the first feature are level 0, which keeps a stale header or
+--- a drafting block from being swallowed into the first feature's fold.
 ---@param lnum integer
 ---@return string
 function M.foldexpr(lnum)
@@ -486,32 +627,122 @@ function M.foldexpr(lnum)
   if line:match("^feature%s") then
     return ">1"
   end
-  -- Before the first feature there is nothing to belong to.
-  for i = lnum - 1, 1, -1 do
-    if vim.fn.getline(i):match("^feature%s") then
-      return "1"
-    end
+  local first = first_feature_lnum()
+  if not first or lnum < first then
+    return "0"
   end
-  return "0"
+  -- A blank line takes the level of the line above it. Vertical space is
+  -- layout, not grammar — the parser says so about never-blocks — so a
+  -- paragraph break inside a member run must not cut the run in two.
+  --
+  -- EXCEPT the blank before the next feature, which is the one blank a
+  -- reader put there on purpose. Swallowed into the member run it vanished
+  -- with the run, and the default view went back to features stacked with
+  -- nothing between them — the render deleting the author's own layout.
+  if line:match("^%s*$") then
+    for i = lnum + 1, vim.fn.line("$") do
+      local next_line = vim.fn.getline(i)
+      if not next_line:match("^%s*$") then
+        return next_line:match("^feature%s") and "1" or "="
+      end
+    end
+    return "="
+  end
+  if not M.is_member_line(line, state.kinds) then
+    return "1"
+  end
+  -- One fold per contiguous run of members, skipping blanks to find out
+  -- whether this line opens a run or continues one.
+  local prev = lnum - 1
+  while prev >= 1 and vim.fn.getline(prev):match("^%s*$") do
+    prev = prev - 1
+  end
+  if prev >= 1 and M.is_member_line(vim.fn.getline(prev), state.kinds) then
+    return "2"
+  end
+  return ">2"
 end
 
---- The fold's one line when it is closed — the whole map, one feature per
---- row, and the view a reader spends most of their time in.
+--- The feature whose block a line falls in.
+---@param at integer
+---@return scry.Feature?
+local function owning_feature(at)
+  local found
+  for _, f in ipairs((state.map or {}).features or {}) do
+    for _, l in ipairs(f.lnums or { f.lnum }) do
+      if l <= at and (not found or l > found.at) then
+        found = { feature = f, at = l }
+      end
+    end
+  end
+  return found and found.feature or nil
+end
+
+--- A closed member fold: the one row a feature's file list collapses to.
 ---
---- ALIGNED, because it is a column of states and a column is the only
---- reason to put them one under another. The open view aligns its verdicts
---- and the closed view did not, so the states drifted with the length of
---- each feature's name — ragged in exactly the view that exists to be
---- scanned.
+--- This is what the default view shows under every description, so it says
+--- the least it can and still be worth a row — the blast radius as a shape,
+--- and words only when something is not where it should be. A run of eight
+--- `✓ present (file)`s is the thing this row exists to replace.
+---@param at integer
+---@param upto integer
+---@return table[]
+local function member_foldtext(at, upto)
+  local feature = owning_feature(at)
+  local mapmod = require("scry.map")
+  local n, backed, broken = 0, 0, 0
+  for _, claim in ipairs(feature and feature.claims or {}) do
+    if claim.lnum >= at and claim.lnum <= upto then
+      n = n + 1
+      local v = state.report and state.report.verdicts[mapmod.claim_id(claim)]
+      local status = v and v.status
+      if status == "backed" or status == "clean" then
+        backed = backed + 1
+      elseif status == "violated" then
+        broken = broken + 1
+      end
+    end
+  end
+
+  -- And the same rule once more, one altitude down. A feature whose members
+  -- are all in ONE run has already had this exact fraction printed on its own
+  -- line, four rows up — so the row says only the blast radius, and speaks up
+  -- when a feature is written as several runs and the runs differ.
+  local whole = feature and n == #feature.claims
+  local out = { { "  ", "Folded" }, { bar(n), "ScryIntent" } }
+  if not whole then
+    if broken > 0 then
+      out[#out + 1] = { ("  ✗ %d broken"):format(broken), "ScryBroken" }
+    elseif state.report and backed < n then
+      out[#out + 1] = { ("  ◐ %d of %d"):format(backed, n), "ScryBuilding" }
+    end
+  end
+  return out
+end
+
+--- The fold's one line when it is closed.
 ---
---- It says how many MEMBERS, not how many lines. A line count measures the
---- prose someone wrote; a member count is how much of the product the
---- feature is made of, which is the question the number was standing in for.
----@return string
+--- Two folds close here and they close to different things (see foldexpr): a
+--- FEATURE fold collapses to one row of the map's densest view, and a MEMBER
+--- fold collapses to the quiet row that sits under a feature's description in
+--- the default one.
+---
+--- The feature row is ALIGNED, because it is a column of states and a column
+--- is the only reason to put them one under another. It says how many
+--- MEMBERS, not how many lines: a line count measures the prose someone
+--- wrote; a member count is how much of the product the feature is made of,
+--- which is the question the number was standing in for.
 ---@param at integer? the fold's first line; defaults to Neovim's v:foldstart,
 ---       which only has a value while a fold is actually being drawn — so a
 ---       spec (or anything wanting one line's rendering) passes it in.
-function M.foldtext(at)
+---@param upto integer? likewise v:foldend.
+---@return table[]
+function M.foldtext(at, upto)
+  at = at or vim.v.foldstart
+  if not vim.fn.getline(at):match("^feature%s") then
+    return member_foldtext(at, upto or vim.v.foldend)
+  end
+
   -- The `feature ` keyword is dropped. Every folded row IS a feature, so it
   -- repeated the same eight columns down the whole page and told a reader
   -- nothing they could not see — and those columns are what pushed the
@@ -519,16 +750,8 @@ function M.foldtext(at)
   local function summary(lnum)
     return (vim.fn.getline(lnum):gsub("^feature%s+", ""))
   end
-  at = at or vim.v.foldstart
   local line = summary(at)
-  local feature
-  for _, f in ipairs((state.map or {}).features or {}) do
-    for _, l in ipairs(f.lnums or { f.lnum }) do
-      if l == at then
-        feature = f
-      end
-    end
-  end
+  local feature = owning_feature(at)
 
   local widest = 0
   for _, f in ipairs((state.map or {}).features or {}) do
@@ -556,30 +779,15 @@ function M.foldtext(at)
     { line, "ScryFeatureName" },
   }
 
-  -- The verdict's words only where they discriminate: not when every feature
-  -- in the map reads the same, and not to spell out `5 of 5`, which says
-  -- only that nothing is missing — which is what saying nothing says.
-  local survey_ = state.survey or { uniform = false }
-  local partial = verdict and verdict.total and verdict.backed and verdict.backed < verdict.total
-  if verdict and (partial or not survey_.uniform) then
-    -- The label with its glyph removed, because the glyph is in column one
-    -- now and saying it twice says it once. And with a trailing `N of N`
-    -- removed when nothing is missing: "3 of 3" is a longer way of writing
-    -- what the absence of a fraction already writes.
-    --
-    -- Both are edits to the engine's own wording rather than a substitute
-    -- for it. The glass may not say something stronger than the verdict
-    -- said, so it does not compose a word of its own here.
-    local words = verdict.label:gsub("^%S+%s+", "")
-    if not partial then
-      words = words:gsub("%s*%(?%d+ of %d+%)?$", "")
-    end
-    if words ~= "" then
-      out[#out + 1] = { pad, "Folded" }
-      out[#out + 1] = { words, hl }
-    elseif n > 0 then
-      out[#out + 1] = { pad, "Folded" }
-    end
+  -- The verdict's words only where they discriminate, and with the glyph
+  -- removed because it is in column one now — saying it twice says it once.
+  local words = verdict_words(verdict, (state.survey or {}).uniform)
+  if words ~= "" then
+    words = words:gsub("^%S+%s+", "")
+  end
+  if words ~= "" then
+    out[#out + 1] = { pad, "Folded" }
+    out[#out + 1] = { words, hl }
   elseif n > 0 then
     out[#out + 1] = { pad, "Folded" }
   end
@@ -588,6 +796,50 @@ function M.foldtext(at)
     out[#out + 1] = { "  " .. bar(n), "ScryIntent" }
   end
   return out
+end
+
+--- Show or hide what the feature under the cursor is made of.
+---
+--- The cursor is usually on a name or in a description — outside the members
+--- fold entirely — so this finds the fold rather than acting where the cursor
+--- happens to be. Already inside one, it just closes it.
+---@return boolean acted
+function M.toggle_members()
+  local here = vim.api.nvim_win_get_cursor(0)[1]
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local function toggle(lnum)
+    if vim.fn.foldclosed(lnum) ~= -1 then
+      pcall(vim.cmd, lnum .. "foldopen")
+    else
+      pcall(vim.cmd, lnum .. "foldclose")
+    end
+    return true
+  end
+
+  if M.is_member_line(lines[here] or "", state.kinds) then
+    return toggle(here)
+  end
+
+  -- Walk back to this feature's header, then forward to its first member.
+  local start = here
+  while start >= 1 and not (lines[start] or ""):match("^feature%s") do
+    start = start - 1
+  end
+  if start < 1 then
+    return false
+  end
+  for i = start + 1, #lines do
+    if lines[i]:match("^feature%s") then
+      break
+    end
+    if M.is_member_line(lines[i], state.kinds) then
+      return toggle(i)
+    end
+  end
+  -- A feature with no members has nothing to open, and that is a real state:
+  -- a capability someone has named and not yet said what it is made of.
+  vim.notify("[scry] this feature has no members yet — nothing to open", vim.log.levels.INFO)
+  return false
 end
 
 --- Jump to the next or previous feature whose verdict wants something.
@@ -650,12 +902,23 @@ function M.window_options(buf)
     vim.wo.foldmethod = "expr"
     vim.wo.foldexpr = "v:lua.require'scry.glass'.foldexpr(v:lnum)"
     vim.wo.foldtext = "v:lua.require'scry.glass'.foldtext()"
-    -- CLOSED on arrival. A map's features are the thing you scan; their
-    -- members are what you open one for. Fifty claims in view at once is
-    -- the same wall of detail the altitude work was about, just rendered
-    -- instead of authored.
-    vim.wo.foldlevel = 0
+    -- LEVEL 1 on arrival: every feature open, every file list closed.
+    --
+    -- The two neighboring settings are both worse and both were tried.
+    -- Level 0 is one bare name per row, which is the densest scan and reads
+    -- as a wall of titles — you cannot tell from it what any of the features
+    -- ARE. Level 2 is fifty claims in view at once, which is the wall of
+    -- detail the altitude work was about, rendered instead of authored.
+    -- What you want first is what each feature is for; `zr` is one keystroke
+    -- away when you want the rest, and `zM` when you want the scan.
+    vim.wo.foldlevel = 1
     vim.wo.foldenable = true
+    -- A ONE-LINE FOLD CLOSES TOO. Vim leaves those open by default, which
+    -- made a feature with one member look structurally unlike a feature with
+    -- four — its file list sitting open in a view where every other feature's
+    -- was a single quiet row, on no better reason than how many members it
+    -- happened to have.
+    vim.wo.foldminlines = 0
     -- No dot leader. Vim fills a fold line to the window edge, and at this
     -- density it drew eighty columns of `·` after every feature — the
     -- loudest thing on a page whose whole job is a quiet list.
@@ -804,12 +1067,16 @@ function M.open(root)
     -- what a feature line is about is its own body. Nothing else is bound:
     -- this is a normal, writable buffer and its editing keys have to stay
     -- exactly the editing keys.
-    -- <Tab> opens and closes a feature. Features are what you scan and
-    -- their members are what you open one FOR, so the map arrives closed
-    -- and this is how it lets you in.
+    -- <Tab> opens and closes a feature's FILE LIST — the thing the default
+    -- view keeps folded and the thing you open a feature for.
+    --
+    -- Not plain `za`. The cursor is normally on a feature's name or in its
+    -- description, and the fold there is the feature itself, so `za` would
+    -- collapse the very sentence you were reading. This reaches down to the
+    -- members instead, which is what the key means.
     vim.keymap.set("n", "<Tab>", function()
-      pcall(vim.cmd, "normal! za")
-    end, { buffer = buf, desc = "scry: expand or collapse this feature" })
+      M.toggle_members()
+    end, { buffer = buf, desc = "scry: show or hide what this feature is made of" })
 
     -- ]d AND [d — TO THE NEXT THING THAT WANTS YOU.
     --
@@ -862,7 +1129,7 @@ function M.open(root)
 
     vim.keymap.set("n", "<CR>", function()
       if vim.fn.getline("."):match("^feature%s") then
-        pcall(vim.cmd, "normal! za")
+        M.toggle_members()
         return
       end
       if not require("scry.locate").open() then
@@ -881,6 +1148,10 @@ function M.open(root)
   vim.bo[buf].modified = false
   state.buf = buf
   state.root = root
+  -- Before window_options, which installs the fold expression: a fold
+  -- evaluated without the project's kinds reads every member as prose and
+  -- folds nothing.
+  state.kinds = require("scry.map").kinds_for(root)
   -- focus FIRST. window_options only applies to a window already showing
   -- the glass, so applying before the buffer is in one silently did
   -- nothing on the very first :Scry — the run everyone sees.
