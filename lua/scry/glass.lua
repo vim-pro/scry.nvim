@@ -385,6 +385,22 @@ function M.render()
   state.map = combined_map()
   state.debt = debt.count(state.map, state.report, state.root)
 
+  -- THE GLOSS (`g?`). Virtual lines, off by default — see scry.explain for
+  -- why this is not the starter block returning.
+  local explain = require("scry.explain")
+  local function gloss(lnum, text)
+    if text then
+      pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, lnum - 1, 0, {
+        virt_lines = { { { "      ? " .. text, "ScryEvidence" } } },
+      })
+    end
+  end
+  if explain.showing() then
+    -- The header's own gloss hangs off the buffer's opening blank line,
+    -- which exists precisely because there is no room above line 1.
+    gloss(1, explain.header(state.debt))
+  end
+
   -- The header lives in the winbar (see scry.debt.winbar and M.winbar
   -- below), not in an extmark. It used to be virt_lines above line 1, which
   -- Neovim does not draw — there is no room above a buffer's first line —
@@ -493,6 +509,12 @@ function M.render()
       if mark.virt_text or mark.virt_lines then
         pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, at - 1, 0, mark)
       end
+      if explain.showing() then
+        gloss(at, explain.feature(v, agreed[feature.name] == true))
+        if #(feature.desc or {}) > 0 then
+          gloss(at + 1, explain.description())
+        end
+      end
     end
 
     -- AND AIR BETWEEN THE SENTENCE AND THE FILE LIST. What a feature IS and
@@ -557,6 +579,10 @@ function M.render()
     if not (state.root and prov.owned(state.root, claim)) and not unowned_throughout[claim.feature] then
       say("∅", "ScryUntouched")
     end
+    if explain.showing() then
+      gloss(claim.lnum, explain.member(v))
+    end
+
     if #parts > 0 then
       local mark = { virt_text = parts, virt_text_pos = "eol" }
       if v and v.status == "violated" and v.evidence then
@@ -1185,6 +1211,14 @@ function M.open(root)
     vim.keymap.set("n", "~", function()
       require("scry.compose").start()
     end, { buffer = buf, desc = "scry: cast an intent across this whole feature" })
+
+    -- `g?` EXPLAINS THIS BUFFER, which is what `g?` means in every plugin
+    -- that has an opinion. It also answers the question the render-what-varies
+    -- rule creates: a silent row is quiet because everything agreed, and
+    -- until you have learned that, silence and "nothing ran" look identical.
+    vim.keymap.set("n", "g?", function()
+      require("scry.explain").toggle()
+    end, { buffer = buf, desc = "scry: explain what this buffer is telling you" })
 
     vim.keymap.set("n", "<CR>", function()
       if vim.fn.getline("."):match("^feature%s") then

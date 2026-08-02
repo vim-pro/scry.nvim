@@ -841,6 +841,7 @@ has. Four mappings are added:
                 features for the files nothing describes (|scry-drafting|).
                 Again to stop a pass in flight.
     ]d  [d      to the next and previous feature that wants something
+    g?          explain what this buffer is telling you; again to stop
 
 MOTIONS, NOT GROUPING. The obvious way to surface what needs attention is to
 group by state under headings, and it is the wrong move here: the buffer IS
@@ -914,6 +915,38 @@ beside the number:
     scry · 6 features · 46 unclaimed files (reach pending) · + to draft
 <
 
+`g?` EXPLAINS WHAT YOU ARE LOOKING AT                            *scry-explain*
+
+The glass is deliberately quiet. Verdicts appear where they discriminate,
+a healthy verdict shared by every member of a feature is printed on none of
+them, and column one says nothing when a feature is fine. That is right for
+reading and wrong for LEARNING: the first time you meet a silent row, silence
+and "nothing ran" look identical.
+
+`g?` puts a plain-language gloss under every line — what the row is, what its
+verdict actually asserts, and what it does NOT:
+>
+    feature Take a checklist away as a PDF                        – unread
+        ? every claim holds — and nobody here has read the description.
+          that is what a draft looks like · its members are quiet below
+          because they all say the same
+
+      route [slug]                    src/pages/[slug].astro
+        ? the file is on disk. nothing has looked inside it
+<
+The rungs are the point. `backed` covers `present (file)`, `defined` and
+`referenced (text)`, and those are not the same claim — the whole argument of
+|scry-honesty| is that a green tick means something different depending on
+which engine produced it. This is that ledger, delivered where you need it.
+
+THIS IS NOT A TUTORIAL IN YOUR MAP. The glass used to open a project with no
+map onto a block of instructions, and that block was prose living in the
+document: it was saved into `.scry/map.scry` and re-read by every drafting
+pass. These are VIRTUAL lines — they cannot be saved, cannot be edited, and
+are off until you ask. And they are not generic: every sentence is about the
+row it sits under and the verdict that row actually got.
+
+==============================================================================
 WHERE A CLAIM TAKES YOU, in order. Evidence first, always: if the last check
 found a line for this claim, that is somewhere an engine actually looked, so
 it is the truest destination scry has. A `calls` claim lands on a real

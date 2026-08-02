@@ -1,0 +1,147 @@
+-- What the buffer is telling you, in plain language.
+--
+-- `g?` in the glass turns on a gloss beside every line: what each row IS,
+-- what its verdict actually asserts, and — the part that matters most — what
+-- that verdict does NOT assert. Press it again and it goes.
+--
+-- THIS IS NOT THE STARTER BLOCK COMING BACK. That was tutorial text living
+-- IN the map: prose, so nothing objected to it, and it was saved into
+-- `.scry/map.scry` and re-read by every drafting pass. Instructions inside
+-- the document they are teaching you to write have no way out of it.
+--
+-- These are virtual lines. They cannot be saved, cannot be edited, cannot be
+-- sent to a model, and are off by default. And they are not generic: every
+-- sentence here is about the row it is under and the verdict that row
+-- actually got.
+--
+-- IT IS ALSO THE ANSWER TO WHAT THE QUIET IS HIDING. The glass withholds a
+-- verdict that is true of every member of a feature, because a column reading
+-- the same on every row is texture (|scry-mappings|). That is right for
+-- reading and wrong for learning: the first time you meet a silent row you
+-- have no way to know whether it means "fine" or "nothing ran". `g?` says
+-- what was withheld.
+--
+-- THE WORDING IS LOAD-BEARING, exactly as the verdict labels are. Nothing
+-- here may claim more than the engine claimed — see |scry-honesty|, which
+-- these sentences are the reader-facing half of. `✓ present (file)` means a
+-- file is on disk and nothing more, and saying so is the whole point.
+local M = {}
+
+-- What each claim verdict asserts, and what it does not.
+--
+-- Keyed by the STATUS the engine returned rather than by its label, so a
+-- reworded label cannot silently detach its explanation from its verdict.
+local CLAIM = {
+  backed = "this holds right now, against the files on disk",
+  clean = "nothing in this feature's files matches that pattern — evidence, not proof",
+  missing = "not there. that is work you have described and not done yet",
+  violated = "PROOF. the thing you forbade is in your code, at the line below",
+  unchecked = "nothing here could answer this. it is not a pass",
+}
+
+-- The rungs, which are the honest part. `backed` covers all of these and they
+-- are not the same claim: the label says which one you got.
+local RUNG = {
+  ["present (file)"] = "the file is on disk. nothing has looked inside it",
+  ["defined"] = "a definition by that name exists in that file. nothing about what it does",
+  ["referenced (text)"] = "that name appears in this feature's files. not a proven call",
+  ["no matches (rg)"] = "no text matches it. a clean prohibition is evidence, not proof",
+}
+
+-- What a feature's rolled-up state means for you.
+local FEATURE = {
+  done = "every claim under this holds, and you have read it",
+  unread = "every claim holds — and nobody here has read the description. that is what a draft looks like",
+  broken = "something that used to hold does not. the most urgent row on the page",
+  partial = "some of it holds. the rest is the work",
+  absent = "nothing holds yet. a capability you have described and not built — this is on purpose",
+  unknown = "nothing has answered for this yet. NOT progress",
+  unevidenced = "named, with nothing under it to check. press + to find the files it is made of",
+}
+
+--- The gloss for a feature's line.
+---
+--- The note about withheld member verdicts belongs HERE and not on each
+--- member, which is where it started: four members produced four identical
+--- parentheticals, which is the exact texture the withholding exists to
+--- remove, reproduced inside the mode that explains it. It is one fact about
+--- the feature, so it goes on the feature.
+---@param verdict table?
+---@param withheld boolean whether this feature's member verdicts are hidden
+---@return string?
+function M.feature(verdict, withheld)
+  local text = verdict and FEATURE[verdict.state]
+  if not text then
+    return nil
+  end
+  if withheld then
+    text = text .. " · its members are quiet below because they all say the same"
+  end
+  return text
+end
+
+--- The gloss for a member's line.
+---
+--- Two sentences at most: what the verdict asserts, and which rung of
+--- evidence it is. A reader who learns only one thing from this mode should
+--- learn that those are different questions.
+---@param verdict table? the claim verdict from the report
+---@return string?
+function M.member(verdict)
+  if not verdict then
+    return "no verdict yet — the check has not settled, or nothing can answer this kind"
+  end
+  local parts = {}
+  local rung = verdict.label and verdict.label:match("^%S+%s+(.*)$")
+  if rung and RUNG[rung] then
+    parts[#parts + 1] = RUNG[rung]
+  elseif CLAIM[verdict.status] then
+    parts[#parts + 1] = CLAIM[verdict.status]
+  end
+  if verdict.status == "violated" then
+    parts = { CLAIM.violated }
+  end
+  if #parts == 0 then
+    return nil
+  end
+  return table.concat(parts, " ")
+end
+
+--- The gloss for a feature's description.
+function M.description()
+  return "prose. never checked, never marked — this is what you believe the capability is for"
+end
+
+--- The gloss for the counts in the header.
+---@param debt table?
+---@return string?
+function M.header(debt)
+  if not debt then
+    return nil
+  end
+  return ("%d feature%s described here · %d file%s in this project no feature claims · everything below is computed, never stored"):format(
+    debt.features,
+    debt.features == 1 and "" or "s",
+    debt.unclaimed or 0,
+    (debt.unclaimed or 0) == 1 and "" or "s"
+  )
+end
+
+-- On or off, per session. Not per project: it is a reading mode, and which
+-- project you are looking at has nothing to do with whether you want it.
+local showing = false
+
+---@return boolean
+function M.showing()
+  return showing
+end
+
+--- Turn the gloss on or off and redraw.
+function M.toggle()
+  showing = not showing
+  local glass = require("scry.glass")
+  glass.render()
+  vim.notify(showing and "[scry] explaining · g? to stop" or "[scry] g? to explain again")
+end
+
+return M
