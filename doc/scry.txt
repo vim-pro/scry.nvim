@@ -203,76 +203,63 @@ computed from and is ignored once any of them changes: a stale reach is
 worse than none, because it would keep a file off the list on the strength
 of a binding that has since been deleted.
 
-THE RESOLVING ITSELF IS NOT SCRY'S. It lives in stackgraphs.nvim, which
-answers four questions — what a name binds to, what binds to a definition,
-what a file reaches, and the transitive closure of that — and labels every
-answer with a fidelity. Scry may never render a stronger word than the one
-it was handed. See |stackgraphs| for the contract.
+IT FOLLOWS FILES, NOT NAMES. Reach reads the import specifiers out of a
+file and resolves each to a file in this repository. That is a smaller
+question than "which definition does this name bind to", and it is the one
+|scry-divergence| actually asks — divergence consumes a list of paths.
 
-That seam has already paid for itself. The backend behind it was swapped
-from an archived stack-graphs CLI to a LANGUAGE SERVER, and nothing in scry
-changed — not the map, not the glass, not one of the fourteen specs. It also
-widened what reach can answer about: a language server resolves lua, go,
-rust and c, which stack graphs never did, so scry's own map is now reachable
-by the same machinery as a TypeScript project.
+Asking the smaller question is what makes it work at all on a real map. A
+`route` names src/pages/{name}.astro, and nothing that binds names reads
+astro — no stack-graphs grammar, no language server anyone has installed.
+Reach from a route computed nothing for as long as it was built on one.
+Following a specifier needs no grammar: `from '../lib/db.js'` looks the same
+in astro, in Lua, and in everything else that borrowed the syntax. >
 
-Reach on a def is two passes, and the split is the honesty:
-
-    candidates   ripgrep finds every position that mentions the name.
-                 Fast, over-broad, never reported as more than it is.
-    resolved     the engine is asked, for each candidate, whether it binds
-                 to THIS definition. What survives is reach.
-
-The difference is not small. On a fixture with one real caller and one
-unrelated function of the same name, ripgrep reports five positions and the
-engine keeps one — and two of the four it drops are a DIFFERENT function
-that merely shares a name. That is the question a text search cannot answer
-and the reason reach needs an engine at all.
-
-Without one, the first pass still runs and the quickfix title says
-`text only`, because a name match is evidence of a mention and nothing
-more. Scry says which kind of answer it has every time it gives one.
-
-REACH IS OPTIONAL. Without stackgraphs.nvim installed, every verdict scry
-gives still works — kinds are probed by path and grep, `def` by treesitter
-— and only the divergence shrink goes away. |:checkhealth|
-says so rather than scry failing to load.
-
-    https://github.com/vim-pro/stackgraphs.nvim
-
-A RESOLVER is per language, and |:checkhealth| reports what resolves what.
-Either a language server on $PATH — nothing to configure — or a stack-graphs
-engine: >
-
-    cargo install tree-sitter-stack-graphs-typescript --features cli \
-      --root ~/.local/share/nvim/stackgraphs
+    src/pages/index.astro  ->  src/layouts/Layout.astro
+                               src/lib/db.js
+                               src/lib/domains.js
+                               src/lib/site.js
 <
-Engines already installed under ~/.local/share/nvim/scry are still found, so
-an existing install does not need redoing. See |stackgraphs-backends| for
-which servers are recognized out of the box.
+THE `.js` THAT MEANS `.ts` is handled. Under ESM you import `./db.js` and
+the file on disk is `db.ts`; reach strips the extension the specifier claims
+and probes the ones that could satisfy it.
+
+ONLY FIRST-PARTY IMPORTS ARE FOLLOWED. `react` and `node:fs` resolve into
+node_modules and the standard library, which is not code this project
+answers for and not anywhere a footprint should wander.
+
+NO ENGINE, NO INDEX, NO SERVER, nothing to install. A file's imports are a
+read and a few pattern matches, so reach for the whole map is cheap enough
+to run in the background whenever the glass opens — which is why the
+header's unclaimed count is an answer rather than an upper bound.
+
+|:ScryReach| on a MEMBER asks the other direction: which files import this
+one. That is the blast radius of changing it, at the grain a feature is made
+of.
 
                                                         *scry-reach-limits*
-REACH IS NOT UNIFORM, and what follows is what has been measured rather
-than what would be tidy.
+WHAT REACH DOES NOT SEE, measured rather than tidy:
 
-Every language present is indexed into ONE database, so an import that
-crosses from TypeScript into JavaScript can resolve, and on a small fixture
-it does. On one real Astro project it does not: an imported name resolves
-to its own import binding and the chain stops there instead of continuing
-into the `.js` file, so a page that imports four modules reaches none of
-them. Why the fixture completes the chain and the project does not is NOT
-established. Do not read a confident zero as proof your code has no
-dependencies.
+A line whose first non-space is `--`, `//`, `#` or `*` is a comment and is
+skipped — without that, a doc comment mentioning `require("scry.map")` was
+read as an import, and because that module exists nothing downstream dropped
+it. An import inside a TRAILING comment or a /* block */ is still counted,
+which over-reports rather than misses.
 
-A file where NOT ONE identifier resolves is reported unresolved — an
-unindexed language, or a grammar that choked — so it is never recorded and
-never shrinks |scry-divergence|. That check is weak on purpose and weak in
-fact: a file whose identifiers resolve only to itself passes it and still
-reaches nothing.
+A specifier assembled at runtime is invisible. Reach reads what is written
+between the quotes, so a dynamic `import(name)` reaches nothing.
 
-Indexing is the slowest thing scry does, which is why reach is a command
-and never part of a check. |:Scry| stays cheap; only a command may be
-expensive, the same rule |:ScryExercise| and the drafting pass follow.
+REACH IS IMPORTS, NOT CALLS. A file that imports a module and uses one
+function of it reaches the whole module. That is the right grain for "which
+feature describes this file" and the wrong grain for "what breaks if I
+change this line" — scry works at the first.
+
+A file that cannot be read is reported unreadable rather than as a confident
+zero, and is never recorded. Only a readable answer shrinks
+|scry-divergence|; the record carries a stamp of the files it was computed
+from and is discarded once any of them changes, because keeping a file off
+the unclaimed list on an import that has since been deleted is the one
+failure this cache can cause.
 
                                                                  *scry-kinds*
 A MEMBER NAMES A TYPED OBJECT ~
