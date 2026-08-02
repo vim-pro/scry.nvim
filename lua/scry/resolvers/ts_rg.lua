@@ -22,8 +22,11 @@ local DEF_QUERY = [[
     (expression_list value: (function_definition)))
 ]]
 
--- Extract definition names from lua source text.
----@return string[]?
+-- Extract definitions from lua source text: the name, and the line it is
+-- on. The line is what lets the glass JUMP to a claim (see scry.locate) —
+-- and it matters that the same query answers both questions, so "where" can
+-- never point somewhere "✓ defined" did not mean.
+---@return { name: string, lnum: integer }[]?
 local function lua_defs(src)
   local ok, parser = pcall(vim.treesitter.get_string_parser, src, "lua")
   if not ok then
@@ -36,22 +39,32 @@ local function lua_defs(src)
     return nil
   end
   local query = vim.treesitter.query.parse("lua", DEF_QUERY)
-  local names = {}
+  local defs = {}
   for _, node in query:iter_captures(trees[1]:root(), src, 0, -1) do
-    names[#names + 1] = vim.treesitter.get_node_text(node, src)
+    local row = node:range()
+    defs[#defs + 1] = { name = vim.treesitter.get_node_text(node, src), lnum = row + 1 }
   end
-  return names
+  return defs
 end
 
 -- Does `symbol` match a definition name exactly or as its final dot-segment
 -- ("request" matches "M.request")?
 local function name_matches(defs, symbol)
+  return M.def_lnum(defs, symbol) ~= nil
+end
+
+--- The line a definition of `symbol` is on, or nil. Exact match, or the
+--- final dot-segment ("request" matches "M.request").
+---@param defs { name: string, lnum: integer }[]
+---@param symbol string
+---@return integer?
+function M.def_lnum(defs, symbol)
   for _, d in ipairs(defs) do
-    if d == symbol or d:match("%.([%w_]+)$") == symbol then
-      return true
+    if d.name == symbol or d.name:match("%.([%w_]+)$") == symbol then
+      return d.lnum
     end
   end
-  return false
+  return nil
 end
 
 local function read(path)
@@ -62,6 +75,26 @@ local function read(path)
   local content = f:read("*a")
   f:close()
   return content
+end
+
+--- Where a `contains path:symbol` claim points, for the glass to jump to.
+--- Answered by the SAME query that decides the verdict, so a jump can never
+--- land somewhere `✓ defined` did not mean. nil when the file is unreadable,
+--- unparseable, or defines no such symbol.
+---@param root string
+---@param path string
+---@param symbol string
+---@return integer?
+function M.locate(root, path, symbol)
+  if not path:match("%.lua$") then
+    return nil
+  end
+  local src = read(root .. "/" .. path)
+  if not src then
+    return nil
+  end
+  local defs = lua_defs(src)
+  return defs and M.def_lnum(defs, symbol) or nil
 end
 
 -- Human age of a timestamp. Dynamic evidence must never render without one:

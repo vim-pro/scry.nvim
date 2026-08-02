@@ -19,6 +19,7 @@ CONTENTS                                                       *scry-contents*
   7. The holdout ................................. |scry-holdout|
   8. Conjuring from the glass .................... |scry-conjure|
   9. Exercised claims ............................ |scry-exercised|
+     Moving around ............................... |scry-mappings|
  10. Commands .................................... |scry-commands|
  11. Configuration ............................... |scry-configuration|
      Per-project ................................. |scry-project-config|
@@ -534,7 +535,43 @@ call every fresh run stale forever.
 Two claims on one spec are one execution, and its recorded dependencies cover
 every feature that exercises it.
 
-==============================================================================
+=========================================================================                                                              *scry-mappings*
+MOVING AROUND ~
+
+The glass is a normal, writable buffer, so it keeps every editing key it
+has. One mapping is added, and it means "take me to what this line is
+about":
+
+    <CR>        on a CLAIM, open the code it points at
+                on a FEATURE line, toggle its fold
+
+WHERE A CLAIM TAKES YOU, in order. Evidence first, always: if the last check
+found a line for this claim, that is somewhere an engine actually looked, so
+it is the truest destination scry has. A `calls` claim lands on a real
+reference; a VIOLATED prohibition lands on the violation, which is the most
+useful jump here.
+
+With no evidence it falls back to the claim's own text, and a
+`contains path:symbol` resolves its line through the SAME treesitter query
+that decided |scry-verdicts|' `✓ defined` — a jump cannot land somewhere the
+verdict did not mean. Failing that, line 1 of the file.
+
+Nothing is invented. A prohibition that is holding names a pattern and not a
+place; a claim whose file does not exist yet is the normal state of work not
+yet done. Both say so instead of jumping somewhere plausible.
+
+The jump does not take the glass's own window — the point is to have the map
+and the code both in front of you. It reuses a window already showing
+something else, and splits only when the glass is all there is.
+
+FOLDING is per feature: everything under a feature, prose and claims alike,
+belongs to it. Lines above the first feature fold into nothing, so a
+drafting block (|scry-drafting|) or a stale header is never swallowed. Folds
+start open — folding is here to be reached for, not to hide the map from
+someone who just asked to see it. A closed fold still shows its feature's
+verdict, since that is an extmark on the feature line.
+
+=====
 10. COMMANDS                                                   *scry-commands*
 
                                                                        *:Scry*

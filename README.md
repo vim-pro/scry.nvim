@@ -148,6 +148,12 @@ optional polish for the list.
 
 `:Scry` to start. `:checkhealth scry` to verify.
 
+In the glass, `<CR>` opens what the line under the cursor is about — the code
+a claim points at, or a feature's fold. Claims jump to evidence when the last
+check found some (a violated prohibition lands on the violation), and
+otherwise to the definition, located by the same query that decided the
+verdict. See `:h scry-mappings`.
+
 ## Configuration (defaults)
 
 ```lua

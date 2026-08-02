@@ -319,6 +319,63 @@ function M.render()
   end
 end
 
+--- Fold expression: one fold per feature.
+---
+--- A real map is long — scry's own is 12 features over 130 lines — and the
+--- reason you opened it is usually one of them. Features are the fold level
+--- because features are the unit: everything under one, prose and claims
+--- alike, belongs to it. Lines before the first feature are level 0, which
+--- keeps a stale header or a drafting block from being swallowed into the
+--- first feature's fold.
+---@param lnum integer
+---@return string
+function M.foldexpr(lnum)
+  local line = vim.fn.getline(lnum)
+  if line:match("^feature%s") then
+    return ">1"
+  end
+  -- Before the first feature there is nothing to belong to.
+  for i = lnum - 1, 1, -1 do
+    if vim.fn.getline(i):match("^feature%s") then
+      return "1"
+    end
+  end
+  return "0"
+end
+
+--- The fold's one line, when it is closed: the feature, and its verdict is
+--- already an extmark on that line, so a closed fold still reports state.
+---@return string
+function M.foldtext()
+  local line = vim.fn.getline(vim.v.foldstart)
+  local n = vim.v.foldend - vim.v.foldstart
+  return ("%s   (%d line%s)"):format(line, n, n == 1 and "" or "s")
+end
+
+--- Window-local options for a window showing the glass. Window-local, so
+--- they have to be re-applied every time the buffer enters a window rather
+--- than set once at creation.
+---@param buf integer
+function M.window_options(buf)
+  local function apply()
+    if vim.api.nvim_get_current_buf() ~= buf then
+      return
+    end
+    vim.wo.foldmethod = "expr"
+    vim.wo.foldexpr = "v:lua.require'scry.glass'.foldexpr(v:lnum)"
+    vim.wo.foldtext = "v:lua.require'scry.glass'.foldtext()"
+    -- Open on arrival. Folding is here to be reached for, not to hide the
+    -- map from someone who just asked to see it.
+    vim.wo.foldlevel = 99
+    vim.wo.foldenable = true
+  end
+  apply()
+  vim.api.nvim_create_autocmd("BufWinEnter", {
+    buffer = buf,
+    callback = apply,
+  })
+end
+
 --- Run reflexion over the glass content and re-render.
 ---@param cb fun()? called after render
 function M.check(cb)
@@ -425,6 +482,21 @@ function M.open(root)
     vim.api.nvim_buf_create_user_command(buf, "Conjure", function()
       require("scry.cascade").start()
     end, { desc = "Conjure the claim under the cursor" })
+
+    -- <CR> is the only mapping, and it means "take me to what this line is
+    -- about" — the code for a claim, and for a feature line the fold, since
+    -- what a feature line is about is its own body. Nothing else is bound:
+    -- this is a normal, writable buffer and its editing keys have to stay
+    -- exactly the editing keys.
+    vim.keymap.set("n", "<CR>", function()
+      if vim.fn.getline(".") :match("^feature%s") then
+        pcall(vim.cmd, "normal! za")
+        return
+      end
+      if not require("scry.locate").open() then
+        vim.notify("[scry] nothing under the cursor to open", vim.log.levels.WARN)
+      end
+    end, { buffer = buf, desc = "scry: open what this line is about" })
     -- Claims that appear under the user's own edits are AUTHORED — that is
     -- the whole ownership gesture. state.map is the renderer's snapshot, so
     -- scry's own writes never register as authorship.
@@ -437,6 +509,7 @@ function M.open(root)
   vim.bo[buf].modified = false
   state.buf = buf
   state.root = root
+  M.window_options(buf)
 
   focus(buf)
   M.check()
