@@ -11,15 +11,6 @@ local H = {}
 H.root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h")
 vim.opt.rtp:prepend(H.root)
 
--- stackgraphs.nvim, which reach is a consumer of, is a sibling checkout
--- during development. A plugin manager puts it on the runtimepath in a real
--- install; the specs have to find it themselves. reach_spec says out loud
--- when it is not there rather than passing a suite that never ran.
-local sibling = vim.fn.fnamemodify(H.root, ":h") .. "/stackgraphs.nvim"
-if vim.fn.isdirectory(sibling) == 1 then
-  vim.opt.rtp:prepend(sibling)
-end
-
 H.fixture = H.root .. "/tests/fixture"
 
 function H.fail(msg)

@@ -32,38 +32,15 @@ function M.check()
     health.warn("no lua treesitter parser — contains claims will render as unchecked")
   end
 
-  -- Reach, and what kind of answer it can give here. An engine that is not
-  -- provisioned is not an error: reach falls back to a name match and says
-  -- so every time. Reporting it as broken would be the wrong shape — the
-  -- degraded answer is a real answer, just a weaker one.
+  -- Reach needs nothing installed. It follows import specifiers with a file
+  -- read, so there is no engine to provision and nothing to report as
+  -- missing -- which is most of what this section used to say.
   local reach = require("scry.reach")
-  if not reach.sg() then
-    -- Not an error either. Every verdict scry gives works without it; only
-    -- :ScryReach and the divergence shrink go away, so this is a missing
-    -- feature rather than a broken install.
-    health.info("reach: stackgraphs.nvim not installed — :ScryReach and the divergence shrink are unavailable")
-    health.info("  https://github.com/vim-pro/stackgraphs.nvim")
-  else
-    -- Which languages actually resolve, and by what. This is the fact that
-    -- decides every reach answer, so it leads — the per-backend detail is
-    -- only useful once you know there is nothing.
-    local resolvable = require("stackgraphs").languages()
-    local names = {}
-    for lang, backend in pairs(resolvable) do
-      names[#names + 1] = ("%s (%s)"):format(lang, backend)
-    end
-    table.sort(names)
-    if #names > 0 then
-      health.ok("reach: resolves " .. table.concat(names, ", "))
-    else
-      health.info("reach: nothing resolves here — :ScryReach answers by name match, labeled `text only`")
-      health.info("  install a language server for your language, or a stack-graphs engine")
-      health.info("  :h stackgraphs-backends")
-    end
-    for _, line in ipairs(reach.status()) do
-      health.info("reach: " .. line)
-    end
+  local cached = 0
+  for _ in pairs(reach.cache_load(root)) do
+    cached = cached + 1
   end
+  health.ok(("reach: follows imports, no engine required (%d feature(s) recorded)"):format(cached))
 
   -- Where the map and the holdout live.
   local map_path = root .. "/" .. config.map_path
