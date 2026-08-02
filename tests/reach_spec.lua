@@ -120,7 +120,7 @@ if reach.engine("typescript") then
   end, 120000), "indexing finished")
 
   local got
-  reach.of(work, { path = "src/lib.ts", lnum = 1, name = "target" }, function(r)
+  reach.callers(work, { path = "src/lib.ts", lnum = 1, name = "target" }, function(r)
     got = r
   end)
   H.ok(H.wait(function()
@@ -131,6 +131,75 @@ if reach.engine("typescript") then
   H.eq(got.hits[1].path, "src/page.ts", "and the decoy's own call is not reach")
 else
   print("  (no typescript engine provisioned — end-to-end reach NOT exercised)")
+end
+
+-- 6) THE CACHE STAMP compares by VALUE. runs.fingerprint returns a table,
+-- and `~=` on two tables compares identities — so a cache guarded that way
+-- is never valid, and the reach was computed, written, and then silently
+-- ignored on every single read. Nothing errored; divergence just never
+-- shrank.
+local sf = vim.fn.tempname()
+vim.fn.mkdir(sf, "p")
+vim.fn.writefile({ "one" }, sf .. "/a.txt")
+local stamp1 = reach.stamp(sf, { "a.txt" })
+H.eq(type(stamp1), "string", "a stamp is a string, so it can be compared")
+H.eq(reach.stamp(sf, { "a.txt" }), stamp1, "and is stable while the file is")
+vim.fn.writefile({ "one", "two" }, sf .. "/a.txt")
+H.ok(reach.stamp(sf, { "a.txt" }) ~= stamp1, "and changes when the file does")
+
+-- 7) DIVERGENCE SHRINKS. This is what reach is for: a file an entry point
+-- genuinely reaches is described by that feature, whether or not anyone
+-- listed it. Making someone list it is what turned a map of a real project
+-- into eighty-six hand-written members.
+if reach.engine("typescript") then
+  local work = vim.fn.tempname()
+  vim.fn.mkdir(work .. "/src", "p")
+  vim.fn.writefile(
+    { "import { helper } from './helper.ts';", "export function entry(id) { return helper(id); }" },
+    work .. "/src/entry.ts"
+  )
+  vim.fn.writefile(
+    { "import { deep } from './deep.ts';", "export function helper(x) { return deep(x); }" },
+    work .. "/src/helper.ts"
+  )
+  vim.fn.writefile({ "export function deep(x) { return x; }" }, work .. "/src/deep.ts")
+  vim.fn.writefile({ "export function unrelated() { return 0; }" }, work .. "/src/orphan.ts")
+
+  local map_ = require("scry.map").parse({ "feature someone can run an entry", "  def src/entry.ts:entry" })
+  local config = { sources = {}, map_path = ".scry/map.scry" }
+  local divergence = require("scry.divergence")
+
+  local before = select(1, divergence.unclaimed(work, map_, config))
+  H.eq(#before, 3, "three files nothing describes, before reach")
+
+  local ready
+  reach.with_index(work, "typescript", function()
+    reach.of_feature(work, map_.features[1], function(files, resolved)
+      vim.schedule(function()
+        if resolved then
+          local c = reach.cache_load(work)
+          c[map_.features[1].name] = { files = files, at = 0, fingerprint = reach.stamp(work, files) }
+          reach.cache_save(work, c)
+        end
+        ready = { files = files, resolved = resolved }
+      end)
+    end)
+  end)
+  H.ok(H.wait(function()
+    return ready ~= nil
+  end, 300000), "feature reach computed")
+  H.eq(ready.resolved, true, "by an engine")
+
+  -- Outbound, not inbound. Nothing CALLS entry — it is an entry point — so
+  -- the callers direction would answer zero here, which is why these are
+  -- two different questions and not two names for one.
+  H.ok(#ready.files >= 3, "the entry point reaches its transitive dependencies: " .. table.concat(ready.files, ", "))
+
+  local after = select(1, divergence.unclaimed(work, map_, config))
+  H.eq(#after, 1, "one file left unclaimed, from one named entry point")
+  H.eq(after[1], "src/orphan.ts", "and it is the one nothing reaches")
+else
+  print("  (no typescript engine — divergence-shrink NOT exercised)")
 end
 
 H.done("reach_spec PASS")

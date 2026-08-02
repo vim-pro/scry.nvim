@@ -70,9 +70,22 @@ end
 ---@return string[] unclaimed, integer total  (total = claimable files seen)
 function M.unclaimed(root, map_, config)
   local mapmod = require("scry.map")
+  local reach = require("scry.reach")
   local claimed = {}
   for _, feature in ipairs(map_.features) do
     for _, path in ipairs(mapmod.footprint(feature)) do
+      claimed[path] = true
+    end
+    -- ...and whatever this feature's entry points genuinely REACH, when
+    -- |:ScryReach| has computed it and the files have not moved since.
+    --
+    -- This is the point of reach. A file a feature's defs bind to is
+    -- described by that feature whether or not anyone typed its name, and
+    -- making someone type it is what turned a map of a real project into
+    -- eighty-six hand-listed members. Only a RESOLVED answer counts: a name
+    -- match would quietly excuse every file that happens to mention a
+    -- common word, which is the opposite of what this list is for.
+    for _, path in ipairs(reach.cached(root, feature.name) or {}) do
       claimed[path] = true
     end
   end

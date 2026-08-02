@@ -157,8 +157,28 @@ A feature's members are its ENTRY POINTS. The code behind them is not
 something anyone should have to list, and listing it is what made a map of a
 real project run to eighty-six members.
 
-|:ScryReach| on a `def` puts everything that binds to it in the quickfix
-list. Two passes, and the split is the honesty:
+TWO DIRECTIONS, and they are different questions. On a `def`, |:ScryReach|
+reports its CALLERS — everything that binds to it, which is "who uses
+this". On a FEATURE line it reports the opposite: everything the feature's
+entry points REACH, transitively, which is its footprint. An entry point
+nobody calls has no callers and a large footprint, and that is exactly what
+an entry point is.
+
+THE FOOTPRINT IS WHY THIS EXISTS. A file a feature's entry points genuinely
+reach is described by that feature whether or not anyone typed its name, so
+|scry-divergence| counts it as claimed. On a four-file fixture with one
+named entry point, the unclaimed list goes from three files to one — and the
+one left is the file nothing reaches. Making someone name the other two by
+hand is what turned a map of a real project into eighty-six members.
+
+Only a RESOLVED answer is recorded. A name match would quietly excuse every
+file that mentions a common word, which is the opposite of what the
+unclaimed list is for. The record carries a stamp of the files it was
+computed from and is ignored once any of them changes: a stale reach is
+worse than none, because it would keep a file off the list on the strength
+of a binding that has since been deleted.
+
+Reach on a def is two passes, and the split is the honesty:
 
     candidates   ripgrep finds every position that mentions the name.
                  Fast, over-broad, never reported as more than it is.

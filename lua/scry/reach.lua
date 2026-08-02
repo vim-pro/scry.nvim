@@ -266,7 +266,12 @@ function M.candidates(root, name, langs, cb)
   end)
 end
 
---- What a definition reaches: every place that genuinely binds to it.
+--- The CALLERS of a definition: every place that genuinely binds to it.
+---
+--- Inbound. This answers "who uses this", which is what :ScryReach on a def
+--- reports. It is NOT a footprint — see M.reaches for the other direction,
+--- and the difference is not a nuance: an entry point nobody calls has no
+--- callers and a large footprint, which is exactly what an entry point is.
 ---
 --- The shape is the answer AND its provenance. `resolved` says an engine
 --- decided each of these; without one, `n` is a count of mentions and the
@@ -275,7 +280,7 @@ end
 ---@param root string
 ---@param target { path: string, lnum: integer, name: string }
 ---@param cb fun(r: { n: integer, files: integer, resolved: boolean, hits: table[] })
-function M.of(root, target, cb)
+function M.callers(root, target, cb)
   local lang = M.lang_of(target.path)
   local exts = {}
   for ext, l in pairs(EXT_LANG) do
@@ -325,6 +330,282 @@ function M.of(root, target, cb)
   end)
 end
 
+-- ---------------------------------------------------------------------------
+-- The cache, and why reach is stored at all
+--
+-- Reach is expensive: indexing a project is the slowest thing scry does. A
+-- check has to stay cheap enough to run every time you look, so reach
+-- cannot be part of one. But its ANSWER is exactly what |scry-divergence|
+-- needs — a file a feature's entry points genuinely reach is described by
+-- that feature, whether or not anyone listed it.
+--
+-- So the answer is written down, out of the repo alongside the run cache,
+-- and divergence reads it. It carries a fingerprint of the files it was
+-- computed from, because a stale reach is worse than none: it would keep a
+-- file out of the unclaimed list on the strength of a binding that has
+-- since been deleted.
+-- ---------------------------------------------------------------------------
+
+--- Cache file for a root. Machine-local, like runs — a resolved binding is
+--- a fact about this checkout, not something to commit.
+---@param root string
+---@return string
+--- Callers must be on the main loop: this uses vim.fn, which a vim.system
+--- callback's fast event context forbids. of_feature schedules its own
+--- continuation for exactly this reason.
+function M.cache_path(root)
+  local dir = vim.fn.stdpath("state") .. "/scry/reach"
+  vim.fn.mkdir(dir, "p")
+  return dir .. "/" .. vim.fn.fnamemodify(root, ":p"):gsub("[/\\:]", "%%") .. "json"
+end
+
+---@param root string
+---@return table<string, { files: string[], at: integer, fingerprint: string }>
+function M.cache_load(root)
+  local f = io.open(M.cache_path(root), "r")
+  if not f then
+    return {}
+  end
+  local content = f:read("*a")
+  f:close()
+  local ok, decoded = pcall(vim.json.decode, content)
+  return (ok and type(decoded) == "table") and decoded or {}
+end
+
+---@param root string
+---@param cache table
+function M.cache_save(root, cache)
+  local f = io.open(M.cache_path(root), "w")
+  if f then
+    f:write(vim.json.encode(cache))
+    f:close()
+  end
+end
+
+--- What a FILE reaches in one hop: the files its identifiers resolve into.
+---
+--- Outbound, and the opposite question from M.callers. Every identifier
+--- position in the file is handed to the engine at once, and each
+--- definition it resolves to that lives in another file is a dependency.
+--- That is a footprint: the code behind an entry point, which is precisely
+--- what nobody should have to enumerate by hand.
+---
+--- Identifiers come from ripgrep rather than a parser because the engine
+--- discards anything that does not resolve — an over-broad candidate list
+--- costs a little time and cannot produce a wrong answer.
+---@param root string
+---@param path string
+---@param cb fun(files: string[], resolved: boolean)
+function M.reaches(root, path, cb)
+  local lang = M.lang_of(path)
+  if not M.engine(lang) then
+    cb({}, false)
+    return
+  end
+  local db, real = M.db(root, lang), vim.fn.resolve(vim.fn.fnamemodify(root, ":p"))
+  local bin = M.engine(lang)
+  vim.system({ "rg", "--vimgrep", "--only-matching", "[A-Za-z_][A-Za-z0-9_]*", path }, { cwd = root, text = true }, function(res)
+    local args = { bin, "query", "-D", db, "definition" }
+    local seen, n = {}, 0
+    for line in (res.stdout or ""):gmatch("[^\n]+") do
+      local p, l, c = line:match("^(.-):(%d+):(%d+):")
+      -- Bounded: a position list is a command line, and a huge file would
+      -- otherwise build one the OS refuses to run.
+      if p and n < 400 then
+        local key = l .. ":" .. c
+        if not seen[key] then
+          seen[key] = true
+          n = n + 1
+          args[#args + 1] = ("%s:%s:%s"):format(p, l, c)
+        end
+      end
+    end
+    if n == 0 then
+      cb({}, true)
+      return
+    end
+    vim.system(args, { cwd = root, text = true }, function(q)
+      if q.code ~= 0 then
+        cb({}, false)
+        return
+      end
+      local files, out = {}, {}
+      for _, ds in pairs(M.parse_query(q.stdout or "", root, real)) do
+        for _, d in ipairs(ds) do
+          if d.path ~= path and not files[d.path] then
+            files[d.path] = true
+            out[#out + 1] = d.path
+          end
+        end
+      end
+      table.sort(out)
+      cb(out, true)
+    end)
+  end)
+end
+
+--- A feature's whole footprint: everything its entry points reach,
+--- transitively.
+---
+--- The defs are the entry points and this walks outward from them. Depth is
+--- bounded because a footprint that reaches the whole repository tells you
+--- nothing — and because each hop is a subprocess.
+---@param root string
+---@param feature scry.Feature
+---@param cb fun(files: string[], resolved: boolean)
+function M.of_feature(root, feature, cb)
+  local frontier, seen, all_resolved = {}, {}, true
+  for _, claim in ipairs(feature.claims) do
+    local path = require("scry.map").claim_path(claim)
+    if path and (claim.kind == "def" or claim.kind == "module") and not seen[path] then
+      seen[path] = true
+      frontier[#frontier + 1] = path
+    end
+  end
+  if #frontier == 0 then
+    cb({}, true)
+    return
+  end
+
+  local DEPTH = 3
+  local function hop(depth, current)
+    if depth > DEPTH or #current == 0 then
+      local out = {}
+      for p in pairs(seen) do
+        out[#out + 1] = p
+      end
+      table.sort(out)
+      cb(out, all_resolved)
+      return
+    end
+    local next_, left = {}, #current
+    for _, path in ipairs(current) do
+      M.reaches(root, path, function(files, ok)
+        if not ok then
+          all_resolved = false
+        end
+        for _, f in ipairs(files) do
+          if not seen[f] then
+            seen[f] = true
+            next_[#next_ + 1] = f
+          end
+        end
+        left = left - 1
+        if left == 0 then
+          vim.schedule(function()
+            hop(depth + 1, next_)
+          end)
+        end
+      end)
+    end
+  end
+  vim.schedule(function()
+    hop(1, frontier)
+  end)
+end
+
+--- A deterministic stamp for a set of files.
+---
+--- runs.fingerprint returns a TABLE, and comparing two tables with ~=
+--- compares identities, so a cache guarded that way is never valid and
+--- never used — the reach was computed, written, and then silently ignored
+--- on every read. Sorted and flattened to a string, it compares by value.
+---@param root string
+---@param files string[]
+---@return string
+function M.stamp(root, files)
+  local runs = require("scry.runs")
+  local sorted = vim.deepcopy(files)
+  table.sort(sorted)
+  local parts = {}
+  for _, p in ipairs(sorted) do
+    parts[#parts + 1] = p .. "=" .. tostring(runs.mark(root, p))
+  end
+  return table.concat(parts, ";")
+end
+
+--- The reach recorded for a feature, or nil when there is none or it has
+--- gone stale. Staleness is by fingerprint over the reached files: if any
+--- of them changed, the binding that put them there may not exist any more,
+--- and keeping a file out of the unclaimed list on a deleted binding is the
+--- one failure a cache here can cause.
+---@param root string
+---@param feature_name string
+---@return string[]?
+function M.cached(root, feature_name)
+  local entry = M.cache_load(root)[feature_name]
+  if not entry or type(entry.files) ~= "table" then
+    return nil
+  end
+  if entry.fingerprint ~= M.stamp(root, entry.files) then
+    return nil
+  end
+  return entry.files
+end
+
+--- Index a project for `lang`, then run `after`. The slow half, factored
+--- out because both the def and the feature paths need it.
+---@param root string
+---@param lang string?
+---@param after fun()
+function M.with_index(root, lang, after)
+  if not M.engine(lang) then
+    after()
+    return
+  end
+  vim.notify(("[scry] indexing %s for reach…"):format(lang))
+  local files = {}
+  local res = vim.system({ "rg", "--files" }, { cwd = root, text = true }):wait()
+  for line in (res.stdout or ""):gmatch("[^\n]+") do
+    if M.lang_of(line) == lang then
+      files[#files + 1] = line
+    end
+  end
+  M.index(root, lang, files, function()
+    vim.schedule(after)
+  end)
+end
+
+--- Compute and record a whole feature's reach.
+---@param root string
+---@param feature scry.Feature
+function M.feature_show(root, feature)
+  local lang
+  for _, c in ipairs(feature.claims) do
+    if c.kind == "def" then
+      lang = lang or M.lang_of((c.target:match("^(.-):") or ""))
+    end
+  end
+  M.with_index(root, lang, function()
+    M.of_feature(root, feature, function(files, resolved)
+      vim.schedule(function()
+        if #files == 0 then
+          vim.notify(("[scry] %s reaches nothing scry can see"):format(feature.name))
+          return
+        end
+        -- Only a resolved answer is recorded. A name match must never
+        -- excuse a file from the unclaimed list.
+        if resolved then
+          local cache = M.cache_load(root)
+          cache[feature.name] = {
+            files = files,
+            at = os.time(),
+            fingerprint = M.stamp(root, files),
+          }
+          M.cache_save(root, cache)
+        end
+        vim.notify(
+          ("[scry] %s reaches %d file(s)%s"):format(
+            feature.name,
+            #files,
+            resolved and " — recorded, and divergence will count them" or " — TEXT ONLY, not recorded"
+          )
+        )
+      end)
+    end)
+  end)
+end
+
 --- :ScryReach — everything that binds to the def under the cursor, into the
 --- quickfix list.
 ---
@@ -348,8 +629,23 @@ function M.show()
       claim = c
     end
   end
+  -- On a FEATURE line: the reach of everything it enters by, unioned and
+  -- recorded, so divergence stops asking you to name files your entry
+  -- points already reach.
+  if not claim then
+    local feature
+    for _, f in ipairs(map_.features) do
+      if f.lnum == lnum then
+        feature = f
+      end
+    end
+    if feature then
+      M.feature_show(state.root, feature)
+      return
+    end
+  end
   if not claim or claim.kind ~= "def" then
-    vim.notify("[scry] reach is a question about a def — put the cursor on one", vim.log.levels.WARN)
+    vim.notify("[scry] reach is a question about a def or a feature", vim.log.levels.WARN)
     return
   end
   local path, name = claim.target:match("^(.-):([%w_.]+)$")
@@ -360,7 +656,6 @@ function M.show()
   name = name:match("([%w_]+)$") or name
 
   local lang = M.lang_of(path)
-  local engine = M.engine(lang)
   local target_lnum = require("scry.resolvers.ts_rg").locate(state.root, path, name) or 1
 
   local function report()
@@ -384,21 +679,7 @@ function M.show()
     end)
   end
 
-  if not engine then
-    report()
-    return
-  end
-  vim.notify(("[scry] indexing %s for reach…"):format(lang))
-  local files = {}
-  local res = vim.system({ "rg", "--files" }, { cwd = state.root, text = true }):wait()
-  for line in (res.stdout or ""):gmatch("[^\n]+") do
-    if M.lang_of(line) == lang then
-      files[#files + 1] = line
-    end
-  end
-  M.index(state.root, lang, files, function()
-    vim.schedule(report)
-  end)
+  M.with_index(state.root, lang, report)
 end
 
 --- A one-line account of what reach is available here, for :checkhealth.
