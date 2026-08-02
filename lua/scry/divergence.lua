@@ -48,6 +48,73 @@ function M.sources(root, config)
   return out
 end
 
+-- FILES NO FEATURE COULD EVER CLAIM. Excluded categorically, not by
+-- config, because the exclusion is not a judgment about a particular
+-- project: an icon has no behavior to describe, and a lockfile is a
+-- record of a resolver's arithmetic. Asking someone to account for them
+-- is the same mistake as asking them to describe .scry/ — which is why it
+-- sits beside that rule rather than in `sources`.
+--
+-- `sources` remains the place to say what THIS product is made of, and it
+-- is a different question. This list is only about files where the answer
+-- can never be yes.
+--
+-- It is not free to get wrong in either direction, so it is short. Source
+-- that happens to be generated, content that happens to be markdown, and
+-- build config are all left in: a reader may reasonably decide any of them
+-- is part of the product, and scry has no business deciding first.
+--
+-- Measured on a real project: seventy-two files, of which eight were these.
+-- The cost was not the eight. It was that a drafting pass kept being handed
+-- them, could not describe them, and correctly concluded it had stopped
+-- making progress.
+local UNDESCRIBABLE = {
+  -- assets: pictures, fonts, media
+  "%.png$",
+  "%.jpe?g$",
+  "%.gif$",
+  "%.webp$",
+  "%.avif$",
+  "%.ico$",
+  "%.svg$",
+  "%.woff2?$",
+  "%.ttf$",
+  "%.otf$",
+  "%.eot$",
+  "%.mp4$",
+  "%.webm$",
+  "%.mp3$",
+  "%.wav$",
+  -- a lockfile is a resolver's output, not a decision anyone made
+  "^package%-lock%.json$",
+  "/package%-lock%.json$",
+  "^yarn%.lock$",
+  "/yarn%.lock$",
+  "^pnpm%-lock%.yaml$",
+  "/pnpm%-lock%.yaml$",
+  "^bun%.lockb$",
+  "^Cargo%.lock$",
+  "/Cargo%.lock$",
+  "^poetry%.lock$",
+  "^uv%.lock$",
+  "^Gemfile%.lock$",
+  "^composer%.lock$",
+  "^go%.sum$",
+  "/go%.sum$",
+}
+
+--- Could a feature ever claim this file?
+---@param path string
+---@return boolean
+function M.describable(path)
+  for _, pat in ipairs(UNDESCRIBABLE) do
+    if path:match(pat) then
+      return false
+    end
+  end
+  return true
+end
+
 -- scry's own bookkeeping is not product. Excluded by path rather than by
 -- config so a fresh map never opens accusing you of not describing itself.
 ---@param path string
@@ -92,7 +159,7 @@ function M.unclaimed(root, map_, config)
 
   local out, total = {}, 0
   for _, path in ipairs(M.sources(root, config)) do
-    if not is_scry_own(path, config) then
+    if not is_scry_own(path, config) and M.describable(path) then
       total = total + 1
       if not claimed[path] then
         out[#out + 1] = path

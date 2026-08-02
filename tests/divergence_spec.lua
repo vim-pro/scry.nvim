@@ -148,4 +148,44 @@ H.eq(#small, 3, "three files stay three rows")
 H.eq(small[1].path, "src/lib/db.js", "named individually")
 H.eq(small[1].count, 1, "one apiece")
 
+-- FILES NO FEATURE COULD EVER CLAIM are not counted, and the exclusion is
+-- categorical rather than configured: an icon has no behavior to describe
+-- and a lockfile is a record of a resolver's arithmetic. `sources` answers
+-- a different question — what THIS product is made of — and a reader may
+-- reasonably draw that line anywhere.
+--
+-- Measured on a real project: eight of seventy-two files. The cost was not
+-- the eight; it was that a drafting pass kept being handed them, could not
+-- describe them, and correctly concluded it had stopped making progress.
+local div = require("scry.divergence")
+for _, junk in ipairs({
+  "public/og.png",
+  "brand/avatar.svg",
+  "assets/fonts/inter.woff2",
+  "media/demo.mp4",
+  "package-lock.json",
+  "app/package-lock.json",
+  "yarn.lock",
+  "Cargo.lock",
+  "go.sum",
+}) do
+  H.eq(div.describable(junk), false, junk .. " is not something a feature claims")
+end
+
+-- SOURCE IS LEFT IN, even where a reader might have excluded it. Generated
+-- code is still code, content is still content, and build config is a real
+-- decision someone made — scry has no business ruling on those first.
+for _, real in ipairs({
+  "src/lib/db.js",
+  "checklists/day-hike.md",
+  "README.md",
+  "package.json",
+  "astro.config.mjs",
+  "render.yaml",
+  "src/pages/index.astro",
+  "scripts/setup-env.mjs",
+}) do
+  H.eq(div.describable(real), true, real .. " is a reader's call, not scry's")
+end
+
 H.done("divergence_spec PASS")

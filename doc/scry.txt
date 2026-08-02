@@ -471,6 +471,18 @@ map does not account for. Without it a feature list cannot be read honestly:
 every feature can be `✓ done` while the map describes a tenth of the
 product, and nothing on the page would say so.
 
+Two kinds of file are never counted. |scry-configuration|'s `sources` says
+what THIS product is made of, and is yours to draw. Separately, and
+categorically, scry omits files no feature could ever claim: pictures,
+fonts, media, and lockfiles. An icon has no behavior to describe and a
+lockfile records a resolver's arithmetic — the same reasoning that keeps
+`.scry/` out of the count, rather than a judgment about your project.
+
+That list is deliberately short. Generated code is still code, content is
+still content, and build config is a decision someone made; a reader may
+reasonably call any of them product, so scry leaves them in and lets
+`sources` settle it.
+
 A file counts as claimed when some feature's footprint names it
 (|scry-footprint|). Everything else is unclaimed, and the header says how
 many:
