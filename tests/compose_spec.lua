@@ -32,7 +32,7 @@ end
 -- posts to have to agree, and no request that sees only one of them can
 -- make them agree.
 local req = compose.request("/proj", FEATURE, "add a PDF export", KINDS, read)
-H.eq(#req.files, 3, "every member with an address is in the cast")
+H.eq(#req.files, 3, "every member that names a file is in the cast")
 H.ok(req.user:find("Tailor a checklist", 1, true) ~= nil, "the feature is named")
 H.ok(req.user:find("Describe your circumstances", 1, true) ~= nil, "its prose rides along")
 H.ok(req.user:find("add a PDF export", 1, true) ~= nil, "and the intent")
@@ -40,13 +40,14 @@ H.ok(req.user:find("export function compile", 1, true) ~= nil, "an existing file
 H.ok(req.user:find("<h1>copy</h1>", 1, true) ~= nil, "all of them, not just the first")
 H.ok(req.user:find("selects and lightly adapts", 1, true) ~= nil, "a member's own note is shown too")
 
--- AN ADDRESS EXISTS BEFORE THE FILE DOES. `route print` resolves through
--- its kind's probe whether or not anything is there, so adding a capability
--- and changing one are the same verb: absent members are files to create.
-H.ok(req.user:find("src/pages/print.astro", 1, true) ~= nil, "an absent member is still addressed")
+-- A MEMBER NAMES ITS FILE BEFORE THE FILE EXISTS. `route print` resolves
+-- through its kind's probe whether or not anything is there, so adding a
+-- capability and changing one are the same verb: absent members are files to
+-- create.
+H.ok(req.user:find("src/pages/print.astro", 1, true) ~= nil, "an absent member still names its file")
 H.ok(req.user:find("DOES NOT EXIST YET", 1, true) ~= nil, "and is marked as one to create")
 
--- A member with no address at all cannot be cast across — a `never` is a
+-- A member that names no file cannot be cast across — a `never` is a
 -- pattern and a grep-probed kind can match anywhere.
 local vague = mapmod.parse({ "feature f", "  never print%(" }, KINDS).features[1]
 H.eq(#compose.request("/proj", vague, "x", KINDS, read).files, 0, "a prohibition is not a place to edit")
@@ -87,7 +88,7 @@ H.eq(#compose.parse(""), 0, "an empty result is no files, not an error")
 H.eq(#compose.parse("I could not do that."), 0, "and neither is a refusal")
 
 -- 3) A CAST MAY ONLY EDIT WHAT IT WAS SHOWN. A path the model invented is a
--- path nobody addressed — writing it would make the map a liar about what
+-- path nobody named — writing it would make the map a liar about what
 -- the feature is made of, and would edit files the reader never put in
 -- scope.
 local proj = vim.fn.tempname()
@@ -99,11 +100,11 @@ local res = compose.apply(proj, {
   { path = "src/pages/print.astro", lines = { "fresh" } },
   { path = "src/lib/secrets.js", lines = { "not yours" } },
 }, allowed)
-H.eq(#res.changed, 1, "an existing addressed file is changed")
+H.eq(#res.changed, 1, "an existing named file is changed")
 H.eq(res.changed[1], "src/pages/copy.astro", "and named")
-H.eq(#res.created, 1, "an absent addressed file is created")
+H.eq(#res.created, 1, "an absent named file is created")
 H.eq(res.created[1], "src/pages/print.astro", "and named")
-H.eq(#res.refused, 1, "a file nobody addressed is refused")
+H.eq(#res.refused, 1, "a file nobody named is refused")
 H.eq(res.refused[1], "src/lib/secrets.js", "and named, rather than dropped quietly")
 
 -- 4) NOTHING TOUCHES THE DISK. The result lands in buffers, modified and

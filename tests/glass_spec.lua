@@ -528,7 +528,7 @@ end)
 vim.api.nvim_win_set_cursor(0, { 1, 0 })
 H.eq(glass.next_action(), "~ to change it", "on a feature with members, the operator is named")
 vim.api.nvim_win_set_cursor(0, { 3, 0 })
-H.ok(glass.next_action():find("+", 1, true) ~= nil, "on a feature made of nothing, the way to address it is")
+H.ok(glass.next_action():find("+", 1, true) ~= nil, "on a feature made of nothing, the way to fill it is")
 -- IT IS NEVER SILENT. "I do not know what to do here" is the state this
 -- exists to remove, and a fully described project sat in it permanently.
 glass._state.debt = { unclaimed = 0 }

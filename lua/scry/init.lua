@@ -44,10 +44,10 @@ end
 
 -- WITH AN INTENT, IT AIMS. Nobody sits down wanting to look at a map; you
 -- sit down wanting to do something, and the map is how scry finds the
--- address for it. `:Scry add a PDF export` puts the cursor on the capability
--- that is about — an existing one if there is one, a new one written at sea
--- level and addressed if there is not — and stops there. You read the
--- address before anything is cast at it. See |scry-aim|.
+-- capability it belongs to. `:Scry add a PDF export` puts the cursor on that
+-- capability — an existing one if there is one, a new one written at sea
+-- level with its members found if there is not — and stops there. You see
+-- the files before anything is cast across them. See |scry-aim|.
 --
 -- Bare, it opens the glass, because looking at the map is still a thing you
 -- do and it should not cost a prompt.
@@ -80,9 +80,9 @@ end, {
 -- files would be its own kind of tax.
 -- How the map READS, as against whether it is true. Every other check asks
 -- the code a question; this one asks nothing of the code at all.
--- The verb. Vim aims an operator at a precisely addressed noun; this aims
--- one at a capability, and the address is every file the capability is made
--- of. You do not open the files.
+-- The verb. Vim aims an operator at a noun the cursor picks out; this aims
+-- one at a capability, and the change lands on every file it is made of.
+-- You do not open the files.
 vim.api.nvim_create_user_command("ScryConjure", function()
   require("scry.compose").start()
 end, { desc = "Cast an intent across the whole feature under the cursor" })

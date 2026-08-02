@@ -1,5 +1,5 @@
--- Giving a capability an address: you say the feature in your own words, and
--- scry finds what it is made of.
+-- Finding what a capability is made of: you say the feature in your own
+-- words, and scry finds its members.
 --
 -- This is the other direction from drafting. A drafting sweep starts at the
 -- FILES nothing describes and writes features to cover them — bottom-up,
@@ -13,7 +13,7 @@
 -- describe the product. Exactly backwards.
 local H = dofile(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .. "/helpers.lua")
 
-local address = require("scry.address")
+local members = require("scry.members")
 local mapmod = require("scry.map")
 
 local KINDS = require("scry.kinds").all({
@@ -22,7 +22,7 @@ local KINDS = require("scry.kinds").all({
 
 -- 1) THE REQUEST. The feature's name is the question; everything else is
 -- what scry knows that the reader should not have to type.
-local req = address.request("Read a checklist as markdown or JSON", {
+local req = members.request("Read a checklist as markdown or JSON", {
   "src/pages/[slug].md.ts",
   "src/pages/[slug].json.ts",
   "src/lib/db.ts",
@@ -36,7 +36,7 @@ H.ok(req.user:find("src/pages/{name}.astro", 1, true) ~= nil, "and where that ki
 
 -- A FILE ANOTHER FEATURE CLAIMS IS OFFERED ANYWAY, and labeled. One file can
 -- serve two capabilities; withholding it to keep the unclaimed count tidy
--- would make this address wrong on purpose. Saying who else claims it is what
+-- would leave the feature short a member on purpose. Saying who else claims it is what
 -- lets an answer notice it is re-describing something already described —
 -- the failure that took one map to 301 features.
 H.ok(req.user:find("src/lib/db.ts", 1, true) ~= nil, "a claimed file is still a candidate")
@@ -50,7 +50,7 @@ H.ok(req.system:find("Emit no `feature` line", 1, true) ~= nil, "the answer is a
 -- makes: a line is a member only when its first word is a kind this project
 -- knows. Guessing by shape once turned the second word of a sentence into a
 -- file path.
-local lines, n = address.parse(table.concat({
+local lines, n = members.parse(table.concat({
   "Every checklist is fetchable as its source markdown or as structured JSON.",
   "module src/pages/[slug].md.ts",
   "module src/pages/[slug].json.ts",
@@ -69,20 +69,20 @@ H.eq(#reparsed.features[1].desc, 1, "with the sentence kept as the feature's own
 -- An UNKNOWN kind is prose, not a claim. A model inventing `endpoint` when
 -- the project has no such kind must cost a sentence, never a claim that
 -- nothing will ever check.
-local _, invented = address.parse("endpoint /api/compile", KINDS)
+local _, invented = members.parse("endpoint /api/compile", KINDS)
 H.eq(invented, 0, "an invented kind is not a member")
 
 -- Fences and un-filled placeholders are dropped rather than kept as prose.
-local fenced, fn = address.parse("```\n<kind> <target>\nmodule a.ts\n```", KINDS)
+local fenced, fn = members.parse("```\n<kind> <target>\nmodule a.ts\n```", KINDS)
 H.eq(fn, 1, "the real member survives a fence")
 H.eq(#fenced, 1, "and the shape's own placeholder is not mistaken for a sentence")
 
 -- Prose AFTER the members is the model explaining itself, and explanation is
 -- not description — it would land in the map as a sentence nobody wrote.
-local trailing = address.parse("module a.ts\nI chose this file because it exports the handler.", KINDS)
+local trailing = members.parse("module a.ts\nI chose this file because it exports the handler.", KINDS)
 H.eq(#trailing, 1, "commentary after the members is dropped")
 
--- 3) WHICH FEATURES WANT ONE. A feature with members has an address.
+-- 3) WHICH FEATURES WANT THEIR MEMBERS FOUND. One that has members does not.
 local map_ = mapmod.parse({
   "feature named and nothing else",
   "feature already made of something",
@@ -90,13 +90,13 @@ local map_ = mapmod.parse({
   "feature made of something that is not there yet",
   "  module does/not/exist.lua",
 }, KINDS)
-H.eq(address.wanted(map_.features[1]), true, "a feature with nothing under it wants an address")
-H.eq(address.wanted(map_.features[2]), false, "one with members has one")
+H.eq(members.wanted(map_.features[1]), true, "a feature with nothing under it wants its members found")
+H.eq(members.wanted(map_.features[2]), false, "one with members does not")
 
--- AND A MEMBER THAT DOES NOT HOLD IS STILL AN ADDRESS. A claim pointing at a
+-- AND A MEMBER THAT DOES NOT HOLD IS STILL A MEMBER. A claim pointing at a
 -- file that does not exist yet is work you described ON PURPOSE — it is how
--- you add a capability (|scry-compose|) — so re-addressing it would delete
--- the thing you were about to build.
-H.eq(address.wanted(map_.features[3]), false, "an absent member is a description, not a gap")
+-- you add a capability (|scry-compose|) — so running `+` again on it would
+-- delete the thing you were about to build.
+H.eq(members.wanted(map_.features[3]), false, "an absent member is a description, not a gap")
 
 H.done("address_spec PASS")

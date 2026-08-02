@@ -29,17 +29,17 @@ across every capability that matches. Nothing new to learn — you already
 know the grammar; scry just gives it a bigger noun.
 
 You don't sit down wanting to look at a map. You sit down wanting to do
-something, and the map is how scry finds the address for it — so say what
-you want and it aims you:
+something, and the map is how scry finds the capability it belongs to — so
+say what you want and it aims you:
 
 ```
 :Scry add a PDF export
 ```
 
 The cursor lands on the capability that work is about, matching a feature
-you already have or writing one and addressing it. Then it **stops**. You
-read the address before anything is cast at it, and `~` comes up pre-filled
-with what you already said.
+you already have or writing one and finding what it's made of. Then it
+**stops**. You see the files before anything is cast across them, and `~`
+comes up pre-filled with what you already said.
 
 Or write the sentence yourself and press `+` on it, and scry finds the files
 it's made of:
@@ -58,15 +58,16 @@ paths by hand meant knowing the layout before you were allowed to describe
 the product, which is backwards. It's an ordinary buffer edit, so `u` takes
 it back.
 
-Adding a capability is the same verb, because an address exists before the
-file does: `route print` names `src/pages/print.astro` whether or not
-anything is there yet. Write the feature you want with the members it
+Adding a capability is the same verb, because a member names its file
+before the file exists: `route print` names `src/pages/print.astro` whether
+or not anything is there yet. Write the feature you want with the members it
 should have, and cast — absent members are files to create.
 
-Everything else here exists to make that address real. The checks tell you
+Everything else here exists to keep that noun real. The checks tell you
 whether what you asked for actually landed; the kinds tell a member where
-its file lives. Neither is the point. The point is that a capability has an
-address you can put a cursor on.
+its file lives. Neither is the point. The point is that you can put a
+cursor on a capability, and the rest keeps the map from lying about what
+it's made of.
 
 ```
 scry · 3 features · 1 building · 1 broken · 1 to do · 4 unclaimed files   checked 40s ago

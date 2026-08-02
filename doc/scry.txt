@@ -13,7 +13,7 @@ CONTENTS                                                       *scry-contents*
      Naming a feature twice ...................... |scry-reopening|
      How the map reads ........................... |scry-lint|
      Aiming an intent ............................ |scry-aim|
-     Giving a capability an address .............. |scry-address|
+     Finding what a feature is made of ........... |scry-members|
      Programming a capability .................... |scry-compose|
      Footprint ................................... |scry-footprint|
   4. Verdicts .................................... |scry-verdicts|
@@ -57,20 +57,21 @@ fans it across every capability that matches. Nothing new to learn — you
 know the grammar already; scry gives it a bigger noun. See |scry-compose|.
 
 THE SENTENCE IS THE ONLY THING YOU TYPE. Write what someone can do, press
-`+` on it, and scry finds the files it is made of (|scry-address|). Typing
+`+` on it, and scry finds the files it is made of (|scry-members|). Typing
 member paths by hand meant knowing the layout before you were allowed to
 describe the product, which is backwards.
 
-Adding a capability is the same verb, because an address exists before the
-file does: `route print` names src/pages/print.astro whether or not
-anything is there yet (|scry-kinds|). Write the feature you want with the
-members it should have and cast — absent members are files to create.
+Adding a capability is the same verb, because a member names its file
+before the file exists: `route print` names src/pages/print.astro whether
+or not anything is there yet (|scry-kinds|). Write the feature you want
+with the members it should have and cast — absent members are files to
+create.
 
-EVERYTHING ELSE HERE EXISTS TO MAKE THAT ADDRESS REAL. The checks say
-whether what you asked for actually landed. The kinds say where a member's
-file lives. Divergence says what has no address yet. None of that is the
-point; the point is that a capability has an address you can put a cursor
-on, and the rest is what keeps the address from lying.
+EVERYTHING ELSE HERE EXISTS TO KEEP THAT NOUN REAL. The checks say whether
+what you asked for actually landed. The kinds say where a member's file
+lives. Divergence says which files no feature accounts for. None of that is
+the point; the point is that you can put a cursor on a capability, and the
+rest is what keeps the map from lying about what it is made of.
 
 So the checks are a means. They keep the description honest while you write
 it — you find out you meant something slightly different from what you
@@ -869,7 +870,7 @@ has. Four mappings are added:
     ~           cast an intent across the whole feature under the cursor,
                 every file it is made of — see |scry-compose|
     +           fill in what is missing here: on a feature with no members,
-                the files it is made of (|scry-address|); anywhere else,
+                the files it is made of (|scry-members|); anywhere else,
                 features for the files nothing describes (|scry-drafting|).
                 Again to stop a pass in flight.
     ]d  [d      to the next and previous feature that wants something
@@ -961,7 +962,7 @@ remove.
 
 THE AFFORDANCE IS IN THE BUFFER, not in a command you have to have read
 about. So the ONE thing you ever type is the sentence — write a feature,
-press `+` on it, and the files it is made of arrive (|scry-address|). And
+press `+` on it, and the files it is made of arrive (|scry-members|). And
 the header says how many files nothing describes, naming the same key
 beside the number:
 >
@@ -1153,18 +1154,19 @@ wrong flag costs less than never seeing a real one.
 AIMING AN INTENT                                                    *scry-aim*
 
 Nobody sits down wanting to look at a map. You sit down wanting to DO
-something, and the map is how scry finds the address for it. So the intent
-is the front door:
+something, and the map is how scry finds the capability it belongs to. So
+the intent is the front door:
 >
     :Scry add a PDF export
 <
 The cursor lands on the capability that work is about. If a feature already
-covers it, that one. If none does, scry writes one at sea level and gives it
-an address (|scry-address|), so the noun exists by the time you look at it.
+covers it, that one. If none does, scry writes one at sea level and finds
+what it is made of (|scry-members|), so the noun is whole by the time you
+look at it.
 
-IT AIMS, IT DOES NOT FIRE. The cursor lands and it stops. You read the
-address before anything is cast at it — that is the shape of this whole
-tool, and a step that skipped the looking would be a different product.
+IT AIMS, IT DOES NOT FIRE. The cursor lands and it stops. You see the files
+before anything is cast across them — that is the shape of this whole tool,
+and a step that skipped the looking would be a different product.
 
 What it does do is REMEMBER. `~` comes up pre-filled with the intent you
 already gave, so agreeing costs one keystroke and disagreeing costs an edit.
@@ -1185,7 +1187,7 @@ Bare `:Scry` opens the glass and asks nothing. Looking at the map is still a
 thing you do, and it should not cost a prompt.
 
 ==============================================================================
-GIVING A CAPABILITY AN ADDRESS                                  *scry-address*
+FINDING WHAT A FEATURE IS MADE OF                               *scry-members*
 
 Type the sentence. That is all you should ever have to type:
 >
@@ -1202,7 +1204,7 @@ what the feature is for and the files it is made of:
       module src/pages/index.json.ts
 <
 It is an ordinary buffer edit, so `u` takes it back like anything else you
-typed. Then `~` (|scry-compose|) works, because the address exists.
+typed. Then `~` (|scry-compose|) works, because the members exist.
 
 THIS IS THE OPPOSITE DIRECTION FROM DRAFTING. A pass (|scry-drafting|)
 starts at the FILES nothing describes and writes features to cover them —
@@ -1217,8 +1219,8 @@ nothing describes. Same verb, scoped by the cursor.
 
 A feature that already has members is left alone, INCLUDING one whose
 members do not hold. A claim pointing at a file that does not exist yet is
-work you described on purpose — it is how you add a capability — so
-re-addressing it would delete the thing you were about to build.
+work you described on purpose — it is how you add a capability — so running
+`+` again on it would delete the thing you were about to build.
 
 IT SEARCHES EVERYTHING, not just the unclaimed. A drafting sweep works the
 undescribed list because its job is coverage; this one is answering which
@@ -1246,7 +1248,7 @@ Vim's bargain is an operator applied to a precisely addressed noun: `d2w`,
 `ci"`, `>ap`. Conjurer ported that to generated edits — `~{motion}` rewrites
 a region toward an intent. |:ScryConjure| raises the noun.
 
-The thing you aim at is a FEATURE, and its address is every file the
+The thing you aim at is a FEATURE, and the change lands on every file the
 feature is made of. Put the cursor on one, press `~`, say what you want,
 and the change lands across the whole footprint. You do not open the files.
 That is the point: a capability spanning four files is one thought, not
@@ -1259,14 +1261,14 @@ single request ever sees the whole capability, and a change that has to
 stay coherent across files is exactly the change worth making here. A page
 and the endpoint it posts to have to agree.
 
-ADDING A CAPABILITY IS THE SAME VERB. A member's address comes from its
-kind's probe, so `route print` names src/pages/print.astro whether or not
-anything is there yet. Write the feature you want with the members it
+ADDING A CAPABILITY IS THE SAME VERB. A member names its file before the
+file exists — the path comes from its kind's probe, so `route print` names
+src/pages/print.astro whether or not anything is there yet. Write the feature you want with the members it
 should have and cast: absent members are files to create, present ones are
 files to change.
 
 A cast may only edit files it was shown. A path the model invents is a path
-nobody addressed; it is refused and named, not written.
+nobody named; it is refused and reported, not written.
 
 THE CAST LEAVES YOU IN THE CHANGE. Every file it touched goes into the
 quickfix list and you land in the first one. Nothing touches the disk —
@@ -1301,9 +1303,9 @@ hands — but the list IS that hand, and not printing to it was the mistake.
                         With an intent — `:Scry add a PDF export` — aim at
                         the capability that work is about: an existing
                         feature if one covers it, otherwise a new one
-                        written at sea level and addressed. The cursor
-                        lands there and stops; `~` is then pre-filled with
-                        what you said. See |scry-aim|.
+                        written at sea level with its members found. The
+                        cursor lands there and stops; `~` is then
+                        pre-filled with what you said. See |scry-aim|.
 
                                                                   *:ScryCheck*
 :ScryCheck              Re-check every claim against the files on disk.

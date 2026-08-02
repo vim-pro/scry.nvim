@@ -3,8 +3,8 @@
 -- Vim's bargain is an operator applied to a precisely addressed noun:
 -- `d2w`, `ci"`, `>ap`. Conjurer ported that to generated edits — `~{motion}`
 -- rewrites a region toward an intent. This raises the noun. The thing you
--- aim at is not a region in a file, it is a FEATURE, and its address is the
--- set of files it is made of.
+-- aim at is not a region in a file, it is a FEATURE, and the change lands on
+-- its footprint — every file it is made of.
 --
 -- So: cursor on a feature, say what you want, and the change lands across
 -- every file in its footprint at once. You do not open the files. That is
@@ -19,7 +19,7 @@
 -- across files is precisely the change worth making here. A page and the
 -- endpoint it posts to have to agree.
 --
--- AN ADDRESS EXISTS BEFORE THE FILE DOES. A member's path comes from its
+-- A MEMBER NAMES ITS FILE BEFORE THE FILE EXISTS. The path comes from its
 -- kind's probe (see scry.map.claim_path), so `route print` names
 -- src/pages/print.astro whether or not anything is there yet. Adding a
 -- capability and changing one are therefore the same verb: write the
@@ -86,7 +86,7 @@ local SYSTEM = table.concat({
 ---@param root string
 ---@param feature scry.Feature
 ---@param intent string
----@param kinds table the kinds in force, for member addresses
+---@param kinds table the kinds in force, for member paths
 ---@param read fun(path: string): string[]|nil reads a file, nil if absent
 ---@return { system: string, user: string, files: { path: string, exists: boolean }[] }
 function M.request(root, feature, intent, kinds, read)
@@ -195,8 +195,8 @@ function M.apply(root, files, allowed)
   last = { root = root, files = {} }
   for _, f in ipairs(files) do
     -- A cast may only edit what it was shown. A path it invented is a path
-    -- nobody addressed, and writing it would make the map a liar about what
-    -- the feature is made of.
+    -- nobody named, and writing it would make the map a liar about what the
+    -- feature is made of.
     if allowed and not allowed[f.path] then
       refused[#refused + 1] = f.path
     else
@@ -318,8 +318,8 @@ function M.at_cursor()
 end
 
 -- THE INTENT YOU ALREADY GAVE. `:Scry {intent}` aims you at a capability
--- (|scry-aim|) and then stops, so you read the address before anything is
--- cast at it. Making you retype the intent at that point would be asking the
+-- (|scry-aim|) and then stops, so you see the files before anything is cast
+-- across them. Making you retype the intent at that point would be asking the
 -- same question twice — so `~` comes up pre-filled, and agreeing costs one
 -- keystroke while disagreeing costs an edit.
 local pending = nil
@@ -444,7 +444,7 @@ function M.cast(root, buf, feature, intent, done)
       local msg = ("[scry] %d file%s · ]q next · :ScryDiscard undoes it"):format(n, n == 1 and "" or "s")
       if #res.refused > 0 then
         -- Never folded into the count. A refused path is a file the cast
-        -- tried to write that nobody addressed, and it is the one thing here
+        -- tried to write that nobody named, and it is the one thing here
         -- worth interrupting for.
         msg = msg .. (" · %d REFUSED"):format(#res.refused)
       end

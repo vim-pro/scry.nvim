@@ -472,9 +472,9 @@ function M.render()
   -- three hundred characters of pure texture. It does not transfer down here.
   --
   -- At a member row the reader is not scanning for anomalies, they are
-  -- VERIFYING AN ADDRESS. Each row is a separate assertion — is that the right
-  -- file, is it really there — and a silent row makes you recall a rendering
-  -- rule before you can interpret it.
+  -- VERIFYING THE MEMBERS: is that the right file, is it really there. Each
+  -- row is a separate assertion, and a silent row makes you recall a
+  -- rendering rule before you can interpret it.
   --
   -- So: open rows always carry their verdict. The folded scan still drops what
   -- repeats (see foldtext), because there the density argument is real.
@@ -557,9 +557,9 @@ function M.render()
 
     -- WHERE THIS MEMBER LANDS, when the row does not already say. A kind
     -- names a thing and its probe knows the file — `route [slug]` IS
-    -- src/pages/[slug].astro — and without that the reader cannot check the
-    -- address at all: they are being asked to agree that a capability is made
-    -- of four files while looking at two of them.
+    -- src/pages/[slug].astro — and without it the reader is being asked to
+    -- agree that a capability is made of four files while looking at two of
+    -- them.
     --
     -- Shown only where it differs from what is written. `def
     -- src/layouts/Layout.astro` already names its file, and printing the
@@ -657,7 +657,7 @@ function M.next_action()
   end
   if feature then
     if #feature.f.claims == 0 then
-      -- Named and made of nothing: the missing thing is its address.
+      -- Named and made of nothing.
       return "+ to find its files"
     end
     return "~ to change it"
@@ -1247,7 +1247,7 @@ function M.open(root)
     --
     -- On a feature with nothing under it, what is missing is its MEMBERS —
     -- you typed the capability in your own words and the files it is made of
-    -- are scry's job to find (|scry-address|). Typing member paths by hand
+    -- are scry's job to find (|scry-members|). Typing member paths by hand
     -- meant knowing the layout before you were allowed to describe the
     -- product, which is backwards, and it was the last hand-typed step in
     -- the loop.
@@ -1260,7 +1260,7 @@ function M.open(root)
         recover.stop()
         return
       end
-      if require("scry.address").at_cursor() then
+      if require("scry.members").at_cursor() then
         return
       end
       recover.start()

@@ -1,4 +1,4 @@
--- Giving a capability an address.
+-- Finding what a capability is made of.
 --
 -- Everything else in scry starts from the code. Drafting (|scry-drafting|)
 -- sweeps the files nothing describes and writes features to cover them —
@@ -16,6 +16,13 @@
 -- the product, which is exactly backwards — and it was the one hand-typed
 -- step left in the loop.
 --
+-- (This used to be called "giving the capability an address". The word was
+-- decoration: every surface that speaks to a person already said "members"
+-- or "files", and a coined noun that only exists in explanations is a word
+-- someone has to learn for nothing. A feature is made of members; the
+-- derived file set is its footprint; the cursor does the addressing, the
+-- way it always has.)
+--
 -- WHY IT IS `+` AND NOT A NEW KEY. `+` already means "add what is not here
 -- yet". On a feature with nothing under it, what is not here yet is its
 -- members; anywhere else, it is features for the files nothing describes.
@@ -25,8 +32,8 @@
 -- the unclaimed list because its job is coverage. This one is answering
 -- "which files is THIS capability made of", and the honest answer often
 -- includes files another feature already claims — one file can serve two
--- capabilities, and pretending otherwise would make the address wrong in
--- order to keep a count tidy.
+-- capabilities, and pretending otherwise would leave the feature short a
+-- member in order to keep a count tidy.
 local M = {}
 
 local SYSTEM = table.concat({
@@ -51,7 +58,7 @@ local SYSTEM = table.concat({
   "- No prose outside the shape. No fences, no commentary, no explanation.",
 }, "\n")
 
---- Everything that leaves scry to give a feature an address.
+--- Everything that leaves scry to find a feature's members.
 ---
 --- Pure: no buffers, no provider, no disk. A spec reads every outgoing byte.
 ---@param name string the feature, as the user wrote it
@@ -81,7 +88,7 @@ function M.request(name, files, kindset, claimed)
   for _, path in ipairs(files) do
     -- A FILE ANOTHER FEATURE CLAIMS IS STILL FAIR GAME, and it is labeled
     -- rather than hidden. One file can serve two capabilities; withholding
-    -- it would silently make this address wrong. Saying who else claims it
+    -- it would silently leave this feature short a member. Saying who else claims it
     -- is what lets the answer notice it is describing something already
     -- described, which is the failure that fragments a map.
     local owner = claimed and claimed[path]
@@ -127,12 +134,12 @@ function M.parse(result, kindset)
   return lines, #members
 end
 
---- Does this feature still need an address?
+--- Does this feature still need its members found?
 ---
---- A feature with members has one. This deliberately does NOT ask whether
---- they hold: a member pointing at a file that does not exist yet is work
---- you described on purpose (|scry-compose|), and re-addressing it would
---- delete the thing you were about to build.
+--- A feature that has members does not. This deliberately does NOT ask
+--- whether they hold: a member pointing at a file that does not exist yet is
+--- work you described on purpose (|scry-compose|), and running `+` again on
+--- it would delete the thing you were about to build.
 ---@param feature scry.Feature
 ---@return boolean
 function M.wanted(feature)
@@ -150,7 +157,7 @@ function M.give(root, buf, feature, done)
   local config = require("scry.project").resolve(root)
   local files = require("scry.divergence").sources(root, config)
   if #files == 0 then
-    vim.notify("[scry] no files found to address this against", vim.log.levels.WARN)
+    vim.notify("[scry] no files found to search for members", vim.log.levels.WARN)
     return
   end
 
@@ -164,7 +171,7 @@ function M.give(root, buf, feature, done)
 
   local built = M.request(feature.name, files, kindset, claimed)
 
-  local ns = vim.api.nvim_create_namespace("scry_address")
+  local ns = vim.api.nvim_create_namespace("scry_members")
   local at = (feature.lnums or { feature.lnum })[1] - 1
   local started = vim.uv.hrtime()
   local function say(text)
@@ -182,7 +189,7 @@ function M.give(root, buf, feature, done)
     config = require("conjurer").config or {},
     system = built.system,
     user = built.user,
-    intent = "address " .. feature.name,
+    intent = "find files for " .. feature.name,
     cwd = root,
     timeout_ms = 300000,
     on_narrate = function(line)
@@ -198,7 +205,7 @@ function M.give(root, buf, feature, done)
       local lines, members = M.parse(result, kindset)
       if members == 0 then
         vim.notify(
-          ("[scry] nothing addressable found for `%s` — say it differently, or name a member yourself"):format(
+          ("[scry] found nothing `%s` could be made of — say it differently, or name a member yourself"):format(
             feature.name
           ),
           vim.log.levels.WARN

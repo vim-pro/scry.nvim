@@ -2,17 +2,19 @@
 --
 -- Nobody sits down wanting to look at a map. You sit down wanting to DO
 -- something — add an export, fix a reload bug — and the map is how scry finds
--- the address for it. So the intent is the front door:
+-- the capability it belongs to. So the intent is the front door:
 --
 --     :Scry add a PDF export
 --
 -- ...puts your cursor on the capability that is about. If a feature already
--- covers it, that one. If none does, it writes one at sea level and gives it
--- an address (|scry-address|), so the noun exists by the time you look at it.
+-- covers it, that one. If none does, it writes one at sea level and finds
+-- what it is made of (|scry-members|), so the noun is whole by the time you
+-- look at it.
 --
--- IT AIMS, IT DOES NOT FIRE. The cursor lands and it stops there. You read
--- the address before anything is cast at it — that is the whole shape of this
--- tool, and a step that skipped the looking would be a different product.
+-- IT AIMS, IT DOES NOT FIRE. The cursor lands and it stops there. You see
+-- the files before anything is cast across them — that is the whole shape of
+-- this tool, and a step that skipped the looking would be a different
+-- product.
 -- What it does do is REMEMBER: `~` comes up pre-filled with the intent you
 -- already gave, so agreeing costs one keystroke and disagreeing costs an
 -- edit.
@@ -111,7 +113,7 @@ local function land(buf, feature, intent)
     vim.api.nvim_set_current_win(win)
     pcall(vim.api.nvim_win_set_cursor, win, { at, 0 })
     -- The members arrive closed (|scry-mappings|); open the one you were
-    -- aimed at, because the address is the thing you are here to read.
+    -- aimed at, because its files are the thing you are here to read.
     pcall(vim.cmd, "normal! zv")
     pcall(require("scry.glass").toggle_members)
   end
@@ -176,9 +178,9 @@ function M.at(root, buf, intent, done)
         return
       end
 
-      -- A NEW capability is written into the map and then ADDRESSED, so the
-      -- noun exists by the time you look at it. Landing you on a bare name
-      -- with nothing under it would just move the hand-typing one step
+      -- A NEW capability is written into the map and its members found, so
+      -- the noun is whole by the time you look at it. Landing you on a bare
+      -- name with nothing under it would just move the hand-typing one step
       -- along.
       local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
       -- Written after the last line that says anything. An empty map is one
@@ -209,7 +211,7 @@ function M.at(root, buf, intent, done)
         return
       end
       land(buf, written, intent)
-      require("scry.address").give(root, buf, written, function()
+      require("scry.members").give(root, buf, written, function()
         if done then
           done("new", name)
         end

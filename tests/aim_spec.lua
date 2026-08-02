@@ -1,7 +1,7 @@
 -- Aiming: from what you want, to the thing it is about.
 --
 -- Nobody sits down wanting to look at a map. You sit down wanting to DO
--- something, and the map is how scry finds the address for it — so the intent
+-- something, and the map is how scry finds the capability it belongs to — so the intent
 -- is the front door and the map is what answers it.
 local H = dofile(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .. "/helpers.lua")
 
@@ -54,8 +54,8 @@ H.eq(aim.parse("I am not sure what you mean.", MAP), nil, "an answer in neither 
 H.eq(aim.parse("", MAP), nil, "and neither does an empty one")
 
 -- 3) THE INTENT IS REMEMBERED, so `~` does not ask the same question twice.
--- Aiming stops at the cursor on purpose — you read the address before
--- anything is cast at it — and that would be a poor trade if agreeing then
+-- Aiming stops at the cursor on purpose — you see the files before
+-- anything is cast across them — and that would be a poor trade if agreeing then
 -- cost you retyping the sentence you already wrote.
 local compose = require("scry.compose")
 -- The provider is never reached — every prompt below is cancelled — but the
