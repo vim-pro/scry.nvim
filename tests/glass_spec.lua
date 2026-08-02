@@ -254,4 +254,72 @@ for name in joined:gmatch(":(Scry%a*)") do
   H.eq(vim.fn.exists(":" .. name), 2, "the starter names :" .. name .. ", so it had better exist")
 end
 
+-- RENDER WHAT VARIES. A column that says the same thing on every row is not
+-- information, it is texture. Measured on a real drafted map: fourteen rows,
+-- ONE distinct verdict state between them, and not one row whose fraction
+-- differed from `N of N` — three hundred and fifty characters repeating,
+-- while the header above already said `14 unread · 50 backed · 0 missing`.
+local function fold_line(lnum)
+  local out = ""
+  for _, c in ipairs(glass.foldtext(lnum)) do
+    out = out .. c[1]
+  end
+  return out
+end
+
+local function staged(lines, status)
+  local mm = require("scry.map")
+  local m = mm.parse(lines, {})
+  local b = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(b, 0, -1, false, lines)
+  vim.api.nvim_win_set_buf(0, b)
+  local report = { at = os.time(), verdicts = {} }
+  for i, c in ipairs(m.claims) do
+    report.verdicts[mm.claim_id(c)] = { status = status(i), label = "x" }
+  end
+  glass._state.buf, glass._state.map, glass._state.root, glass._state.report = b, m, ".", report
+  glass.render()
+  return m
+end
+
+-- Every feature reading the same: the words go.
+staged({
+  "feature Work through a checklist",
+  "  module a.lua",
+  "  module b.lua",
+  "feature Tailor a checklist",
+  "  module c.lua",
+}, function()
+  return "backed"
+end)
+local uniform_first = fold_line(1)
+H.eq(uniform_first:find("unread"), nil, "a state every row shares is not printed on every row")
+H.eq(uniform_first:find(" of "), nil, "nor is a fraction that says nothing is missing")
+H.ok(uniform_first:find("Work through a checklist", 1, true) ~= nil, "the name survives")
+H.ok(uniform_first:find("▍", 1, true) ~= nil, "and the size is a shape rather than a word")
+
+-- One feature differing: the words come back, and only where they earn it.
+staged({
+  "feature Work through a checklist",
+  "  module a.lua",
+  "  module b.lua",
+  "feature Tailor a checklist",
+  "  module c.lua",
+}, function(i)
+  return i == 1 and "missing" or "backed"
+end)
+local varied = fold_line(1)
+H.ok(varied:find(" of ", 1, true) ~= nil, "a partial feature shows how far along it is")
+
+-- COLUMN ONE IS THE ATTENTION CHANNEL, and it says nothing when a feature is
+-- fine. A scan reads the first characters of each line and little else, so
+-- marking every row would mark none of them.
+H.ok(varied:sub(1, 3):find("%S") ~= nil, "a feature that wants you carries a mark")
+local healthy = fold_line(4)
+H.eq(healthy:sub(1, 3), "   ", "and one that does not carries nothing")
+
+-- The mark is not also spelled out on the right: it moved, it was not copied.
+local _, glyphs = varied:gsub("◐", "")
+H.ok(glyphs <= 1, "the glyph appears once, not once per column")
+
 H.done("glass_spec PASS")

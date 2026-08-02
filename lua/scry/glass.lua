@@ -101,6 +101,63 @@ local FEATURE_HL = {
   unknown = "ScryUnchecked",
 }
 
+-- WHICH STATES WANT YOU. Column one is the most valuable space on the
+-- screen — a scan reads the first characters of each line and little else —
+-- and it was spent on the first letter of a sentence, fourteen times over.
+-- It carries state instead, and carries nothing when a feature is fine.
+--
+-- Silence is the healthy reading. `unread` is not an alarm: it is what every
+-- claim in a freshly drafted map is, and marking all of them would mark
+-- none of them.
+local ATTENTION = {
+  broken = "✗",
+  absent = "✗",
+  unevidenced = "·",
+  partial = "◐",
+  unknown = "?",
+}
+
+--- What the map looks like as a whole, computed once per render.
+---
+--- RENDER WHAT VARIES. A column that says the same thing on every row is not
+--- information, it is texture. Measured on a real map: fourteen rows, one
+--- distinct verdict state between them, not one row whose fraction differed
+--- from `N of N` — three hundred and fifty characters repeating while the
+--- header already said `14 unread · 50 backed · 0 missing · 0 violated`.
+---
+--- So the verdict column appears when it discriminates and stays away when
+--- it does not.
+---@param map table
+---@param report table?
+---@param root string?
+---@return { uniform: boolean }
+local function survey(map, report, root)
+  if not report then
+    return { uniform = false }
+  end
+  local feat = require("scry.feature")
+  local seen, n = {}, 0
+  for _, f in ipairs(map.features or {}) do
+    local v = feat.verdict(f, report, root)
+    if v and not seen[v.state] then
+      seen[v.state] = true
+      n = n + 1
+    end
+  end
+  return { uniform = n <= 1 }
+end
+
+-- The blast radius of a `~`, as a shape rather than a word. A magnitude read
+-- as a length is faster than one read as "5 members", and this is the number
+-- you want before aiming an operator at a capability.
+local BAR_MAX = 10
+local function bar(n)
+  if n <= 0 then
+    return ""
+  end
+  return ("▍"):rep(math.min(n, BAR_MAX)) .. (n > BAR_MAX and "…" or "")
+end
+
 -- Session state: one glass per project root.
 local state = {
   root = nil,
@@ -309,6 +366,7 @@ function M.render()
 
   -- Each feature carries the state its evidence adds up to. This is the line
   -- a reader actually scans, so it gets the strongest rendering on the page.
+  state.survey = survey(state.map, state.report, state.root)
   for _, feature in ipairs(state.map.features) do
     local v = feat.verdict(feature, state.report, state.root)
     -- On EVERY line the feature is opened on, not just the first: a feature
@@ -450,7 +508,10 @@ end
 --- prose someone wrote; a member count is how much of the product the
 --- feature is made of, which is the question the number was standing in for.
 ---@return string
-function M.foldtext()
+---@param at integer? the fold's first line; defaults to Neovim's v:foldstart,
+---       which only has a value while a fold is actually being drawn — so a
+---       spec (or anything wanting one line's rendering) passes it in.
+function M.foldtext(at)
   -- The `feature ` keyword is dropped. Every folded row IS a feature, so it
   -- repeated the same eight columns down the whole page and told a reader
   -- nothing they could not see — and those columns are what pushed the
@@ -458,11 +519,14 @@ function M.foldtext()
   local function summary(lnum)
     return (vim.fn.getline(lnum):gsub("^feature%s+", ""))
   end
-  local line = summary(vim.v.foldstart)
+  at = at or vim.v.foldstart
+  local line = summary(at)
   local feature
   for _, f in ipairs((state.map or {}).features or {}) do
-    if f.lnum == vim.v.foldstart then
-      feature = f
+    for _, l in ipairs(f.lnums or { f.lnum }) do
+      if l == at then
+        feature = f
+      end
     end
   end
 
@@ -483,13 +547,45 @@ function M.foldtext()
   -- {text, group} pairs, so the name, the state and the count keep the
   -- colors they have when the fold is open, and the state column can be
   -- read by color before it is read by word.
-  local out = { { line, "ScryFeatureName" } }
-  if verdict then
+  local hl = verdict and (FEATURE_HL[verdict.state] or "ScryEvidence") or "ScryEvidence"
+  local mark = verdict and ATTENTION[verdict.state] or nil
+
+  local out = {
+    -- Column one: the state, or nothing at all.
+    { mark and (" " .. mark .. " ") or "   ", hl },
+    { line, "ScryFeatureName" },
+  }
+
+  -- The verdict's words only where they discriminate: not when every feature
+  -- in the map reads the same, and not to spell out `5 of 5`, which says
+  -- only that nothing is missing — which is what saying nothing says.
+  local survey_ = state.survey or { uniform = false }
+  local partial = verdict and verdict.total and verdict.backed and verdict.backed < verdict.total
+  if verdict and (partial or not survey_.uniform) then
+    -- The label with its glyph removed, because the glyph is in column one
+    -- now and saying it twice says it once. And with a trailing `N of N`
+    -- removed when nothing is missing: "3 of 3" is a longer way of writing
+    -- what the absence of a fraction already writes.
+    --
+    -- Both are edits to the engine's own wording rather than a substitute
+    -- for it. The glass may not say something stronger than the verdict
+    -- said, so it does not compose a word of its own here.
+    local words = verdict.label:gsub("^%S+%s+", "")
+    if not partial then
+      words = words:gsub("%s*%(?%d+ of %d+%)?$", "")
+    end
+    if words ~= "" then
+      out[#out + 1] = { pad, "Folded" }
+      out[#out + 1] = { words, hl }
+    elseif n > 0 then
+      out[#out + 1] = { pad, "Folded" }
+    end
+  elseif n > 0 then
     out[#out + 1] = { pad, "Folded" }
-    out[#out + 1] = { verdict.label, FEATURE_HL[verdict.state] or "ScryEvidence" }
   end
+
   if n > 0 then
-    out[#out + 1] = { ("   %d member%s"):format(n, n == 1 and "" or "s"), "ScryIntent" }
+    out[#out + 1] = { "  " .. bar(n), "ScryIntent" }
   end
   return out
 end
