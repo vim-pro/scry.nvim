@@ -71,6 +71,20 @@ end
 -- that styled it does not silently lose its color.
 vim.api.nvim_set_hl(0, "ScryUnratified", { link = "ScryUntouched", default = true })
 
+-- A feature's state to the group that renders it. Module scope because BOTH
+-- views need it: render() puts it at the end of an open feature line, and
+-- foldtext() puts it on the closed one — and the closed map is the view a
+-- reader spends most of their time in.
+local FEATURE_HL = {
+  done = "ScryDone",
+  broken = "ScryBroken",
+  partial = "ScryBuilding",
+  unread = "ScryUnread",
+  absent = "ScryTodo",
+  unevidenced = "ScryTodo",
+  unknown = "ScryUnchecked",
+}
+
 -- Session state: one glass per project root.
 local state = {
   root = nil,
@@ -279,15 +293,6 @@ function M.render()
 
   -- Each feature carries the state its evidence adds up to. This is the line
   -- a reader actually scans, so it gets the strongest rendering on the page.
-  local FEATURE_HL = {
-    done = "ScryDone",
-    broken = "ScryBroken",
-    partial = "ScryBuilding",
-    unread = "ScryUnread",
-    absent = "ScryTodo",
-    unevidenced = "ScryTodo",
-    unknown = "ScryUnchecked",
-  }
   for _, feature in ipairs(state.map.features) do
     local v = feat.verdict(feature, state.report, state.root)
     pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, feature.lnum - 1, 0, {
@@ -448,11 +453,24 @@ function M.foldtext()
   local gap = column - vim.fn.strdisplaywidth(line)
   local pad = (" "):rep(gap >= 2 and gap or 2)
 
-  local label = feature and state.report and require("scry.feature").verdict(feature, state.report, state.root).label
-    or ""
+  local verdict = feature and state.report and require("scry.feature").verdict(feature, state.report, state.root)
   local n = feature and #feature.claims or 0
-  local members = n > 0 and ("   %d member%s"):format(n, n == 1 and "" or "s") or ""
-  return line .. pad .. label .. members
+
+  -- CHUNKS, not a string. A folded line is drawn in one highlight — Folded
+  -- — so returning text made the whole closed map a single gray, which is
+  -- most of what a reader looks at. Neovim lets 'foldtext' return
+  -- {text, group} pairs, so the name, the state and the count keep the
+  -- colors they have when the fold is open, and the state column can be
+  -- read by color before it is read by word.
+  local out = { { line, "ScryFeatureName" } }
+  if verdict then
+    out[#out + 1] = { pad, "Folded" }
+    out[#out + 1] = { verdict.label, FEATURE_HL[verdict.state] or "ScryEvidence" }
+  end
+  if n > 0 then
+    out[#out + 1] = { ("   %d member%s"):format(n, n == 1 and "" or "s"), "ScryIntent" }
+  end
+  return out
 end
 
 --- Window-local options for a window showing the glass. Window-local, so

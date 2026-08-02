@@ -720,8 +720,14 @@ THE MAP ARRIVES CLOSED. Features are what you scan; their members are what
 you open one FOR, and fifty claims in view at once is the same wall of
 detail the altitude work was about, rendered instead of authored.
 
-The closed map is one feature per row, and it is built to be read as a
-column: the states line up at a common cell, so they can be run down rather
+The closed map KEEPS ITS COLORS. A folded line is normally drawn in one
+highlight, so the whole thing came out a single gray — most of what a reader
+looks at, in the one color that says nothing. 'foldtext' returns highlighted
+chunks instead, so the name, the state and the count render as they do when
+the fold is open and the state column can be read by color before it is read
+by word: amber is building, cyan is unread, green is done, red is broken.
+
+It is one feature per row, and built to be read as a column: the states line up at a common cell, so they can be run down rather
 than hunted for. Each row drops the `feature` keyword, which repeated eight
 columns down the page and told a reader nothing they could not see, and
 carries the state and a MEMBER count — how much of the product the feature
