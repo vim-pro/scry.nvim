@@ -912,6 +912,13 @@ function M.window_options(buf)
     -- density it drew eighty columns of `·` after every feature — the
     -- loudest thing on a page whose whole job is a quiet list.
     vim.wo.fillchars = "fold: "
+    -- A WRAPPED LINE KEEPS ITS INDENT. Indentation is this buffer's grammar,
+    -- so a continuation starting in column one reads as a new line at the
+    -- outermost level — a feature's description looked like it had become
+    -- something else halfway through a sentence. `linebreak` too, because
+    -- prose broken mid-word is prose you re-read.
+    vim.wo.breakindent = true
+    vim.wo.linebreak = true
     -- One feature per row means the row IS the unit of attention.
     vim.wo.cursorline = true
     vim.wo.winbar = "%{%v:lua.require'scry.glass'.winbar()%}"
@@ -1017,6 +1024,18 @@ function M.open(root)
   -- The header already says what to do (`+ to draft`), and `:Scry {intent}`
   -- is the way in that does not need reading about. See |scry-aim|.
   local composed = M.compose(map_lines, holdout_lines)
+
+  -- ONE BLANK LINE AT THE TOP, and a real one. The gap between features is
+  -- virtual, but there is no room above a buffer's first line for Neovim to
+  -- draw in — probed twice — so the only way to have air under the header is
+  -- to put a line there.
+  --
+  -- It costs a leading blank in `.scry/map.scry`, which is the honest price
+  -- and a small one. Added only when the first line is not already blank, or
+  -- every save-and-reopen would grow another.
+  if #composed > 0 and vim.trim(composed[1]) ~= "" then
+    table.insert(composed, 1, "")
+  end
 
   local buf = state.buf
   if reusing then

@@ -85,6 +85,19 @@ H.ok(H.wait(function()
   return glass._state.report ~= nil
 end, 8000), "check settled")
 
+-- ONE BLANK LINE AT THE TOP, and a REAL one. Every other gap in this buffer
+-- is virtual, but there is no room above a buffer's first line for Neovim to
+-- draw in, so air under the header has to be a line. It costs a leading blank
+-- in the map file, which is the honest price.
+H.eq(vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1], "", "the glass opens with a blank line")
+
+-- A WRAPPED LINE KEEPS ITS INDENT. Indentation is this buffer's grammar, so a
+-- continuation starting in column one reads as a new line at the outermost
+-- level — a feature's description looked like it had turned into something
+-- else halfway through a sentence.
+H.eq(vim.wo.breakindent, true, "wrapped lines keep the indent their line started at")
+H.eq(vim.wo.linebreak, true, "and break at words, since prose broken mid-word is prose you re-read")
+
 local ns = vim.api.nvim_get_namespaces()["scry.glass"]
 local virt = H.virt_by_row(buf, ns)
 local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
@@ -275,6 +288,18 @@ local opened = vim.api.nvim_buf_get_lines(glass._state.buf, 0, -1, false)
 H.eq(table.concat(opened, ""), "", "a project with no map opens to nothing at all")
 H.eq(#require("scry.map").parse(opened).features, 0, "and there is nothing in it to check")
 H.eq(glass.starter, nil, "the template is gone, not merely unused")
+
+-- THE OPENING BLANK IS ADDED ONCE, NOT EVERY TIME. It is a real line, so it
+-- is saved with the map — and a map reopened would otherwise grow another
+-- blank on every visit, which is a document slowly walking down the screen.
+local spaced = vim.fn.tempname()
+vim.fn.mkdir(spaced .. "/.scry", "p")
+vim.fn.writefile({ "", "feature already spaced", "  module a.lua" }, spaced .. "/.scry/map.scry")
+require("scry").setup({ holdout_path = spaced .. "/holdout.scry" })
+require("scry.glass").open(spaced)
+local reopened = vim.api.nvim_buf_get_lines(glass._state.buf, 0, -1, false)
+H.eq(reopened[1], "", "a map that already starts blank still starts blank")
+H.eq(reopened[2], "feature already spaced", "and its first feature has not been pushed down again")
 
 -- RENDER WHAT VARIES. A column that says the same thing on every row is not
 -- information, it is texture. Measured on a real drafted map: fourteen rows,

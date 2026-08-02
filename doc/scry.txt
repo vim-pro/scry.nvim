@@ -970,9 +970,18 @@ it — so anchoring it there would have made the gap disappear in exactly the
 default view. A feature with no description gets nothing; its members follow
 its name directly and read fine tight.
 
-The FIRST feature in a map has no gap above it, for the same reason: there is
-no room above a buffer's first line. The header is a window bar with its own
-background, which is what separates it there.
+ABOVE THE FIRST FEATURE THE BLANK IS REAL. There is no room above a buffer's
+first line for Neovim to draw a virtual one in, so the only way to have air
+under the header is to put a line there — and the glass opens with one. It
+costs a leading blank in `.scry/map.scry`, which is the honest price and a
+small one. It is added only when the first line is not already blank, or
+every save-and-reopen would grow another.
+
+A WRAPPED LINE KEEPS ITS INDENT ('breakindent', 'linebreak'). Indentation is
+this buffer's grammar, so a continuation starting in column one reads as a
+new line at the outermost level — a feature's description looked like it had
+turned into something else halfway through a sentence. And prose broken
+mid-word is prose you re-read.
 
 The blank YOU wrote before a feature stays out of the members fold: swallowed
 into it, it vanished whenever the members were closed, and the render was

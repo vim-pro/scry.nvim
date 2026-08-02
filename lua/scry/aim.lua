@@ -193,7 +193,15 @@ function M.at(root, buf, intent, done)
         tail[#tail + 1] = ""
       end
       tail[#tail + 1] = "feature " .. name
-      vim.api.nvim_buf_set_lines(buf, last, #lines, false, tail)
+      -- The glass opens with a blank first line (see glass.open). A map that
+      -- is nothing but that line must end up blank-then-feature rather than
+      -- having its one line of breathing room overwritten by the first
+      -- capability anyone names.
+      local from = last
+      if from == 0 and #lines > 0 then
+        from = 1
+      end
+      vim.api.nvim_buf_set_lines(buf, from, #lines, false, tail)
 
       local written = require("scry.map").feature(reparse(), name)
       if not written then
