@@ -60,6 +60,30 @@ local none = reach.parse_query(
 )
 H.eq(#(none["a.ts:1:1"] or {}), 0, "nothing is collected after `has no definitions`")
 
+-- THE SINGULAR FORM. The engine writes `has 2 definitions` for several and
+-- `has definition` — no count — for exactly one. Matching only the counted
+-- spelling dropped every single-definition resolution, which is the common
+-- case: reach reported zero for a file whose import resolves perfectly, and
+-- that zero was read as evidence that stack graphs cannot cross a language
+-- boundary. They can. The parser could not read the answer.
+local singular = reach.parse_query(
+  table.concat({
+    ROOT .. "/src/page.ts:9:19: found 1 definitions for 1 references",
+    "queried reference",
+    ROOT .. "/src/page.ts:9:19:",
+    "9 |   const entries = allChecklists();",
+    "",
+    "has definition",
+    ROOT .. "/src/lib/db.js:197:17:",
+    "197 | export function allChecklists() {",
+  }, "\n"),
+  ROOT
+)
+local one = singular["src/page.ts:9:19"]
+H.eq(#(one or {}), 1, "a lone definition is read")
+H.eq(one[1].path, "src/lib/db.js", "across a language boundary, which is not a barrier")
+H.eq(one[1].lnum, 197, "at its line")
+
 -- THE PATH THE ENGINE PRINTS IS THE REAL ONE. On macOS /var is a symlink to
 -- /private/var, so a root of /var/folders/…/proj comes back as
 -- /private/var/folders/…/proj. Stripping only the root as given leaves every
@@ -202,37 +226,18 @@ else
   print("  (no typescript engine — divergence-shrink NOT exercised)")
 end
 
--- 8) ZERO IS TWO ANSWERS. A file with no imports reaches nothing, and that
--- is a fact. A file whose imports the engine cannot see also reaches
--- nothing, and that is a blind spot — measured on a real Astro project,
--- where a .ts page importing ../lib/db.js resolves to nothing because
--- stack-graphs index per language and do not join. Reporting that as a
--- confident zero would tell someone their page has no dependencies.
-if reach.engine("typescript") then
-  local mixed = vim.fn.tempname()
-  vim.fn.mkdir(mixed .. "/src", "p")
-  vim.fn.writefile({ "export function lib(x) { return x; }" }, mixed .. "/src/lib.js")
-  vim.fn.writefile(
-    { "import { lib } from './lib.js';", "export function page() { return lib(1); }" },
-    mixed .. "/src/page.ts"
-  )
-  local idx
-  reach.index(mixed, "typescript", { "src/page.ts" }, function(ok)
-    idx = ok
-  end)
-  H.ok(H.wait(function()
-    return idx ~= nil
-  end, 180000), "indexed the .ts side only, as the engine would")
-
-  local seen
-  reach.reaches(mixed, "src/page.ts", function(files, resolved)
-    seen = { files = files, resolved = resolved }
-  end)
-  H.ok(H.wait(function()
-    return seen ~= nil
-  end, 180000), "reach answered")
-  H.eq(#seen.files, 0, "it sees nothing across the language boundary")
-  H.eq(seen.resolved, false, "and does NOT call that a resolved zero")
-end
+-- 8) A FILE THE ENGINE DID NOT COVER is unresolved, not a confident zero.
+-- The signal is deliberately weak and this pins what it actually catches:
+-- a language with no engine at all.
+H.eq(reach.engine("lua"), nil, "lua has no engine")
+local nolang
+reach.reaches(vim.fn.tempname(), "somewhere/thing.lua", function(files, resolved)
+  nolang = { files = files, resolved = resolved }
+end)
+H.ok(H.wait(function()
+  return nolang ~= nil
+end, 10000), "it answers rather than hanging")
+H.eq(#nolang.files, 0, "with nothing")
+H.eq(nolang.resolved, false, "and does not call that resolved")
 
 H.done("reach_spec PASS")

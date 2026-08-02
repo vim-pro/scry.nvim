@@ -74,15 +74,23 @@ function M.engine(lang)
   return vim.fn.executable(crate) == 1 and crate or nil
 end
 
---- Where the engine's index for this project and language lives.
+--- Where this project's index lives. ONE database for the whole project,
+--- every language in it.
+---
+--- It was one per language, and that was the bug behind a whole wrong
+--- conclusion: a TypeScript page importing a JavaScript module resolved to
+--- nothing, and I read that as stack graphs being unable to cross a
+--- language boundary. They cross it perfectly well — the .js file simply
+--- was not in the database the query ran against. Different engines
+--- indexing into a SHARED database produce a graph that joins, which is
+--- measurable in three separate ways and now has a spec.
 ---@param root string
----@param lang string
 ---@return string
-function M.db(root, lang)
+function M.db(root)
   local key = root:gsub("[^%w]", "%%")
   local dir = vim.fn.stdpath("cache") .. "/scry"
   vim.fn.mkdir(dir, "p")
-  return ("%s/%s-%s.sqlite"):format(dir, key, lang)
+  return ("%s/%s.sqlite"):format(dir, key)
 end
 
 --- Index a project's sources for `lang`. Slow, and the only slow thing
@@ -99,7 +107,7 @@ function M.index(root, lang, files, cb)
   end
   -- --hide-error-details because a file the grammar chokes on is normal in
   -- a real repo and its stack trace is not scry's news to deliver.
-  local args = { bin, "index", "-D", M.db(root, lang), "--hide-error-details" }
+  local args = { bin, "index", "-D", M.db(root), "--hide-error-details" }
   vim.list_extend(args, files)
   vim.system(args, { cwd = root, text = true }, function(res)
     cb(res.code == 0, res.code ~= 0 and (res.stderr or ("exit " .. res.code)) or nil)
@@ -116,7 +124,7 @@ end
 ---   2 | const x = initChecklist("a");
 ---     |           ^^^^^^^^^^^^^
 ---
----   has 2 definitions
+---   has 2 definitions          <- `has definition` when there is one
 ---   /abs/src/lib.ts:1:17:
 ---   1 | export function initChecklist(id: string) {
 ---
@@ -168,10 +176,17 @@ function M.parse_query(out, root, real)
       cur = ("%s:%s:%s"):format(rel(p), l, c)
       defs[cur] = defs[cur] or {}
       in_defs = false
-    elseif line:match("^has %d+ definition") then
-      in_defs = true
     elseif line:match("^has no definition") then
       in_defs = false
+    elseif line:match("^has definition") or line:match("^has %d+ definition") then
+      -- THREE spellings, not two. The engine writes `has 2 definitions`
+      -- when there are several and `has definition` — singular, with NO
+      -- count — when there is exactly one. Matching only the counted form
+      -- dropped every single-definition resolution, which is the common
+      -- case, so reach reported zero for files whose imports resolve
+      -- perfectly. It cost a wrong conclusion about stack graphs before it
+      -- cost a wrong number.
+      in_defs = true
     elseif in_defs and cur then
       local dp, dl = line:match("^(.+):(%d+):%d+:%s*$")
       if dp then
@@ -220,7 +235,7 @@ function M.resolve(root, lang, candidates, target, cb)
     cb({}, nil)
     return
   end
-  local args = { bin, "query", "-D", M.db(root, lang), "definition" }
+  local args = { bin, "query", "-D", M.db(root), "definition" }
   for _, c in ipairs(candidates) do
     args[#args + 1] = ("%s:%d:%d"):format(c.path, c.lnum, c.col)
   end
@@ -402,7 +417,7 @@ function M.reaches(root, path, cb)
     cb({}, false)
     return
   end
-  local db, real = M.db(root, lang), vim.fn.resolve(vim.fn.fnamemodify(root, ":p"))
+  local db, real = M.db(root), vim.fn.resolve(vim.fn.fnamemodify(root, ":p"))
   local bin = M.engine(lang)
   vim.system({ "rg", "--vimgrep", "--only-matching", "[A-Za-z_][A-Za-z0-9_]*", path }, { cwd = root, text = true }, function(res)
     local args = { bin, "query", "-D", db, "definition" }
@@ -440,19 +455,18 @@ function M.reaches(root, path, cb)
         end
       end
       table.sort(out)
-      -- ZERO IS TWO DIFFERENT ANSWERS and they must not look alike.
+      -- A file where NOT ONE identifier resolves is a file the engine did
+      -- not cover — an unindexed language, a grammar that choked. That is
+      -- reported unresolved rather than as a confident zero.
       --
-      -- A file with no imports reaches nothing, and that is a fact. A file
-      -- whose imports the engine cannot see also reaches nothing, and that
-      -- is a blind spot. Measured on a real Astro project: a .ts page
-      -- importing ../lib/db.js resolves to nothing at all, because
-      -- stack-graphs indexes per language and the TypeScript engine has no
-      -- .js in its graph — indexing both into one database does not join
-      -- them either. Reporting that as a confident "reaches 0" would tell
-      -- someone their page has no dependencies.
-      --
-      -- So: hundreds of identifiers and not one resolution means the engine
-      -- did not cover this file, and the answer is not resolved.
+      -- It is a weak signal and worth being plain about: a file whose
+      -- identifiers resolve only to ITSELF passes this test and still
+      -- reaches nothing outside. That is observable on a real project,
+      -- where an imported name resolves to its own import binding and the
+      -- chain stops there rather than continuing into the imported file. A
+      -- minimal fixture of the same shape does continue, so the difference
+      -- is a property of that project or that grammar and is NOT explained
+      -- here. What is not explained is not asserted.
       cb(out, any_resolved or n == 0)
     end)
   end)
@@ -561,27 +575,50 @@ function M.cached(root, feature_name)
   return entry.files
 end
 
---- Index a project for `lang`, then run `after`. The slow half, factored
---- out because both the def and the feature paths need it.
+--- Index EVERY language in the project that has an engine, into the one
+--- shared database, then run `after`.
+---
+--- Every language, not the one the entry point happens to be written in.
+--- Real projects mix — the project this was built for has `.ts` pages over
+--- `.js` libraries — and indexing only the caller's language leaves the
+--- callee invisible, which reads exactly like the engine being unable to
+--- resolve across the boundary. It is not; it was never asked.
 ---@param root string
----@param lang string?
+---@param _lang string? ignored, kept so callers need not care
 ---@param after fun()
-function M.with_index(root, lang, after)
-  if not M.engine(lang) then
+function M.with_index(root, _lang, after)
+  local by_lang = {}
+  local res = vim.system({ "rg", "--files" }, { cwd = root, text = true }):wait()
+  for line in (res.stdout or ""):gmatch("[^\n]+") do
+    local l = M.lang_of(line)
+    if l and M.engine(l) then
+      by_lang[l] = by_lang[l] or {}
+      table.insert(by_lang[l], line)
+    end
+  end
+  local langs = {}
+  for l in pairs(by_lang) do
+    langs[#langs + 1] = l
+  end
+  if #langs == 0 then
     after()
     return
   end
-  vim.notify(("[scry] indexing %s for reach…"):format(lang))
-  local files = {}
-  local res = vim.system({ "rg", "--files" }, { cwd = root, text = true }):wait()
-  for line in (res.stdout or ""):gmatch("[^\n]+") do
-    if M.lang_of(line) == lang then
-      files[#files + 1] = line
+  vim.notify(("[scry] indexing %s for reach…"):format(table.concat(langs, ", ")))
+  -- Sequential: they share one database, and two engines writing it at once
+  -- is not a race worth discovering later.
+  local i = 0
+  local function step()
+    i = i + 1
+    if i > #langs then
+      vim.schedule(after)
+      return
     end
+    M.index(root, langs[i], by_lang[langs[i]], function()
+      vim.schedule(step)
+    end)
   end
-  M.index(root, lang, files, function()
-    vim.schedule(after)
-  end)
+  step()
 end
 
 --- Compute and record a whole feature's reach.

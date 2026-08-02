@@ -207,19 +207,23 @@ scry's own map is checked by treesitter and answered textually here, and
 says so.
 
                                                         *scry-reach-limits*
-STACK GRAPHS INDEX PER LANGUAGE, and they do not join. A TypeScript file
-importing a JavaScript module resolves to nothing, and indexing both into
-one database does not fix it — measured on a real Astro project, where
-every page is `.ts` and every library is `.js`, so reach there sees almost
-nothing. That is the engine's boundary, not a wiring fault, and there is no
-workaround from here.
+REACH IS NOT UNIFORM, and what follows is what has been measured rather
+than what would be tidy.
 
-It is reported rather than hidden. A file with no imports reaches nothing
-and that is a fact; a file whose imports the engine cannot see also reaches
-nothing and that is a blind spot. When a file offers hundreds of
-identifiers and NOT ONE resolves, reach is marked unresolved — so it is
-never recorded, never shrinks |scry-divergence|, and never tells you a page
-has no dependencies when it has four.
+Every language present is indexed into ONE database, so an import that
+crosses from TypeScript into JavaScript can resolve, and on a small fixture
+it does. On one real Astro project it does not: an imported name resolves
+to its own import binding and the chain stops there instead of continuing
+into the `.js` file, so a page that imports four modules reaches none of
+them. Why the fixture completes the chain and the project does not is NOT
+established. Do not read a confident zero as proof your code has no
+dependencies.
+
+A file where NOT ONE identifier resolves is reported unresolved — an
+unindexed language, or a grammar that choked — so it is never recorded and
+never shrinks |scry-divergence|. That check is weak on purpose and weak in
+fact: a file whose identifiers resolve only to itself passes it and still
+reaches nothing.
 
 Indexing is the slowest thing scry does, which is why reach is a command
 and never part of a check. |:Scry| stays cheap; only a command may be
