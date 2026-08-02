@@ -411,25 +411,48 @@ function M.foldexpr(lnum)
   return "0"
 end
 
---- The fold's one line when it is closed.
+--- The fold's one line when it is closed — the whole map, one feature per
+--- row, and the view a reader spends most of their time in.
 ---
---- It carries the feature's STATE, because a closed fold is the normal way
---- to look at a map now and an extmark's end-of-line virtual text is not
---- drawn on one. Rendering the feature name alone would hide the single
---- thing the line exists to tell you.
+--- ALIGNED, because it is a column of states and a column is the only
+--- reason to put them one under another. The open view aligns its verdicts
+--- and the closed view did not, so the states drifted with the length of
+--- each feature's name — ragged in exactly the view that exists to be
+--- scanned.
+---
+--- It says how many MEMBERS, not how many lines. A line count measures the
+--- prose someone wrote; a member count is how much of the product the
+--- feature is made of, which is the question the number was standing in for.
 ---@return string
 function M.foldtext()
-  local line = vim.fn.getline(vim.v.foldstart)
-  local n = vim.v.foldend - vim.v.foldstart
-  local label = ""
-  if state.map and state.report then
-    for _, f in ipairs(state.map.features) do
-      if f.lnum == vim.v.foldstart then
-        label = "   " .. require("scry.feature").verdict(f, state.report, state.root).label
-      end
+  -- The `feature ` keyword is dropped. Every folded row IS a feature, so it
+  -- repeated the same eight columns down the whole page and told a reader
+  -- nothing they could not see — and those columns are what pushed the
+  -- longest names past the alignment cap.
+  local function summary(lnum)
+    return (vim.fn.getline(lnum):gsub("^feature%s+", ""))
+  end
+  local line = summary(vim.v.foldstart)
+  local feature
+  for _, f in ipairs((state.map or {}).features or {}) do
+    if f.lnum == vim.v.foldstart then
+      feature = f
     end
   end
-  return ("%s%s   ▸ %d line%s"):format(line, label, n, n == 1 and "" or "s")
+
+  local widest = 0
+  for _, f in ipairs((state.map or {}).features or {}) do
+    widest = math.max(widest, vim.fn.strdisplaywidth(summary(f.lnum)))
+  end
+  local column = math.min(widest + 3, 72)
+  local gap = column - vim.fn.strdisplaywidth(line)
+  local pad = (" "):rep(gap >= 2 and gap or 2)
+
+  local label = feature and state.report and require("scry.feature").verdict(feature, state.report, state.root).label
+    or ""
+  local n = feature and #feature.claims or 0
+  local members = n > 0 and ("   %d member%s"):format(n, n == 1 and "" or "s") or ""
+  return line .. pad .. label .. members
 end
 
 --- Window-local options for a window showing the glass. Window-local, so
@@ -450,6 +473,12 @@ function M.window_options(buf)
     -- instead of authored.
     vim.wo.foldlevel = 0
     vim.wo.foldenable = true
+    -- No dot leader. Vim fills a fold line to the window edge, and at this
+    -- density it drew eighty columns of `·` after every feature — the
+    -- loudest thing on a page whose whole job is a quiet list.
+    vim.wo.fillchars = "fold: "
+    -- One feature per row means the row IS the unit of attention.
+    vim.wo.cursorline = true
     vim.wo.winbar = "%{%v:lua.require'scry.glass'.winbar()%}"
   end
   apply()

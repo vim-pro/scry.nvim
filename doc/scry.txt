@@ -718,10 +718,17 @@ drafting block (|scry-drafting|) or a stale header is never swallowed.
 
 THE MAP ARRIVES CLOSED. Features are what you scan; their members are what
 you open one FOR, and fifty claims in view at once is the same wall of
-detail the altitude work was about, rendered instead of authored. A closed
-fold carries its feature's state and its size, because an extmark's
-end-of-line text is not drawn on a folded line and the state is the one
-thing that line exists to tell you.
+detail the altitude work was about, rendered instead of authored.
+
+The closed map is one feature per row, and it is built to be read as a
+column: the states line up at a common cell, so they can be run down rather
+than hunted for. Each row drops the `feature` keyword, which repeated eight
+columns down the page and told a reader nothing they could not see, and
+carries the state and a MEMBER count — how much of the product the feature
+is made of, where a line count would only measure how much prose someone
+wrote about it. `fillchars` drops the fold's dot leader, which at this
+density was eighty columns of noise per row on a page whose whole job is a
+quiet list.
 
 =====
 10. COMMANDS                                                   *scry-commands*

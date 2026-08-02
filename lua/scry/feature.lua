@@ -87,7 +87,10 @@ function M.verdict(feature, report, root)
     if root and not M.engaged(root, feature) then
       return {
         state = "unread",
-        label = ("– unread (%d of %d backed)"):format(backed, total),
+        -- Same shape as every other state, so the column has one rhythm:
+        -- `– unread 3 of 3` reads beside `◐ 2 of 4`, where
+        -- `– unread (3 of 3 backed)` was half again as long and broke it.
+        label = ("– unread %d of %d"):format(backed, total),
         backed = backed,
         total = total,
       }

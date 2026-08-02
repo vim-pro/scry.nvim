@@ -178,7 +178,10 @@ H.eq(feat.verdict(drafted.features[1], all_backed).state, "done", "no root: the 
 local v = feat.verdict(drafted.features[1], all_backed, unread_root)
 H.eq(v.state, "unread", "with a root and no trail: unread, not done")
 H.eq(v.backed, 2, "the evidence is still reported")
-H.ok(v.label:find("2 of 2 backed", 1, true) ~= nil, "and the label says so: " .. v.label)
+-- Same shape as every other state, so the closed map reads as one column:
+-- `– unread 2 of 2` beside `◐ 2 of 4`, where `(2 of 2 backed)` was half
+-- again as long and broke the rhythm of the one view built for scanning.
+H.ok(v.label:find("unread 2 of 2", 1, true) ~= nil, "and the label says so: " .. v.label)
 H.eq(feat.tally(drafted, all_backed, unread_root).unread, 1, "the header counts it apart from done")
 H.eq(feat.tally(drafted, all_backed, unread_root).done, 0, "and not as done")
 
