@@ -117,15 +117,17 @@ function M.build(map_, unclaimed, kindset, examples, def_langs)
   -- `src/pages/api/{name}.ts` and reports `src/pages/api//index.json.ts`
   -- absent — accurately, about a path nobody meant. Real names settle it in
   -- one line each.
-  -- `def` is only checkable where an engine can ground a definition — one
-  -- language today. A def anywhere else is not wrong, it is unanswerable:
-  -- it renders `– unchecked (no lua resolver)` for good, and a feature
-  -- carrying two of them reads `◐ 1 of 3` forever. Say so, rather than let
-  -- a drafter spend its claims on questions nothing will answer.
-  local langs = table.concat(def_langs or { "lua" }, ", ")
-  local defnote = ("A `def` CAN ONLY BE CHECKED IN: %s. For a file in any other language name"):format(langs)
-    .. "\nthe FILE with `module`, or use a kind above — a def scry cannot check renders"
-    .. "\nunchecked forever and is worth no more than saying nothing.\n"
+  -- A `def` IS ANSWERABLE EVERYWHERE now, at one of two rungs: parsed where
+  -- a grammar is installed, textual otherwise. It used to be lua or nothing,
+  -- which meant a drafter working an Astro project had no honest claim
+  -- stronger than "this file exists" and spent every def on a question that
+  -- rendered `– unchecked` forever.
+  local langs = table.concat(def_langs or {}, ", ")
+  local defnote = "A `def path:symbol` is checked in EVERY language. Where a treesitter grammar\n"
+    .. (#langs > 0 and ("is installed (%s) it is grounded in a definition node; elsewhere a line\n"):format(langs) or "is installed it is grounded in a definition node; elsewhere a line\n")
+    .. "that looks like a definition is enough, and the verdict says which it was.\n"
+    .. "Prefer a real symbol over naming the bare FILE with `module`: a file path says\n"
+    .. "only that something is there.\n"
 
   local shape_lines = {}
   for _, name in ipairs(kindnames) do

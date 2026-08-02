@@ -1,7 +1,8 @@
--- The v0 engine: treesitter for definitions (lua only), ripgrep for
--- references and prohibitions. Every label states its fidelity — a claim
+-- The v0 engine: treesitter for definitions where a grammar exists, a text
+-- rung for every other language, ripgrep for references and prohibitions. Every label states its fidelity — a claim
 -- backed here is ACCOUNTED FOR at text/parse level, not proven correct:
---   contains ✓ defined          a named definition node exists in that file
+--   contains ✓ defined          a named definition NODE exists in that file
+--   contains ✓ defined (text)   a line there looks like a definition of it
 --   contains ✓ present (file)   the file is there; nothing about its contents
 --   calls    ✓ referenced (text) the token occurs; not a resolved call
 --   never    ✓ no matches (rg)   no textual match; not absence of behavior
@@ -10,47 +11,38 @@
 -- Violations carry evidence lines and ARE certain; clean is evidence only.
 local M = {
   name = "ts_rg",
-  -- Languages this engine can decide a `def` in. Treesitter grounds a
-  -- definition and there is one grammar wired here, so the honest list is
-  -- one entry long — and it is a list rather than a comment because the
-  -- drafting pass reads it. Asking a model for claims scry cannot check
-  -- produces a map that renders `– unchecked` forever.
-  def_languages = { "lua" },
+  -- A `def` IS ANSWERABLE IN EVERY LANGUAGE NOW. It used to be lua or
+  -- nothing, which made this a lua tool: on an Astro/TypeScript project
+  -- every claim it could make topped out at "the file is on disk".
+  --
+  -- The list is the languages that get the PARSED rung, computed rather
+  -- than asserted — a query is only worth claiming if its grammar is
+  -- actually on this machine. The drafting pass reads both fields.
+  def_anywhere = true,
+  def_languages = nil, -- set below, once scry.defs can be required
 }
 
--- Definitions a lua file declares: function_declaration names plus
--- `X = function(...)` assignments. (The query probed against real code:
--- 37 definitions extracted from conjurer's operator.lua.)
-local DEF_QUERY = [[
-  (function_declaration name: (_) @name)
-  (assignment_statement
-    (variable_list name: (_) @name)
-    (expression_list value: (function_definition)))
-]]
+setmetatable(M, {
+  __index = function(_, k)
+    if k == "def_languages" then
+      return (require("scry.defs").available())
+    end
+  end,
+})
 
--- Extract definitions from lua source text: the name, and the line it is
--- on. The line is what lets the glass JUMP to a claim (see scry.locate) —
--- and it matters that the same query answers both questions, so "where" can
--- never point somewhere "✓ defined" did not mean.
----@return { name: string, lnum: integer }[]?
-local function lua_defs(src)
-  local ok, parser = pcall(vim.treesitter.get_string_parser, src, "lua")
-  if not ok then
-    return nil
+-- Definitions in a source file: PARSED where a grammar is here, TEXT
+-- everywhere else. The line comes back with the name, because the same
+-- answer has to serve the verdict AND the jump (see scry.locate) — "where"
+-- can never point somewhere "✓ defined" did not mean.
+---@return { name: string, lnum: integer }[]?, string fidelity
+local function defs_in(path, src, symbol)
+  local defs = require("scry.defs")
+  local lang = defs.lang_of(path)
+  local parsed = lang and defs.parsed(src, lang)
+  if parsed then
+    return parsed, "ts-def"
   end
-  local ok2, trees = pcall(function()
-    return parser:parse()
-  end)
-  if not ok2 or not trees or not trees[1] then
-    return nil
-  end
-  local query = vim.treesitter.query.parse("lua", DEF_QUERY)
-  local defs = {}
-  for _, node in query:iter_captures(trees[1]:root(), src, 0, -1) do
-    local row = node:range()
-    defs[#defs + 1] = { name = vim.treesitter.get_node_text(node, src), lnum = row + 1 }
-  end
-  return defs
+  return defs.textual(src, symbol), "text-def"
 end
 
 -- Does `symbol` match a definition name exactly or as its final dot-segment
@@ -92,14 +84,11 @@ end
 ---@param symbol string
 ---@return integer?
 function M.locate(root, path, symbol)
-  if not path:match("%.lua$") then
-    return nil
-  end
   local src = read(root .. "/" .. path)
   if not src then
     return nil
   end
-  local defs = lua_defs(src)
+  local defs = defs_in(path, src, symbol)
   return defs and M.def_lnum(defs, symbol) or nil
 end
 
@@ -235,24 +224,28 @@ function M.check_def(ctx, claim, cb)
     -- than error, answer the question it plainly meant.
     return M.check_module(ctx, claim, cb)
   end
-  if not path:match("%.lua$") then
-    cb({ status = "unchecked", fidelity = "none", label = "– unchecked (no lua resolver)" })
-    return
-  end
   local src = read(ctx.root .. "/" .. path)
   if not src then
-    cb({ status = "missing", fidelity = "ts-def", label = "✗ absent (no such file)" })
+    cb({ status = "missing", fidelity = "file", label = "✗ absent (no such file)" })
     return
   end
-  local defs = lua_defs(src)
+  local defs, fidelity = defs_in(path, src, symbol)
   if not defs then
     cb({ status = "unchecked", fidelity = "none", label = "– unchecked (parse failed)" })
     return
   end
+  -- THE LABEL SAYS WHICH RUNG ANSWERED. `✓ defined` is a definition node;
+  -- `✓ defined (text)` is a line that looks like one and could be inside a
+  -- comment. Same status, different claim, and a reader must be able to tell.
+  local parsed = fidelity == "ts-def"
   if name_matches(defs, symbol) then
-    cb({ status = "backed", fidelity = "ts-def", label = "✓ defined" })
+    cb({ status = "backed", fidelity = fidelity, label = parsed and "✓ defined" or "✓ defined (text)" })
   else
-    cb({ status = "missing", fidelity = "ts-def", label = "✗ absent" })
+    cb({
+      status = "missing",
+      fidelity = fidelity,
+      label = parsed and "✗ absent" or "✗ absent (no definition found)",
+    })
   end
 end
 
@@ -268,15 +261,18 @@ function M.check_calls(ctx, claim, cb)
     return
   end
 
-  -- Definition side: enumerate defs in lua files matching the hint.
-  vim.system({ "rg", "--files", "-g", "*.lua" }, { text = true, cwd = ctx.root }, function(out)
+  -- Definition side: enumerate defs in the files matching the hint. EVERY
+  -- language, not just lua — a `calls` claim whose definition side could only
+  -- see lua reported `✗ absent` for a function that was plainly there, which
+  -- is worse than not answering.
+  vim.system({ "rg", "--files" }, { text = true, cwd = ctx.root }, function(out)
     vim.schedule(function()
       local files = vim.split(out.stdout or "", "\n", { plain = true, trimempty = true })
       local defined = false
       for _, f in ipairs(files) do
         if hint == "" or f:find(hint, 1, true) then
           local src = read(ctx.root .. "/" .. f)
-          local defs = src and lua_defs(src)
+          local defs = src and defs_in(f, src, symbol)
           if defs and name_matches(defs, symbol) then
             defined = true
             break

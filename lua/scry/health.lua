@@ -25,6 +25,20 @@ function M.check()
       "brew install ripgrep",
     })
   end
+  -- WHICH RUNG A `def` GETS, per language. A `def` is answerable everywhere
+  -- now; the question health can settle is whether it will be GROUNDED in a
+  -- definition node or read off a line that looks like one.
+  local defs = require("scry.defs")
+  local parsed, missing = defs.available()
+  if #parsed > 0 then
+    health.ok(("definitions parsed in: %s"):format(table.concat(parsed, ", ")))
+  end
+  if #missing > 0 then
+    health.warn(("no grammar here for: %s — those fall to the text rung"):format(table.concat(missing, ", ")))
+  end
+  health.info("every other language gets `✓ defined (text)`: a line that looks like a definition,")
+  health.info("which cannot tell a definition from the same words inside a comment")
+
   local ok_parser = pcall(vim.treesitter.language.inspect, "lua")
   if ok_parser then
     health.ok("lua treesitter parser available (definitions)")

@@ -243,6 +243,11 @@ full. In short:
   there for files that define nothing nameable, so an unclaimed file always
   has a remedy. It renders `✓ present (file)` — a map of
   bare paths is a list of files, which is what features exist to prevent.
+- **A `def` is answerable in every language, at one of two rungs.** Where a
+  treesitter grammar is installed you get `✓ defined` — a definition node.
+  Everywhere else you get `✓ defined (text)`: a line that looks like one,
+  which cannot tell a definition from the same words in a comment. The label
+  is which rung answered. `:checkhealth scry` says what your machine parses.
 - **A feature is only as strong as its weakest claim, and `done` costs a
   run.** Four claims that each say "the file is on disk" roll up to
   `✓ 4 files exist`, never `✓ done` — a feature cannot be better established

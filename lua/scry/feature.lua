@@ -28,13 +28,16 @@ local M = {}
 
 -- The engine's own ladder, weakest first. `run` is the only rung that says
 -- anything was EXECUTED; everything under it is structure.
-local ORDER = { none = 0, file = 1, ["rg-text"] = 2, ["ts-def"] = 3, run = 4 }
+local ORDER = { none = 0, file = 1, ["rg-text"] = 2, ["text-def"] = 3, ["ts-def"] = 4, run = 5 }
 
 -- What a whole feature at that rung has actually established. Never a word
 -- stronger than the engine's own — the same rule the labels follow.
 local WORDING = {
   file = "✓ %d files exist",
   ["rg-text"] = "✓ %d referenced",
+  -- A text definition could be in a comment; the parser cannot be wrong
+  -- about that. Same word, and the qualifier is what separates them.
+  ["text-def"] = "✓ %d defined (text)",
   ["ts-def"] = "✓ %d defined",
 }
 

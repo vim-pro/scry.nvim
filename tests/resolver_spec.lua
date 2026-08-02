@@ -83,15 +83,52 @@ local clean = v("never", "io\\.write")
 H.eq(clean.status, "clean", "io.write clean (logging.lua is outside the feature's files)")
 H.eq(clean.label, "✓ no matches (rg)", "clean label states rg fidelity")
 
--- non-lua contains → unchecked, never ✓
-local unch = {}
-resolver.check(ts_rg, ctx, { kind = "def", target = "src/main.rs:run", feature = "a user can start a session" }, function(x)
-  unch = x
-end)
-H.ok(H.wait(function()
-  return unch.status ~= nil
-end), "unchecked settled")
-H.eq(unch.status, "unchecked", "non-lua target is unchecked")
-H.eq(unch.label, "– unchecked (no lua resolver)", "unchecked label — silence never masquerades as ✓")
+-- A `def` IS ANSWERABLE IN EVERY LANGUAGE, at one of two rungs.
+--
+-- It used to be lua or nothing: anything else answered `– unchecked (no lua
+-- resolver)` forever. Measured on a real project — Astro and TypeScript —
+-- that made every claim scry could offer top out at "the file is on disk",
+-- because the one rung above it was closed. A tool that can only describe
+-- lua is a lua tool.
+--
+-- There is no TypeScript grammar on the machines this suite runs on, which
+-- is exactly the case worth pinning: this is what most of most projects looks
+-- like to scry.
+local function decide_one(target)
+  local got = {}
+  resolver.check(ts_rg, ctx_for(S1), { kind = "def", target = target, feature = S1 }, function(x)
+    got = x
+  end)
+  H.ok(H.wait(function()
+    return got.status ~= nil
+  end), "settled: " .. target)
+  return got
+end
+
+local textual = decide_one("web/print.ts:renderPrintSheet")
+H.eq(textual.status, "backed", "a TypeScript definition is found")
+H.eq(textual.fidelity, "text-def", "at the TEXT rung, because there is no grammar for it here")
+H.eq(textual.label, "✓ defined (text)", "and the label says which rung answered")
+
+-- THE LABEL IS THE HONESTY. `✓ defined` is a definition NODE; `✓ defined
+-- (text)` is a line that looks like one and could be sitting in a comment.
+-- Same status, different claim, and a reader has to be able to tell.
+local parsed = decide_one("lua/auth.lua:create_session")
+H.eq(parsed.fidelity, "ts-def", "lua still gets the parsed rung")
+H.eq(parsed.label, "✓ defined", "with no qualifier, because none is needed")
+H.ok(textual.label ~= parsed.label, "and the two greens do not read the same")
+
+-- A MENTION IS NOT A DEFINITION. `return loadChecklist(...)` appears in that
+-- file; a text rung that counted it would be exactly the false ✓ this whole
+-- tool exists to avoid, and the failure mode a pattern list falls into.
+local mention = decide_one("web/print.ts:loadChecklist")
+H.eq(mention.status, "missing", "a call is not a definition")
+H.eq(mention.label, "✗ absent (no definition found)", "and says so in the text rung's own words")
+
+-- An absent FILE is a file-level answer, not a definition-level one: there
+-- was nothing to look inside.
+local gone = decide_one("web/nope.ts:anything")
+H.eq(gone.status, "missing", "a file that is not there is missing")
+H.eq(gone.fidelity, "file", "at the file rung, because no definition was ever examined")
 
 H.done("resolver_spec PASS")

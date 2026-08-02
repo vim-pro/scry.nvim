@@ -142,10 +142,11 @@ nothing has looked inside any of them.
 
 So the label carries the rung the engine actually reached:
 
-    ✓ done             something was executed and passed
-    ✓ 4 defined        definitions by those names exist
-    ✓ 4 referenced     those names appear in the feature's files
-    ✓ 4 files exist    the files are on disk, and that is all
+    ✓ done                 something was executed and passed
+    ✓ 4 defined            definition NODES by those names exist
+    ✓ 4 defined (text)     lines there look like definitions of them
+    ✓ 4 referenced         those names appear in the feature's files
+    ✓ 4 files exist        the files are on disk, and that is all
 
 A RUN PROMOTES; IT IS NOT AVERAGED IN. "Was any of this executed" and "how
 well is the rest established" are the two axes (|scry-exercised|) and they do
@@ -495,6 +496,23 @@ The glyph never appears alone. The label states what was actually checked:
     – stale                it passed, but the code has moved since; NOT a pass
     – vacuous?             it passes, and nothing its feature claims exists
                            yet — so it is asserting nothing. NOT a pass
+
+A `def` IS ANSWERABLE IN EVERY LANGUAGE, at one of two rungs. Where a
+treesitter grammar is installed the answer is grounded in a definition NODE;
+everywhere else a line that looks like a definition is enough, and the label
+says which you got — `✓ defined` against `✓ defined (text)`. The text rung
+cannot tell a definition from the same words inside a comment, and its
+wording is what admits that.
+
+It used to be lua or nothing. Everything else answered `– unchecked (no lua
+resolver)` forever, which on an Astro/TypeScript project meant the strongest
+claim available was "this file is on disk". A tool that can only describe lua
+is a lua tool.
+
+`:checkhealth scry` names the languages that get the parsed rung on your
+machine. Adding one is a query in scry/defs.lua, and only queries that have
+been RUN against their grammar are shipped: a query nobody executed is a
+guess, and a wrong one produces confident false verdicts rather than an error.
 
 That vocabulary is the honesty mechanism, not decoration. The fidelity of
 the evidence travels with the verdict, so the glass cannot render a stronger
