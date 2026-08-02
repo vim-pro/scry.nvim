@@ -396,7 +396,13 @@ function M.render()
   if explain.showing() then
     -- The header's own gloss hangs off the buffer's opening blank line,
     -- which exists precisely because there is no room above line 1.
-    gloss(1, explain.header(state.debt))
+    gloss(
+      1,
+      explain.header(
+        state.debt,
+        require("scry.advice").best(state.map, state.report, require("scry.project").resolve(state.root))
+      )
+    )
   end
 
   -- The header lives in the winbar (see scry.debt.winbar and M.winbar
@@ -613,6 +619,7 @@ function M.winbar()
   if not (state.buf and vim.api.nvim_get_current_buf() == state.buf and state.debt) then
     return ""
   end
+  local action = M.next_action()
   -- vim.fn.winwidth, not nvim_win_get_width. A winbar expression is
   -- evaluated in a restricted context where the API call fails, and a
   -- failing expression renders as NOTHING — the option was set, the
@@ -620,7 +627,53 @@ function M.winbar()
   -- blank. pcall on top so a future restriction degrades to an unfitted
   -- line rather than to an empty one.
   local ok, width = pcall(vim.fn.winwidth, 0)
-  return require("scry.debt").winbar(state.debt, state.report and state.report.at, ok and width or nil)
+  return require("scry.debt").winbar(state.debt, state.report and state.report.at, ok and width or nil, action)
+end
+
+--- What to do next, from where the cursor is.
+---
+--- The header used to say `+ to draft` and nothing else, forever. An engineer
+--- who opened the glass on a capability they had just described, read
+--- `✓ 5 files exist`, and looked for what to do next was told to draft more
+--- features — while the operator that would actually build the thing was not
+--- named anywhere on the screen.
+---
+--- Never nil when the glass has content: "I do not know what to do here" is
+--- the state this exists to remove.
+---@return string?
+function M.next_action()
+  local ok, recover = pcall(require, "scry.recover")
+  if ok and recover.passing() then
+    return "+ to stop drafting"
+  end
+  local lnum = (pcall(vim.fn.line, ".") and vim.fn.line(".")) or 0
+  local feature
+  for _, f in ipairs((state.map or {}).features or {}) do
+    for _, at in ipairs(f.lnums or { f.lnum }) do
+      if at <= lnum and (not feature or at > feature.at) then
+        feature = { f = f, at = at }
+      end
+    end
+  end
+  if feature then
+    if #feature.f.claims == 0 then
+      -- Named and made of nothing: the missing thing is its address.
+      return "+ to find its files"
+    end
+    return "~ to change it"
+  end
+  if (state.debt or {}).unclaimed and state.debt.unclaimed > 0 then
+    return "+ to draft"
+  end
+  if #((state.map or {}).features or {}) == 0 then
+    -- An empty map has no noun to aim at, so the way in is the intent.
+    return ":Scry <what you want to do>"
+  end
+  -- Features exist and the cursor is not on one. Naming the verb and where it
+  -- applies beats saying nothing: "I do not know what to do here" is the
+  -- state this exists to remove, and it was the state a fully described
+  -- project sat in permanently.
+  return "~ on a feature to change it"
 end
 
 -- The first `feature` line, memoized per change. The fold expression is

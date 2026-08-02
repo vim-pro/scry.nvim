@@ -519,6 +519,11 @@ claims:
     [scry] 12 claims stop at `defined (text)` — no grammar here for astro
            typescript · install nvim-treesitter, then :TSInstall astro typescript
 <
+It is a notification, and a notification is gone the moment anything else
+prints — so `g?` (|scry-explain|) carries the same sentence for as long as
+you want it. Someone who read it, blinked and wondered what it said has
+somewhere to look.
+
 One thing, not a list: a list of five is a list nobody reads, and the
 second-best suggestion is noise until the best one is done. It never names a
 grammar that does not exist, and a project with nothing limiting it hears
@@ -936,6 +941,23 @@ nothing is lost by claiming it — and drafting is the one gesture that has
 to be reachable from the header that reports the gap. `d` would read
 better and would cost `dd` and `dw` on your own prose, which is not a trade
 worth making for one gesture.
+
+WHAT TO DO NEXT IS ON THE LINE YOU ARE ALREADY READING, and it follows the
+cursor:
+>
+    on a feature with members        ~ to change it
+    on a feature made of nothing     + to find its files
+    a pass in flight                 + to stop drafting
+    files nothing describes          + to draft
+    an empty map                     :Scry <what you want to do>
+<
+It used to say `+ to draft` and nothing else, forever. That went wrong two
+ways: it disappeared entirely once a project was fully described — the state
+with the fewest reasons to guess what to do — and it named DRAFTING while the
+cursor sat on a capability you had just written and plainly wanted to build,
+with the operator that would build it named nowhere on the screen. It is
+never silent now: "I do not know what to do here" is the state it exists to
+remove.
 
 THE AFFORDANCE IS IN THE BUFFER, not in a command you have to have read
 about. So the ONE thing you ever type is the sentence — write a feature,

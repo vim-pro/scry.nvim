@@ -93,11 +93,21 @@ function M.description()
 end
 
 --- The gloss for the counts in the header.
+---
+--- THE CEILING LIVES HERE TOO. Scry says the one thing that would most
+--- improve its answers once per project, as a notification — and a
+--- notification is gone the moment anything else prints. Someone who read it,
+--- blinked, and wondered what it said had nowhere to look. This is that
+--- somewhere.
 ---@param debt table?
+---@param limit table? the advice item, from scry.advice.best
 ---@return string?
-function M.header(debt)
+function M.header(debt, limit)
   if not debt then
     return nil
+  end
+  if limit then
+    return ("%s · %s"):format(limit.say, limit.how)
   end
   return ("%d feature%s described here · %d file%s in this project no feature claims · everything below is computed, never stored"):format(
     debt.features,

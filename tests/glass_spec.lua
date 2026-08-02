@@ -510,6 +510,31 @@ H.ok(lvirt[0] and lvirt[0]:find("%S") ~= nil, "a map of one feature still says h
 -- argument is real and the header carries the fact. Two views, two jobs.
 H.eq(fold_line(1):find("unread"), nil, "the scan view is unchanged")
 
+-- WHAT TO DO NEXT, ON THE LINE YOU ARE ALREADY READING.
+--
+-- The header said `+ to draft` and nothing else, forever. It went wrong two
+-- ways: it vanished entirely once a project was fully described — the state
+-- with the fewest reasons to guess — and it named DRAFTING even when the
+-- cursor sat on a capability you had just written and plainly wanted to
+-- build, while the operator that would build it was not named anywhere on
+-- the screen.
+staged({
+  "feature a described one",
+  "  module a.lua",
+  "feature a bare one",
+}, function()
+  return "backed"
+end)
+vim.api.nvim_win_set_cursor(0, { 1, 0 })
+H.eq(glass.next_action(), "~ to change it", "on a feature with members, the operator is named")
+vim.api.nvim_win_set_cursor(0, { 3, 0 })
+H.ok(glass.next_action():find("+", 1, true) ~= nil, "on a feature made of nothing, the way to address it is")
+-- IT IS NEVER SILENT. "I do not know what to do here" is the state this
+-- exists to remove, and a fully described project sat in it permanently.
+glass._state.debt = { unclaimed = 0 }
+vim.api.nvim_win_set_cursor(0, { 1, 0 })
+H.ok(glass.next_action() ~= nil, "and there is always something to say")
+
 -- ]d AND [d — MOTIONS INSTEAD OF GROUPING.
 --
 -- The obvious way to surface what needs attention is to group by state with

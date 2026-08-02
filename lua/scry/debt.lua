@@ -130,7 +130,7 @@ end
 ---@param at integer?
 ---@return table[] line1 {text, group} pairs
 ---@return table[] line2
-function M.parts(d, at)
+function M.parts(d, at, action)
   local age = at and (os.time() - at) or nil
   local when = age == nil and "unchecked" or (age < 5 and "just checked" or ("checked " .. age .. "s ago"))
 
@@ -179,17 +179,29 @@ function M.parts(d, at)
   -- does not exist — a file a feature REACHES is described by that feature,
   -- so the number is an upper bound rather than an answer. Saying which it
   -- is costs four words and is the difference between a count and a claim.
-  -- The number, what it is still waiting on, and the key that acts on it.
-  -- A count with nothing to do about it is a complaint; the gesture belongs
-  -- beside it rather than in a command someone has to have read about.
-  local drafting = pcall(require, "scry.recover") and require("scry.recover").passing()
   add(
     d.unclaimed,
     ((d.files or 0) > 0 and ("of %d files undescribed"):format(d.files) or "unclaimed files")
-      .. ((d.reach == "running" and " (reach pending)") or (d.reach == "unavailable" and " (no reach)") or "")
-      .. (drafting and " · + to stop" or " · + to draft"),
+      .. ((d.reach == "running" and " (reach pending)") or (d.reach == "unavailable" and " (no reach)") or ""),
     "ScryTodo"
   )
+
+  -- WHAT TO DO NEXT, on the line you are already reading.
+  --
+  -- This used to be a fixed `+ to draft` glued onto the unclaimed count, which
+  -- went wrong two ways. It vanished entirely once a project was fully
+  -- described — the state with the FEWEST reasons to guess — and it named
+  -- drafting even when the cursor was sitting on a capability you had just
+  -- written and plainly wanted to build. An engineer who opened the glass,
+  -- read `✓ 5 files exist`, and looked for what to do next was told to draft
+  -- more features.
+  --
+  -- It is cursor-driven now, because the next thing to do depends on what you
+  -- are looking at, and it always says something.
+  if action then
+    line1[#line1 + 1] = { " · ", "ScryHeaderDim" }
+    line1[#line1 + 1] = { action, "ScryUnread" }
+  end
   line1[#line1 + 1] = { "   " .. when .. " (files on disk)", "ScryHeaderDim" }
 
   -- The unchecked column is shown whenever it is non-zero: nothing an engine
@@ -235,8 +247,8 @@ end
 ---@param at integer? report timestamp
 ---@param width integer? columns available; unlimited when nil
 ---@return string
-function M.winbar(d, at, width)
-  local line1, line2 = M.parts(d, at)
+function M.winbar(d, at, width, action)
+  local line1, line2 = M.parts(d, at, action)
   local function esc(t)
     return (t:gsub("%%", "%%%%"))
   end

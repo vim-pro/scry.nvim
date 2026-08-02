@@ -194,7 +194,10 @@ function M.offer(root, map_, report, config)
     return
   end
   told[root] = true
-  vim.notify(("[scry] %s · %s"):format(best.say, best.how), vim.log.levels.INFO)
+  -- WHERE IT WENT, because a message on the status line is gone the moment
+  -- anything else prints and a reader who blinked has no way back to it. `g?`
+  -- carries the same sentence for as long as they want it.
+  vim.notify(("[scry] %s · %s · g? to see this again"):format(best.say, best.how), vim.log.levels.INFO)
 end
 
 --- Forget what has been said, so a spec can drive this twice.
