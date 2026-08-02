@@ -590,6 +590,54 @@ function M.foldtext(at)
   return out
 end
 
+--- Jump to the next or previous feature whose verdict wants something.
+---
+--- Deliberately does not wrap. A motion that silently starts over hides the
+--- fact that you have seen everything, and "no more" is the answer you most
+--- want at the end of a pass.
+---@param dir 1|-1
+---@return boolean moved
+function M.wants_attention(dir)
+  if not (state.map and state.report) then
+    return false
+  end
+  local feat = require("scry.feature")
+  local here = vim.api.nvim_win_get_cursor(0)[1]
+  local best
+  for _, f in ipairs(state.map.features or {}) do
+    local v = feat.verdict(f, state.report, state.root)
+    if v and ATTENTION[v.state] then
+      for _, at in ipairs(f.lnums or { f.lnum }) do
+        -- Not `dir > 0 and at > here or at < here`. That is the Lua
+        -- ternary idiom, and it breaks precisely when the middle term is
+        -- false: `(false) or (at < here)` then answers the question for the
+        -- OTHER direction, so ]d past the last one silently wrapped
+        -- backwards — which is the one behavior this deliberately does not
+        -- have.
+        local ahead
+        if dir > 0 then
+          ahead = at > here
+        else
+          ahead = at < here
+        end
+        if ahead and (not best or (dir > 0 and at < best) or (dir < 0 and at > best)) then
+          best = at
+        end
+      end
+    end
+  end
+  if not best then
+    vim.notify(
+      ("[scry] no %s feature wants anything"):format(dir > 0 and "later" or "earlier"),
+      vim.log.levels.INFO
+    )
+    return false
+  end
+  vim.cmd("normal! m'")
+  vim.api.nvim_win_set_cursor(0, { best, 0 })
+  return true
+end
+
 --- Window-local options for a window showing the glass. Window-local, so
 --- they have to be re-applied every time the buffer enters a window rather
 --- than set once at creation.
@@ -762,6 +810,27 @@ function M.open(root)
     vim.keymap.set("n", "<Tab>", function()
       pcall(vim.cmd, "normal! za")
     end, { buffer = buf, desc = "scry: expand or collapse this feature" })
+
+    -- ]d AND [d — TO THE NEXT THING THAT WANTS YOU.
+    --
+    -- The obvious way to surface what needs attention is to group by state
+    -- with headings. It is the wrong move here, because the buffer IS the
+    -- file: grouping means reordering, and reordering means rewriting
+    -- someone's document to suit a view of it.
+    --
+    -- Vim's answer to "take me to the one that matters" was never sorting.
+    -- It was motions. The document keeps the order its author gave it, a
+    -- motion does the work grouping would have done, and it composes with
+    -- everything else — `]d~` is "fix the next broken thing", and `.`
+    -- repeats that.
+    --
+    -- ]d/[d are Neovim's jump-to-#define, which is C-specific and useless
+    -- here, so the buffer-local override costs nothing.
+    for lhs, dir in pairs({ ["]d"] = 1, ["[d"] = -1 }) do
+      vim.keymap.set("n", lhs, function()
+        M.wants_attention(dir)
+      end, { buffer = buf, desc = "scry: " .. (dir > 0 and "next" or "previous") .. " feature that wants you" })
+    end
 
     -- `+` DRAFTS WHAT IS MISSING, and stops a pass in flight.
     --

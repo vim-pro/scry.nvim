@@ -825,6 +825,32 @@ has. Four mappings are added:
                 every file it is made of — see |scry-compose|
     +           draft features for the files nothing describes; again to
                 stop a pass in flight — see |scry-drafting|
+    ]d  [d      to the next and previous feature that wants something
+
+MOTIONS, NOT GROUPING. The obvious way to surface what needs attention is to
+group by state under headings, and it is the wrong move here: the buffer IS
+the file, so grouping means reordering, and reordering means rewriting your
+document to suit a view of it.
+
+Vim's answer to "take me to the one that matters" was never sorting. It was
+motions. The map keeps the order you gave it, `]d` does the work grouping
+would have done, and it composes: `]d~` is "fix the next broken thing", and
+`.` repeats that on the one after. Neither wraps — a motion that silently
+starts over hides the fact that you have seen everything, and "no more" is
+the answer you most want at the end of a pass.
+
+WHAT THE ROWS SHOW, and what they leave out. A column that says the same
+thing on every row is not information, it is texture. So a verdict's words
+appear where they discriminate: a map whose features all read the same shows
+names and nothing else, and one feature going partial brings its fraction
+back on that row alone. `3 of 3` is never printed, because "nothing is
+missing" is what the absence of a fraction already says.
+
+Column one carries the state and carries nothing when a feature is fine — a
+scan reads the first characters of a line and little else, so marking every
+row would mark none of them. The member count is a bar rather than a number:
+size is a magnitude, it reads faster as a length, and it is the blast radius
+of a `~`.
 
 WHY THOSE TWO KEYS. `~` is conjurer's operator, at a coarser noun. `+` is
 only a synonym for <CR>'s motion, which the glass has already taken, so

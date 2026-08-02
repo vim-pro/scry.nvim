@@ -83,10 +83,16 @@ H.eq(d.unread, 0, "and read, so `done` is the honest word for it")
 H.eq(d.todo, 0, "nothing outstanding, by the feature axis alone")
 H.eq(d.unclaimed, 4, "yet four files are described by nothing")
 local header = debt.header(d, all_done.at)
+local first = vim.split(header, "\n")[1]
+H.ok(first:find("4", 1, true) ~= nil, "so the header says it on the line the reader scans: " .. first)
 H.ok(
-  header:find("4 unclaimed files", 1, true) ~= nil,
-  "so the header says it on the line the reader scans: " .. vim.split(header, "\n")[1]
+  first:find("undescribed", 1, true) ~= nil or first:find("unclaimed", 1, true) ~= nil,
+  "and says what the number is about"
 )
+-- WITH ITS DENOMINATOR. "4 undescribed" reads as alarming against six files
+-- and as nearly finished against four thousand, and the header gave no way
+-- to tell which.
+H.ok(first:find("of 6", 1, true) ~= nil, "against the number of files there are")
 
 -- 4) `sources` narrows what counts, for repos where everything is noise
 local lua_only = { map_path = ".scry/map.scry", holdout_path = "", sources = { "lua/**/*.lua" } }

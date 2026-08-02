@@ -322,4 +322,50 @@ H.eq(healthy:sub(1, 3), "   ", "and one that does not carries nothing")
 local _, glyphs = varied:gsub("◐", "")
 H.ok(glyphs <= 1, "the glyph appears once, not once per column")
 
+-- ]d AND [d — MOTIONS INSTEAD OF GROUPING.
+--
+-- The obvious way to surface what needs attention is to group by state with
+-- headings, and it is wrong here: the buffer IS the file, so grouping means
+-- reordering, and reordering means rewriting someone's document to suit a
+-- view of it. Vim's answer to "take me to the one that matters" was never
+-- sorting; it was motions. `]d~` is then "fix the next broken thing", and
+-- `.` repeats it.
+local m = staged({
+  "feature healthy one",
+  "  module a.lua",
+  "feature the broken one",
+  "  module b.lua",
+  "feature another healthy one",
+  "  module c.lua",
+  "feature the other broken one",
+  "  module d.lua",
+}, function(i)
+  return (i == 2 or i == 4) and "missing" or "backed"
+end)
+H.eq(#m.features, 4, "four features staged")
+
+vim.api.nvim_win_set_cursor(0, { 1, 0 })
+H.eq(glass.wants_attention(1), true, "]d moves")
+H.eq(vim.api.nvim_win_get_cursor(0)[1], 3, "to the next feature that wants something, skipping the healthy one")
+H.eq(glass.wants_attention(1), true, "and again")
+H.eq(vim.api.nvim_win_get_cursor(0)[1], 7, "to the one after that")
+
+-- IT DOES NOT WRAP. A motion that silently starts over hides the fact that
+-- you have seen everything, and "no more" is the answer you most want at the
+-- end of a pass.
+H.eq(glass.wants_attention(1), false, "and stops at the end rather than starting over")
+H.eq(vim.api.nvim_win_get_cursor(0)[1], 7, "leaving the cursor where it was")
+
+H.eq(glass.wants_attention(-1), true, "[d goes back")
+H.eq(vim.api.nvim_win_get_cursor(0)[1], 3, "to the previous one")
+H.eq(glass.wants_attention(-1), false, "and stops at the top too")
+
+-- A map with nothing wrong has nowhere to go, and says so rather than
+-- moving somewhere arbitrary.
+staged({ "feature all fine", "  module a.lua" }, function()
+  return "backed"
+end)
+vim.api.nvim_win_set_cursor(0, { 1, 0 })
+H.eq(glass.wants_attention(1), false, "a healthy map has nothing to jump to")
+
 H.done("glass_spec PASS")

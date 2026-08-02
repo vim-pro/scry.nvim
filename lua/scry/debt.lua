@@ -62,17 +62,22 @@ function M.count(map_, report, root)
     todo = counts.absent + counts.unevidenced,
     unknown = counts.unknown,
     unclaimed = 0,
+    files = 0,
     reach = "off",
   }
   -- Divergence needs the filesystem, so it is best-effort: a repo without
   -- ripgrep, or a root that has gone away, must not take the whole header
   -- down with it.
   if root then
-    local ok, div = pcall(function()
-      return (require("scry.divergence").unclaimed(root, map_, require("scry.project").resolve(root)))
+    local ok, div, total = pcall(function()
+      return require("scry.divergence").unclaimed(root, map_, require("scry.project").resolve(root))
     end)
     if ok then
       d.unclaimed = #div
+      -- WITH ITS DENOMINATOR. "46 unclaimed files" is a number without a
+      -- scale — it reads as alarming at 46 of 50 and as nearly done at 46 of
+      -- 4000, and the header gave no way to tell which.
+      d.files = total
     end
     -- The count is computed as though reach does not exist until it has
     -- run. Saying so is the difference between a number and a claim: a
@@ -146,14 +151,34 @@ function M.parts(d, at)
       line1[#line1 + 1] = { ("%d %s"):format(n, word), group }
     end
   end
-  add(d.done, "done", "ScryDone")
-  -- Immediately after done, and before anything else: this is the number that
-  -- keeps "N done" from being read as "N finished".
-  add(d.unread, "unread", "ScryUnread")
-  add(d.building, "building", "ScryBuilding")
-  add(d.broken, "broken", "ScryBroken")
-  add(d.todo, "to do", "ScryTodo")
-  add(d.unknown, "unknown", "ScryUnchecked")
+  -- ONE STATE FOR EVERY FEATURE IS ONE FACT, not a repeated one. `14
+  -- features · 14 unread` says the same number twice; `14 features, all
+  -- unread` says it once and reads as the sentence it is. The rows below
+  -- follow this rule too — see glass.foldtext.
+  local states = { { d.done, "done", "ScryDone" }, { d.unread, "unread", "ScryUnread" },
+    { d.building, "building", "ScryBuilding" }, { d.broken, "broken", "ScryBroken" },
+    { d.todo, "to do", "ScryTodo" }, { d.unknown, "unknown", "ScryUnchecked" } }
+  local only, folded = nil, false
+  for _, st in ipairs(states) do
+    if st[1] > 0 then
+      only = only == nil and st or false
+    end
+  end
+  if only and d.features > 0 and only[1] == d.features then
+    line1[#line1 + 1] = { ", all " .. only[2], only[3] }
+    folded = true
+  end
+
+  if not folded then
+    add(d.done, "done", "ScryDone")
+    -- Immediately after done, and before anything else: this is the number
+    -- that keeps "N done" from being read as "N finished".
+    add(d.unread, "unread", "ScryUnread")
+    add(d.building, "building", "ScryBuilding")
+    add(d.broken, "broken", "ScryBroken")
+    add(d.todo, "to do", "ScryTodo")
+    add(d.unknown, "unknown", "ScryUnchecked")
+  end
   -- QUALIFIED, because until reach has run this is computed as though reach
   -- does not exist — a file a feature REACHES is described by that feature,
   -- so the number is an upper bound rather than an answer. Saying which it
@@ -164,7 +189,7 @@ function M.parts(d, at)
   local drafting = pcall(require, "scry.recover") and require("scry.recover").passing()
   add(
     d.unclaimed,
-    "unclaimed files"
+    ((d.files or 0) > 0 and ("of %d files undescribed"):format(d.files) or "unclaimed files")
       .. ((d.reach == "running" and " (reach pending)") or (d.reach == "unavailable" and " (no reach)") or "")
       .. (drafting and " · + to stop" or " · + to draft"),
     "ScryTodo"
