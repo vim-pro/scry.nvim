@@ -252,12 +252,128 @@ local function seed(root, intent, res)
     return
   end
   vim.fn.setqflist({}, " ", { title = "scry: " .. intent, items = items })
-  -- Land IN the change rather than in a message about it. cfirst opens the
-  -- first file in the current window, which is the glass — deliberate: you
-  -- came here to change the product, not to look at the map.
-  pcall(vim.cmd, "cfirst")
 end
 M._seed = seed -- exposed for specs
+
+-- ---------------------------------------------------------------------------
+-- REVIEW: the diff, with the map still in the room.
+--
+-- The first version of review was `cfirst`: it dropped you at LINE ONE of
+-- the first changed file. On a 2,200-line stylesheet whose change was at
+-- line 2081 that meant an unmarked buffer, no way to know where the change
+-- was, and the plan — the reason you were there — a buffer away. All the
+-- context this tool exists to keep was discarded at the exact moment of
+-- judgment.
+--
+-- The review is a TAB now, made of things vim already has:
+--
+--     +--------------------------------------------+
+--     |  scry://glass — the feature and its plan   |
+--     +---------------------+----------------------+
+--     |  what is on disk    |  what the cast wrote |
+--     +---------------------+----------------------+
+--
+-- The glass stays on top, full width, so the plan's rows (`~ change`,
+-- `✓ changed`, `✗ skipped`) are in view while you judge each file. Below,
+-- 'diff' does what quickfix could not: the change is highlighted, and the
+-- cursor lands ON the first hunk rather than at the top of the file.
+--
+-- `]q` / `[q` walk the files WITHIN the layout — both panes move together
+-- and re-diff. `:w` in the right pane keeps a file; :ScryDiscard still drops
+-- everything unsaved; closing the tab ends the review and your windows are
+-- exactly as you left them, because a tab is vim's own idea of a temporary
+-- room.
+-- ---------------------------------------------------------------------------
+
+local review = nil
+
+--- Point the review's two panes at one file and diff them.
+---@param idx integer
+local function review_show(idx)
+  if not review then
+    return
+  end
+  local f = review.files[idx]
+  if not f then
+    return
+  end
+  review.idx = idx
+  local full = review.root .. "/" .. f.path
+
+  -- The disk side: a scratch of what `:w` would overwrite. For a created
+  -- file that is nothing, and the diff shows the whole file as new — which
+  -- is the truth.
+  local disk = vim.api.nvim_create_buf(false, true)
+  vim.bo[disk].bufhidden = "wipe"
+  local lines = f.created and {} or vim.fn.readfile(full)
+  vim.api.nvim_buf_set_lines(disk, 0, -1, false, lines)
+  vim.bo[disk].modifiable = false
+  pcall(vim.api.nvim_buf_set_name, disk, "scry://disk/" .. f.path)
+
+  local rbuf = vim.fn.bufadd(full)
+  vim.fn.bufload(rbuf)
+
+  for win, buf in pairs({ [review.left] = disk, [review.right] = rbuf }) do
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_set_buf(win, buf)
+      vim.api.nvim_win_call(win, function()
+        vim.cmd("diffthis")
+      end)
+    end
+  end
+  -- Cursor on the first change, not at the top of the file. This is the
+  -- whole complaint the review exists to answer.
+  if vim.api.nvim_win_is_valid(review.right) then
+    vim.api.nvim_set_current_win(review.right)
+    pcall(vim.cmd, "normal! gg]c")
+  end
+
+  -- The walk, in the panes it applies to. Buffer-local, so outside the
+  -- review `]q` stays whatever it was.
+  for _, buf in ipairs({ disk, rbuf }) do
+    vim.keymap.set("n", "]q", function()
+      if review and review.idx < #review.files then
+        review_show(review.idx + 1)
+      else
+        vim.notify("[scry] that was the last file — `:w` what you keep, :ScryDiscard drops the rest")
+      end
+    end, { buffer = buf, desc = "scry: next changed file" })
+    vim.keymap.set("n", "[q", function()
+      if review and review.idx > 1 then
+        review_show(review.idx - 1)
+      end
+    end, { buffer = buf, desc = "scry: previous changed file" })
+  end
+
+  vim.notify(("[scry] reviewing %d of %d: %s · ]q next · :w keeps"):format(idx, #review.files, f.path))
+end
+
+--- Open the review tab for the last cast.
+---@param root string
+---@param glass_buf integer
+---@param files { path: string, created: boolean }[]? for specs; defaults to the last cast's
+function M.review(root, glass_buf, files)
+  files = files or (last and last.files)
+  if not (files and #files > 0) then
+    return
+  end
+  vim.cmd(("tab sbuffer %d"):format(glass_buf))
+  local top = vim.api.nvim_get_current_win()
+  vim.cmd("belowright split")
+  local right = vim.api.nvim_get_current_win()
+  vim.cmd("leftabove vertical split")
+  local left = vim.api.nvim_get_current_win()
+
+  -- The glass keeps enough height for the feature and its plan, and no
+  -- more: the diff is the work here, the map is the context.
+  vim.api.nvim_win_set_height(top, 10)
+  vim.api.nvim_win_call(top, function()
+    vim.wo.winfixheight = true
+  end)
+
+  review = { root = root, files = files, idx = 0, left = left, right = right }
+  review_show(1)
+end
 
 --- Take back the last cast, as far as it can honestly be taken back.
 function M.discard()
@@ -436,6 +552,10 @@ function M.cast(root, buf, feature, intent, done)
       local res = M.apply(root, parsed, allowed)
       require("scry.glass").check()
       seed(root, intent, res)
+      -- The review opens in its own tab: glass on top with the plan's
+      -- settled rows in view, the diff below with the cursor on the first
+      -- hunk. Closing the tab is closing the review.
+      M.review(root, buf)
 
       -- SHORT ENOUGH NOT TO NEED A KEYPRESS. The old summary overflowed the
       -- window, so vim ended every successful cast with `Press ENTER` — a

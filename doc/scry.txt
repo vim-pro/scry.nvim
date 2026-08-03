@@ -1329,29 +1329,41 @@ files to change.
 A cast may only edit files it was shown. A path the model invents is a path
 nobody named; it is refused and reported, not written.
 
-THE CAST LEAVES YOU IN THE CHANGE. Every file it touched goes into the
-quickfix list and you land in the first one. Nothing touches the disk —
-results are BUFFERS, modified and unsaved, which is the state you would be
-in had you typed the change yourself. So every key is one you already have:
+THE CAST ENDS IN THE REVIEW TAB — the diff, with the map still in the room:
 >
-    ]q  [q      the next and previous file the cast touched
+    +--------------------------------------------+
+    |  scry://glass — the feature and its plan   |
+    +---------------------+----------------------+
+    |  what is on disk    |  what the cast wrote |
+    +---------------------+----------------------+
+<
+The glass stays on top, full width, so the plan's settled rows (`✓ changed`,
+`✗ skipped`) are in view while you judge each file below them. The two panes
+are vim's own 'diff': changes highlighted, and the cursor lands ON the first
+hunk — not at line one of a two-thousand-line stylesheet with no hint of
+where the change went, which is what the first version of this did. The
+disk side is what `:w` would overwrite, and it is not editable: it is the
+past, shown for comparison. A created file diffs against nothing, so the
+whole file reads as new, which is the truth.
+
+Nothing touches the disk — results are BUFFERS, modified and unsaved, the
+state you would be in had you typed the change yourself. Every key is one
+you already have:
+>
+    ]q  [q      the next and previous file the cast touched, both panes
+                moving together
     u           undo this one — it is an ordinary buffer edit
     :w          keep it        :wa   keep all of them
     :e!         drop it        |:ScryDiscard|  drop the whole cast
 <
-That ending was measured rather than designed. It used to print a summary
-of what changed — longer than a window, so vim ended every SUCCESSFUL cast
-at a `Press ENTER` prompt, and then left you typing `:b` with paths you had
-to remember. Eight steps to answer "did it do what I asked", on the one
-gesture meant to feel like `d2w`.
+Closing the tab is closing the review — your windows are exactly as you
+left them, because a tab is vim's own idea of a temporary room. The files
+also seed the quickfix list, for anything else you want to do with them.
 
 |:ScryDiscard| takes back what is still unsaved, and says which files it
 could not. Once you `:w`, the change is yours: reverting a written file is
 git's job, and doing it behind your back would be the most destructive
 thing here.
-
-A review UI invented here would be worse than the one already in your
-hands — but the list IS that hand, and not printing to it was the mistake.
 
 ==============================================================================
 10. COMMANDS                                                   *scry-commands*

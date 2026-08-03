@@ -62,6 +62,11 @@ each planned row flips to what actually happened. A planned member the cast
 never touched reads `✗ skipped`, because an approved plan and a cast that
 quietly did four fifths of it must not look the same.
 
+The cast ends in a review tab: the glass on top — the plan still in view —
+and below it, what's on disk against what the cast wrote, in vim's own
+diff, cursor on the first hunk. `]q` walks the files with both panes moving
+together; `:w` keeps one; closing the tab is closing the review.
+
 Or write the sentence yourself and press `+` on it, and scry finds the files
 it's made of:
 

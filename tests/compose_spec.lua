@@ -192,4 +192,79 @@ H.eq(vim.fn.readfile(fake_root .. "/c.ts")[1], "cast wrote this", "a saved file 
 H.ok(told and told:find("c.ts", 1, true) ~= nil, "and named as one discard could not take back: " .. tostring(told))
 H.ok(told:find("git", 1, true) ~= nil, "with the tool that can")
 
+-- 5) REVIEW: the diff, with the map still in the room.
+--
+-- The first review was `cfirst`: line ONE of the first changed file. On a
+-- 2,200-line stylesheet whose change sat at line 2081, that was an unmarked
+-- buffer, nothing saying where the change was, and the plan — the reason you
+-- were there — a buffer away. The review is a tab now: the glass on top,
+-- full width, and below it what is on disk against what the cast wrote.
+local review_root = vim.fn.tempname()
+vim.fn.mkdir(review_root, "p")
+vim.fn.writefile({ "old line one", "old line two" }, review_root .. "/a.css")
+local a_buf = vim.fn.bufadd(review_root .. "/a.css")
+vim.fn.bufload(a_buf)
+vim.api.nvim_buf_set_lines(a_buf, 0, -1, false, { "old line one", "NEW line two" })
+local b_buf = vim.fn.bufadd(review_root .. "/b.css")
+vim.fn.bufload(b_buf)
+vim.api.nvim_buf_set_lines(b_buf, 0, -1, false, { "a created file" })
+
+local fake_glass = vim.api.nvim_create_buf(true, true)
+local tabs_before = #vim.api.nvim_list_tabpages()
+compose.review(review_root, fake_glass, {
+  { path = "a.css", created = false },
+  { path = "b.css", created = true },
+})
+
+H.eq(#vim.api.nvim_list_tabpages(), tabs_before + 1, "the review is its own tab — closing it is leaving")
+local wins = vim.api.nvim_tabpage_list_wins(0)
+H.eq(#wins, 3, "three windows: the glass, and the two sides of the diff")
+
+local top, diffed = nil, {}
+for _, win in ipairs(wins) do
+  if vim.api.nvim_win_get_buf(win) == fake_glass then
+    top = win
+  elseif vim.wo[win].diff then
+    diffed[#diffed + 1] = win
+  end
+end
+H.ok(top ~= nil, "the glass is one of them — the plan stays in the room")
+H.eq(vim.api.nvim_win_get_width(top), vim.o.columns, "and it spans the full width, above both panes")
+H.eq(#diffed, 2, "the other two are in diff mode")
+
+-- The cursor is IN the change, not at line 1 of the file. This is the whole
+-- complaint the review exists to answer.
+H.eq(vim.api.nvim_get_current_buf(), a_buf, "the cast's side is focused")
+H.eq(vim.api.nvim_win_get_cursor(0)[1], 2, "with the cursor on the first changed line, not line one")
+
+-- The disk side is what `:w` would overwrite, and it is not editable — it is
+-- the past, shown for comparison.
+local disk_buf
+for _, win in ipairs(diffed) do
+  local b = vim.api.nvim_win_get_buf(win)
+  if b ~= a_buf then
+    disk_buf = b
+  end
+end
+H.eq(vim.api.nvim_buf_get_lines(disk_buf, 0, -1, false)[2], "old line two", "the disk side shows what is on disk")
+H.eq(vim.bo[disk_buf].modifiable, false, "and cannot be edited — it is the past")
+
+-- ]q walks the files WITHIN the layout: both panes move together, and a
+-- created file diffs against nothing, which shows the whole file as new —
+-- the truth.
+local map_found = false
+for _, m in ipairs(vim.api.nvim_buf_get_keymap(a_buf, "n")) do
+  if m.lhs == "]q" then
+    map_found = true
+  end
+end
+H.ok(map_found, "]q is bound in the review's panes, and only there")
+-- The cast's side is already the current window, which is where a reader
+-- pressing ]q actually is. (Not nvim_buf_call: that wraps the keys in a
+-- temporary window context and restores it afterward, un-doing the very
+-- window switch the motion performs.)
+vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("]q", true, false, true), "x", false)
+H.eq(vim.api.nvim_get_current_buf(), b_buf, "]q moves both panes to the next file")
+vim.cmd("tabclose")
+
 H.done("compose_spec PASS")
