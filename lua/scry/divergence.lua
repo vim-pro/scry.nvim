@@ -45,6 +45,16 @@ function M.sources(root, config)
   for _, line in ipairs(vim.split(res.stdout or "", "\n", { plain = true, trimempty = true })) do
     out[#out + 1] = line
   end
+  -- SORTED, because ripgrep's is not an order. It walks directories in
+  -- parallel and emits paths as workers finish them, so the same project
+  -- lists differently between runs and between machines.
+  --
+  -- Everything downstream inherits that. A draft pass takes the first twelve
+  -- unclaimed files, so which twelve you are asked about is a coin flip; run
+  -- the pass twice and it walks the codebase differently both times, with no
+  -- way to tell where you are in it. Sorting makes a batch a position in a
+  -- list rather than a sample from one.
+  table.sort(out)
   return out
 end
 
