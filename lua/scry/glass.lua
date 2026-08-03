@@ -736,26 +736,20 @@ local function first_feature_lnum()
   return first_feature.lnum
 end
 
---- Fold expression: TWO levels, because the map has two altitudes.
+--- Fold expression: ONE level, one fold per feature.
 ---
---- Level 1 is the feature — its name and the sentence saying what it is for.
---- Level 2 is what it is MADE OF: the members, their notes, the prohibitions.
+--- There was a second level for a while — the members folded into a bar
+--- under the description, so the default view was titles and sentences with
+--- the file lists tucked away. It read well in a screenshot and badly in
+--- use: `<Tab>` near a member collapsed the thing you were working on into
+--- a `▍▍▍▍` row, which summarized precisely the rows the plan had just
+--- annotated. A fold that hides the work is not a zoom, it is a surprise.
 ---
---- That split is the whole point. A feature's description is the one piece of
---- writing a reader most needs and it used to be inside the fold, so the
---- default view was fourteen bare names stacked with no space between them —
---- a block of text that answered "what is in this project" with a list of
---- titles. Now the default view answers it with titles AND the sentences
---- under them, and the file lists — which are what you open a feature FOR —
---- stay one quiet row each.
+--- So members are simply visible. The one fold left is the feature, which
+--- is the scan view: `zM` for one row per feature, `zR` to open the map.
 ---
---- And because they are fold LEVELS rather than a mode, the outline is a
---- zoom and vim already has the control: `zM` gives one row per feature (the
---- densest scan), `zm`/`zr` step through, `zR` opens everything. Nothing here
---- had to invent a view switch.
----
---- Lines before the first feature are level 0, which keeps a stale header or
---- a drafting block from being swallowed into the first feature's fold.
+--- Lines before the first feature are level 0, which keeps a stale header
+--- or a drafting block from being swallowed into the first feature's fold.
 ---@param lnum integer
 ---@return string
 function M.foldexpr(lnum)
@@ -767,36 +761,7 @@ function M.foldexpr(lnum)
   if not first or lnum < first then
     return "0"
   end
-  -- A blank line takes the level of the line above it. Vertical space is
-  -- layout, not grammar — the parser says so about never-blocks — so a
-  -- paragraph break inside a member run must not cut the run in two.
-  --
-  -- EXCEPT the blank before the next feature, which is the one blank a
-  -- reader put there on purpose. Swallowed into the member run it vanished
-  -- with the run, and the default view went back to features stacked with
-  -- nothing between them — the render deleting the author's own layout.
-  if line:match("^%s*$") then
-    for i = lnum + 1, vim.fn.line("$") do
-      local next_line = vim.fn.getline(i)
-      if not next_line:match("^%s*$") then
-        return next_line:match("^feature%s") and "1" or "="
-      end
-    end
-    return "="
-  end
-  if not M.is_member_line(line, state.kinds) then
-    return "1"
-  end
-  -- One fold per contiguous run of members, skipping blanks to find out
-  -- whether this line opens a run or continues one.
-  local prev = lnum - 1
-  while prev >= 1 and vim.fn.getline(prev):match("^%s*$") do
-    prev = prev - 1
-  end
-  if prev >= 1 and M.is_member_line(vim.fn.getline(prev), state.kinds) then
-    return "2"
-  end
-  return ">2"
+  return "1"
 end
 
 --- The feature whose block a line falls in.
@@ -814,54 +779,7 @@ local function owning_feature(at)
   return found and found.feature or nil
 end
 
---- A closed member fold: the one row a feature's file list collapses to.
----
---- This is what the default view shows under every description, so it says
---- the least it can and still be worth a row — the blast radius as a shape,
---- and words only when something is not where it should be. A run of eight
---- `✓ present (file)`s is the thing this row exists to replace.
----@param at integer
----@param upto integer
----@return table[]
-local function member_foldtext(at, upto)
-  local feature = owning_feature(at)
-  local mapmod = require("scry.map")
-  local n, backed, broken = 0, 0, 0
-  for _, claim in ipairs(feature and feature.claims or {}) do
-    if claim.lnum >= at and claim.lnum <= upto then
-      n = n + 1
-      local v = state.report and state.report.verdicts[mapmod.claim_id(claim)]
-      local status = v and v.status
-      if status == "backed" or status == "clean" then
-        backed = backed + 1
-      elseif status == "violated" then
-        broken = broken + 1
-      end
-    end
-  end
-
-  -- And the same rule once more, one altitude down. A feature whose members
-  -- are all in ONE run has already had this exact fraction printed on its own
-  -- line, four rows up — so the row says only the blast radius, and speaks up
-  -- when a feature is written as several runs and the runs differ.
-  local whole = feature and n == #feature.claims
-  local out = { { "  ", "Folded" }, { bar(n), "ScryIntent" } }
-  if not whole then
-    if broken > 0 then
-      out[#out + 1] = { ("  ✗ %d broken"):format(broken), "ScryBroken" }
-    elseif state.report and backed < n then
-      out[#out + 1] = { ("  ◐ %d of %d"):format(backed, n), "ScryBuilding" }
-    end
-  end
-  return out
-end
-
---- The fold's one line when it is closed.
----
---- Two folds close here and they close to different things (see foldexpr): a
---- FEATURE fold collapses to one row of the map's densest view, and a MEMBER
---- fold collapses to the quiet row that sits under a feature's description in
---- the default one.
+--- The fold's one line when it is closed: one feature per row, the scan.
 ---
 --- The feature row is ALIGNED, because it is a column of states and a column
 --- is the only reason to put them one under another. It says how many
@@ -871,13 +789,9 @@ end
 ---@param at integer? the fold's first line; defaults to Neovim's v:foldstart,
 ---       which only has a value while a fold is actually being drawn — so a
 ---       spec (or anything wanting one line's rendering) passes it in.
----@param upto integer? likewise v:foldend.
 ---@return table[]
-function M.foldtext(at, upto)
+function M.foldtext(at)
   at = at or vim.v.foldstart
-  if not vim.fn.getline(at):match("^feature%s") then
-    return member_foldtext(at, upto or vim.v.foldend)
-  end
 
   -- The `feature ` keyword is dropped. Every folded row IS a feature, so it
   -- repeated the same eight columns down the whole page and told a reader
@@ -932,50 +846,6 @@ function M.foldtext(at, upto)
     out[#out + 1] = { "  " .. bar(n), "ScryIntent" }
   end
   return out
-end
-
---- Show or hide what the feature under the cursor is made of.
----
---- The cursor is usually on a name or in a description — outside the members
---- fold entirely — so this finds the fold rather than acting where the cursor
---- happens to be. Already inside one, it just closes it.
----@return boolean acted
-function M.toggle_members()
-  local here = vim.api.nvim_win_get_cursor(0)[1]
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  local function toggle(lnum)
-    if vim.fn.foldclosed(lnum) ~= -1 then
-      pcall(vim.cmd, lnum .. "foldopen")
-    else
-      pcall(vim.cmd, lnum .. "foldclose")
-    end
-    return true
-  end
-
-  if M.is_member_line(lines[here] or "", state.kinds) then
-    return toggle(here)
-  end
-
-  -- Walk back to this feature's header, then forward to its first member.
-  local start = here
-  while start >= 1 and not (lines[start] or ""):match("^feature%s") do
-    start = start - 1
-  end
-  if start < 1 then
-    return false
-  end
-  for i = start + 1, #lines do
-    if lines[i]:match("^feature%s") then
-      break
-    end
-    if M.is_member_line(lines[i], state.kinds) then
-      return toggle(i)
-    end
-  end
-  -- A feature with no members has nothing to open, and that is a real state:
-  -- a capability someone has named and not yet said what it is made of.
-  vim.notify("[scry] this feature has no members yet — nothing to open", vim.log.levels.INFO)
-  return false
 end
 
 -- A GLANCE AT THE DIFF, WITHOUT LEAVING THE MAP.
@@ -1121,23 +991,12 @@ function M.window_options(buf)
     vim.wo.foldmethod = "expr"
     vim.wo.foldexpr = "v:lua.require'scry.glass'.foldexpr(v:lnum)"
     vim.wo.foldtext = "v:lua.require'scry.glass'.foldtext()"
-    -- LEVEL 1 on arrival: every feature open, every file list closed.
-    --
-    -- The two neighboring settings are both worse and both were tried.
-    -- Level 0 is one bare name per row, which is the densest scan and reads
-    -- as a wall of titles — you cannot tell from it what any of the features
-    -- ARE. Level 2 is fifty claims in view at once, which is the wall of
-    -- detail the altitude work was about, rendered instead of authored.
-    -- What you want first is what each feature is for; `zr` is one keystroke
-    -- away when you want the rest, and `zM` when you want the scan.
+    -- OPEN on arrival. Members are simply visible — the fold that tucked
+    -- them into a bar under the description summarized exactly the rows the
+    -- plan annotates, and collapsed them under your cursor. The one fold is
+    -- the feature itself: `zM` for the one-row-per-feature scan, `zR` back.
     vim.wo.foldlevel = 1
     vim.wo.foldenable = true
-    -- A ONE-LINE FOLD CLOSES TOO. Vim leaves those open by default, which
-    -- made a feature with one member look structurally unlike a feature with
-    -- four — its file list sitting open in a view where every other feature's
-    -- was a single quiet row, on no better reason than how many members it
-    -- happened to have.
-    vim.wo.foldminlines = 0
     -- No dot leader. Vim fills a fold line to the window edge, and at this
     -- density it drew eighty columns of `·` after every feature — the
     -- loudest thing on a page whose whole job is a quiet list.
@@ -1330,15 +1189,20 @@ function M.open(root)
     -- description, and the fold there is the feature itself, so `za` would
     -- collapse the very sentence you were reading. This reaches down to the
     -- members instead, which is what the key means.
+    -- <Tab> peeks the diff on a member with an unsaved change, and on a
+    -- feature line it folds the feature to its scan row. Anywhere else it
+    -- does NOTHING, on purpose: it used to fall through to a fold toggle,
+    -- which collapsed the members you were reading into a summary bar the
+    -- moment there was no diff to show. A key that sometimes hides your
+    -- work is worse than a key that sometimes does nothing.
     vim.keymap.set("n", "<Tab>", function()
-      -- On a member with an unsaved change, the diff; anywhere else, the
-      -- fold. One key, and it answers the question the row you are on is
-      -- actually asking.
       if M.toggle_diff() then
         return
       end
-      M.toggle_members()
-    end, { buffer = buf, desc = "scry: peek the diff here, or show what this feature is made of" })
+      if vim.fn.getline("."):match("^feature%s") then
+        pcall(vim.cmd, "normal! za")
+      end
+    end, { buffer = buf, desc = "scry: peek the diff here, or fold this feature" })
 
     -- ]d AND [d — TO THE NEXT THING THAT WANTS YOU.
     --
@@ -1414,7 +1278,7 @@ function M.open(root)
 
     vim.keymap.set("n", "<CR>", function()
       if vim.fn.getline("."):match("^feature%s") then
-        M.toggle_members()
+        pcall(vim.cmd, "normal! za")
         return
       end
       if not require("scry.locate").open() then

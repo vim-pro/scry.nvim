@@ -368,16 +368,9 @@ H.eq(healthy:sub(1, 3), "   ", "and one that does not carries nothing")
 local _, glyphs = varied:gsub("◐", "")
 H.ok(glyphs <= 1, "the glyph appears once, not once per column")
 
--- THE DEFAULT VIEW SHOWS WHAT A FEATURE IS, NOT JUST ITS NAME.
---
--- With one fold per feature, everything under the name was inside it, so the
--- only closed view was a stack of bare titles — and a title is the part a
--- reader can already guess. The description is the one piece of writing they
--- most need, and it was the first thing hidden.
---
--- Two levels fix it without a mode: the name and its sentence are level 1,
--- the members are level 2. `zM` still gives the dense scan, the default gives
--- titles AND sentences, `zR` gives the files. Vim already had the control.
+-- MEMBERS ARE SIMPLY VISIBLE. The fold that tucked them into a bar under
+-- the description is gone (see locate_spec for the fold shape); what remains
+-- foldable is the feature itself, whose closed row is the scan.
 local desc = staged({
   "feature Read a checklist as markdown or JSON",
   "  Every checklist is fetchable as its source markdown.",
@@ -390,19 +383,6 @@ local desc = staged({
 }, function()
   return "backed"
 end)
-H.eq(glass.foldexpr(2), "1", "the sentence saying what a feature is stays out of the members fold")
-H.eq(glass.foldexpr(3), ">2", "which the members open for themselves")
-
--- The closed members fold is the blast radius and nothing else. The feature's
--- own line four rows up has already printed its state, so repeating the
--- fraction here would be the same defect one altitude down.
-local members = ""
-for _, c in ipairs(glass.foldtext(3, 5)) do
-  members = members .. c[1]
-end
-H.ok(members:find("▍", 1, true) ~= nil, "the members row carries the size")
-H.eq(members:find("%d"), nil, "and not a count the feature line already gave")
-
 -- BREATHING ROOM IS RENDERED, NOT WRITTEN. A drafting pass emits features
 -- with no blank line between them, and scry does not get to edit someone's
 -- file to add whitespace — so the separator is virtual, and only where the

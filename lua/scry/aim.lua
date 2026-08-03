@@ -112,10 +112,9 @@ local function land(buf, feature, intent)
   if win ~= -1 then
     vim.api.nvim_set_current_win(win)
     pcall(vim.api.nvim_win_set_cursor, win, { at, 0 })
-    -- The members arrive closed (|scry-mappings|); open the one you were
-    -- aimed at, because its files are the thing you are here to read.
+    -- The fold, if the feature was scanned closed: its files are the thing
+    -- you are here to read.
     pcall(vim.cmd, "normal! zv")
-    pcall(require("scry.glass").toggle_members)
   end
   require("scry.compose").remember(intent)
 end

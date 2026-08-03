@@ -866,10 +866,12 @@ The glass is a normal, writable buffer, so it keeps every editing key it
 has. Four mappings are added:
 
     <Tab>       on a member with an unsaved change: peek the diff inline,
-                capped; <Tab> again puts it away. Anywhere else: show or
-                hide what the feature under the cursor is made of
+                capped; <Tab> again puts it away. On a feature line: fold
+                the feature to its scan row. Anywhere else: nothing, on
+                purpose — a key that sometimes hides your work is worse
+                than a key that sometimes does nothing
     <CR>        on a CLAIM, open the code it points at
-                on a FEATURE line, the same as <Tab>
+                on a FEATURE line, fold or unfold the feature
     ~           cast an intent across the whole feature under the cursor,
                 every file it is made of — see |scry-compose|
     +           fill in what is missing here: on a feature with no members,
@@ -1029,74 +1031,14 @@ line now, with Vim's truncation point after the feature counts — a narrow
 window gives up the claim-level evidence first and shows `<`, which reads as
 cut off rather than as absent.
 
-FOLDING HAS TWO LEVELS, because the map has two altitudes. Level 1 is the
-feature — its name and the sentence saying what it is for. Level 2 is what it
-is MADE OF: the members, their notes, the prohibitions. Lines above the first
-feature fold into nothing, so a drafting block (|scry-drafting|) or a stale
-header is never swallowed.
-
-So the outline is a ZOOM, and vim already had the control for it:
->
-    zM      one row per feature — the densest scan
-    (default)   every feature open, every file list closed
-    zR      everything
-<
-`zm` and `zr` step between them. There is no view switch here and no mode:
-the levels ARE the outline, and every fold key you already know works on it.
-
-THE MAP ARRIVES AT LEVEL 1, which is titles and the sentences under them.
-The two neighbors were both tried and both are worse. Level 0 is a stack of
-bare names, and a name is the part a reader can already guess — the
-description is the one piece of writing they most need, and it was the first
-thing the old single-level fold hid. Level 2 is fifty claims in view at once,
-which is the wall of detail the altitude work was about, rendered instead of
-authored.
-
-A ONE-LINE FOLD CLOSES TOO ('foldminlines' is 0). Vim leaves those open by
-default, which made a feature with one member look structurally unlike a
-feature with four, on no better reason than how many members it happened to
-have.
-
-BREATHING ROOM IS RENDERED, NOT WRITTEN. A drafting pass emits features flush
-against each other, and scry does not get to edit your file to add
-whitespace — so the blank lines are virtual. There are two:
-
-    between features, and only where you have not already left one
-
-    between a feature's sentence and its file list — what it IS and what it
-    is MADE OF, the two altitudes this buffer is built around, which
-    otherwise run together as one block
-
-The second hangs off the LAST LINE OF THE DESCRIPTION rather than sitting
-above the first member, because the members are a fold and a virtual line
-above a closed fold's first line is never drawn — Neovim has nowhere to put
-it — so anchoring it there would have made the gap disappear in exactly the
-default view. A feature with no description gets nothing; its members follow
-its name directly and read fine tight.
-
-ABOVE THE FIRST FEATURE THE BLANK IS REAL. There is no room above a buffer's
-first line for Neovim to draw a virtual one in, so the only way to have air
-under the header is to put a line there — and the glass opens with one. It
-costs a leading blank in `.scry/map.scry`, which is the honest price and a
-small one. It is added only when the first line is not already blank, or
-every save-and-reopen would grow another.
-
-A WRAPPED LINE KEEPS ITS INDENT ('breakindent', 'linebreak'). Indentation is
-this buffer's grammar, so a continuation starting in column one reads as a
-new line at the outermost level — a feature's description looked like it had
-turned into something else halfway through a sentence. And prose broken
-mid-word is prose you re-read.
-
-The blank YOU wrote before a feature stays out of the members fold: swallowed
-into it, it vanished whenever the members were closed, and the render was
-deleting the layout of the file it was showing.
-
-The closed map KEEPS ITS COLORS. A folded line is normally drawn in one
-highlight, so the whole thing came out a single gray — most of what a reader
-looks at, in the one color that says nothing. 'foldtext' returns highlighted
-chunks instead, so the name, the state and the count render as they do when
-the fold is open and the state column can be read by color before it is read
-by word: amber is building, green is done, red is broken.
+FOLDING IS ONE LEVEL: the feature. Members are simply VISIBLE — for a
+while they folded into a bar under the description, which read well in a
+screenshot and badly in use: the bar summarized exactly the rows the plan
+annotates, and `<Tab>` collapsed them under your cursor the moment there
+was no diff to peek. A fold that hides the work is not a zoom, it is a
+surprise. What remains is the scan: `zM` for one row per feature, `zR` to
+open the map, and lines above the first feature fold into nothing so a
+drafting block is never swallowed.
 
 At `zM` it is one feature per row, and built to be read as a column: the
 states line up at a common cell, so they can be run down rather than hunted
