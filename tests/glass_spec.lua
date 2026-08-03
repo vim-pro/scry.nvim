@@ -536,6 +536,57 @@ H.eq(pvirt[5] and pvirt[5]:find("change", 1, true), nil, "an unnoted member carr
 vim.fn.delete("exists.lua")
 require("scry.plan").clear()
 
+-- <Tab> ON A CHANGED MEMBER PEEKS THE DIFF, without leaving the map. The
+-- review tab is the full walk; this is the look you take before deciding to
+-- walk. Capped, because a forty-hunk diff inline in the map stops being a
+-- glance.
+local peek_root = vim.fn.tempname()
+vim.fn.mkdir(peek_root, "p")
+vim.fn.writefile({ "line one", "line two", "line three" }, peek_root .. "/style.css")
+local pbuf = vim.fn.bufadd(peek_root .. "/style.css")
+vim.fn.bufload(pbuf)
+vim.api.nvim_buf_set_lines(pbuf, 1, 2, false, { "CHANGED two" })
+
+staged({ "feature peekable", "  module style.css" }, function()
+  return "backed"
+end)
+glass._state.root = peek_root
+vim.api.nvim_win_set_cursor(0, { 2, 0 })
+H.eq(glass.toggle_diff(), true, "<Tab> on a member with an unsaved change shows the diff")
+local dns = vim.api.nvim_get_namespaces()["scry.diff"]
+local dmarks = vim.api.nvim_buf_get_extmarks(glass._state.buf, dns, 0, -1, { details = true })
+H.eq(#dmarks, 1, "as one block under the row")
+local dtext = {}
+for _, vl in ipairs(dmarks[1][4].virt_lines) do
+  dtext[#dtext + 1] = vl[1][1]
+end
+local joined_diff = table.concat(dtext, "\n")
+H.ok(joined_diff:find("-line two", 1, true) ~= nil, "what was there, marked removed")
+H.ok(joined_diff:find("+CHANGED two", 1, true) ~= nil, "what replaced it, marked added")
+
+H.eq(glass.toggle_diff(), true, "<Tab> again puts it away")
+H.eq(#vim.api.nvim_buf_get_extmarks(glass._state.buf, dns, 0, -1, {}), 0, "and nothing is left behind")
+
+-- CAPPED. A big diff shows its head and says how much more there is — the
+-- glance must not become the review.
+local big = {}
+for i = 1, 80 do
+  big[i] = "new line " .. i
+end
+vim.api.nvim_buf_set_lines(pbuf, 0, -1, false, big)
+H.eq(glass.toggle_diff(), true, "a big diff still peeks")
+local bmarks = vim.api.nvim_buf_get_extmarks(glass._state.buf, dns, 0, -1, { details = true })
+local n_rows = #bmarks[1][4].virt_lines
+H.ok(n_rows <= 21, "but capped: " .. n_rows .. " rows shown")
+local tail = bmarks[1][4].virt_lines[n_rows][1][1]
+H.ok(tail:find("more line", 1, true) ~= nil, "with the remainder counted rather than hidden")
+glass.toggle_diff()
+
+-- A saved file has no diff to peek — the change IS the disk — so <Tab>
+-- falls through to the fold, which is what the key means everywhere else.
+vim.bo[pbuf].modified = false
+H.eq(glass.toggle_diff(), false, "no unsaved change, no peek: the key falls through to the fold")
+
 -- WHAT TO DO NEXT, ON THE LINE YOU ARE ALREADY READING.
 --
 -- The header said `+ to draft` and nothing else, forever. It went wrong two

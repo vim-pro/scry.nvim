@@ -865,7 +865,9 @@ MOVING AROUND ~
 The glass is a normal, writable buffer, so it keeps every editing key it
 has. Four mappings are added:
 
-    <Tab>       show or hide what the feature under the cursor is made of
+    <Tab>       on a member with an unsaved change: peek the diff inline,
+                capped; <Tab> again puts it away. Anywhere else: show or
+                hide what the feature under the cursor is made of
     <CR>        on a CLAIM, open the code it points at
                 on a FEATURE line, the same as <Tab>
     ~           cast an intent across the whole feature under the cursor,
@@ -1345,6 +1347,10 @@ where the change went, which is what the first version of this did. The
 disk side is what `:w` would overwrite, and it is not editable: it is the
 past, shown for comparison. A created file diffs against nothing, so the
 whole file reads as new, which is the truth.
+
+Back in the glass, `<Tab>` on any changed member peeks its diff INLINE —
+capped to a screenful, with the remainder counted — for the glance that
+does not need the walk.
 
 Nothing touches the disk — results are BUFFERS, modified and unsaved, the
 state you would be in had you typed the change yourself. Every key is one

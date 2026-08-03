@@ -6,6 +6,11 @@
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("scry.glass")
+-- Peeked inline diffs (see M.toggle_diff). Its own namespace so a render can
+-- clear stale peeks without touching them being part of the verdict pass —
+-- and declared HERE because render() clears it: a `local` further down the
+-- file would be a nil global from render's point of view.
+local diff_ns = vim.api.nvim_create_namespace("scry.diff")
 
 -- The palette. Every group is a `default link`, so a colorscheme that
 -- defines any of them wins and nothing here has to know about colors.
@@ -383,6 +388,10 @@ function M.render()
   local debt = require("scry.debt")
   local feat = require("scry.feature")
   vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
+  -- Peeked diffs go too: a render follows the moments the diff itself moves
+  -- (a cast landing, a write, a discard's reload), and a stale diff shown as
+  -- current is worse than pressing <Tab> again.
+  vim.api.nvim_buf_clear_namespace(state.buf, diff_ns, 0, -1)
 
   state.map = combined_map()
   state.debt = debt.count(state.map, state.report, state.root)
@@ -969,6 +978,89 @@ function M.toggle_members()
   return false
 end
 
+-- A GLANCE AT THE DIFF, WITHOUT LEAVING THE MAP.
+--
+-- The review tab (|scry-compose|) is the full walk; this is the look you
+-- take before deciding to walk. `<Tab>` on a member whose file has an
+-- unsaved change unfolds the diff right under the row — capped, because a
+-- forty-hunk diff inline in the map stops being a glance — and `<Tab>`
+-- again puts it away.
+local diff_ns = vim.api.nvim_create_namespace("scry.diff")
+
+-- Enough to judge a small change whole and to recognize a big one.
+local DIFF_LINES = 20
+
+--- Toggle an inline diff under the member at the cursor.
+---@return boolean handled false when there is nothing here to diff
+function M.toggle_diff()
+  if not state.root then
+    return false
+  end
+  local here = vim.api.nvim_win_get_cursor(0)[1]
+  local claim
+  for _, c in ipairs((state.map or {}).claims or {}) do
+    if c.lnum == here then
+      claim = c
+    end
+  end
+  if not claim then
+    return false
+  end
+  local cpath = require("scry.map").claim_path(claim, state.kinds)
+  if not cpath then
+    return false
+  end
+
+  -- Already showing: put it away.
+  local marks = vim.api.nvim_buf_get_extmarks(state.buf, diff_ns, { here - 1, 0 }, { here - 1, -1 }, {})
+  if #marks > 0 then
+    for _, m in ipairs(marks) do
+      vim.api.nvim_buf_del_extmark(state.buf, diff_ns, m[1])
+    end
+    return true
+  end
+
+  -- The diff only exists between an unsaved buffer and the disk. Before the
+  -- cast a `~ change` row has nothing to show yet; after `:w` the change IS
+  -- the disk. Neither is an error — there is just nothing here to peek at.
+  local full = state.root .. "/" .. cpath
+  local buf = vim.fn.bufnr(full)
+  if buf == -1 or not vim.api.nvim_buf_is_loaded(buf) or not vim.bo[buf].modified then
+    return false
+  end
+
+  local disk = vim.fn.filereadable(full) == 1 and (table.concat(vim.fn.readfile(full), "\n") .. "\n") or ""
+  local now = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n") .. "\n"
+  -- vim.text.diff is this API's current name; vim.diff its old one.
+  local difffn = (vim.text and vim.text.diff) or vim.diff
+  local unified = difffn(disk, now, { ctxlen = 2 })
+  if not unified or unified == "" then
+    return false
+  end
+
+  local rows = {}
+  local all = vim.split(unified, "\n", { plain = true, trimempty = true })
+  for i = 1, math.min(#all, DIFF_LINES) do
+    local line = all[i]
+    local lead = line:sub(1, 1)
+    local hl = (lead == "+" and "Added") or (lead == "-" and "Removed") or "ScryEvidence"
+    rows[#rows + 1] = { { "      " .. line, hl } }
+  end
+  if #all > DIFF_LINES then
+    rows[#rows + 1] = {
+      {
+        ("      … %d more line%s — the review tab after a cast walks all of it"):format(
+          #all - DIFF_LINES,
+          #all - DIFF_LINES == 1 and "" or "s"
+        ),
+        "ScryEvidence",
+      },
+    }
+  end
+  vim.api.nvim_buf_set_extmark(state.buf, diff_ns, here - 1, 0, { virt_lines = rows })
+  return true
+end
+
 --- Jump to the next or previous feature whose verdict wants something.
 ---
 --- Deliberately does not wrap. A motion that silently starts over hides the
@@ -1239,8 +1331,14 @@ function M.open(root)
     -- collapse the very sentence you were reading. This reaches down to the
     -- members instead, which is what the key means.
     vim.keymap.set("n", "<Tab>", function()
+      -- On a member with an unsaved change, the diff; anywhere else, the
+      -- fold. One key, and it answers the question the row you are on is
+      -- actually asking.
+      if M.toggle_diff() then
+        return
+      end
       M.toggle_members()
-    end, { buffer = buf, desc = "scry: show or hide what this feature is made of" })
+    end, { buffer = buf, desc = "scry: peek the diff here, or show what this feature is made of" })
 
     -- ]d AND [d — TO THE NEXT THING THAT WANTS YOU.
     --
