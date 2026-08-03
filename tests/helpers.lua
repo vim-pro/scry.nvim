@@ -13,9 +13,12 @@ vim.opt.rtp:prepend(H.root)
 
 H.fixture = H.root .. "/tests/fixture"
 
+-- Raise, do not exit. os.exit(1) killed the whole Neovim on the first failed
+-- assertion, so every later check in the file went unrun and unreported — and
+-- from outside, a real failure was indistinguishable from a crash. An error is
+-- something a test runner can catch, attribute and carry on from.
 function H.fail(msg)
-  io.stderr:write("FAIL: " .. msg .. "\n")
-  os.exit(1)
+  error(msg, 0)
 end
 
 function H.eq(got, want, what)
@@ -70,9 +73,10 @@ function H.virt_by_row(buf, ns)
   return out
 end
 
+-- Kept so no spec needs editing, but it no longer exits: reaching the end of a
+-- spec IS the pass, and the runner is what says so.
 function H.done(msg)
-  print(msg)
-  os.exit(0)
+  return msg
 end
 
 return H
