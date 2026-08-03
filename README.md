@@ -1,5 +1,7 @@
 # scry.nvim
 
+[![CI](https://github.com/vim-pro/scry.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/vim-pro/scry.nvim/actions/workflows/ci.yml)
+
 **Scry your software.** Look into your codebase and see the product it
 describes. Then conjure the changes you want.
 
