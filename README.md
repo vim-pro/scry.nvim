@@ -52,11 +52,15 @@ feature Take a checklist away as a PDF
     the print-only sheet: steps, notes, no chrome
 ```
 
-What exists, what will change, what gets created, what gets removed, what
-this change doesn't touch — one screen. Alter it by editing lines; it's your
-buffer. Discard it with `u`. Build it with `~`, pre-filled with what you
-said — and the cast carries your edited notes, so it executes the plan you
-approved rather than re-deriving one.
+What exists, what will change (`~ change`), what gets created (`+ create`),
+what gets removed, what this change doesn't touch — one screen, with the
+states rendered in the diff colors your scheme already has. Alter it by
+editing lines; it's your buffer. Discard it with `u`. Build it with `~`,
+pre-filled with what you said — the cast carries your edited notes, so it
+executes the plan you approved rather than re-deriving one, and afterwards
+each planned row flips to what actually happened. A planned member the cast
+never touched reads `✗ skipped`, because an approved plan and a cast that
+quietly did four fifths of it must not look the same.
 
 Or write the sentence yourself and press `+` on it, and scry finds the files
 it's made of:

@@ -1264,7 +1264,24 @@ things. An untouched member stays bare:
 <
 Reading down the page: what exists, what will change, what gets created,
 what gets removed (a note like any other), and what this change does not
-touch.
+touch — and the states are WORDS on the rows, not a reading exercise:
+>
+    route c/[slug]      src/pages/c/[slug].astro  ✓ present (file) · ~ change
+    route print         src/pages/print.astro     ✗ absent         · + create
+    module src/lib/site.js                        ✓ present (file)
+<
+`~ change` and `+ create` render in the diff colors every scheme already
+has (|hl-Changed|, |hl-Added|). An untouched member carries no word.
+
+THE CAST IS CHECKED AGAINST THE PLAN. After `~`, each planned row flips to
+what actually happened — `✓ changed`, `✓ created` — and a planned member
+the cast never touched reads `✗ skipped` rather than sitting there looking
+intended. The notification counts skips too, because a plan you approved
+and a cast that quietly did four fifths of it must not look the same.
+
+The words are session state, like the last cast. `:write` clears them —
+writing the map is accepting it — and the notes stay behind as the members'
+descriptions, which an executed plan's notes are.
 
 THE PLAN IS BUFFER TEXT, NOT AN OVERLAY. Altering the suggestion is editing
 lines. Discarding it is `u`. Building it is `~` — whose request already

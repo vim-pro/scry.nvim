@@ -139,4 +139,40 @@ local _, c_count = after2:gsub("module c%.lua", "")
 H.eq(c_count, 1, "a member in another block is not duplicated into this one")
 H.ok(after2:find("feature split\n  module a%.lua\n    touch this") ~= nil, "this block's member took its note")
 
+-- 5) THE PLAN HAS A LIFECYCLE: pending, built, settled against what
+-- actually happened.
+--
+-- A plan note and a member's ordinary description are the same grammar on
+-- purpose, so the buffer alone cannot say "this row is about to change" —
+-- the pending state is what says it, and it is session state like the last
+-- cast.
+plan.clear()
+local c1 = { kind = "route", target = "c/[slug]", feature = "Take a checklist away as a PDF", desc = { "add a print button" } }
+local c2 = { kind = "route", target = "print", feature = "Take a checklist away as a PDF", desc = { "the print-only sheet" } }
+local c3 = { kind = "module", target = "src/lib/site.js", feature = "Take a checklist away as a PDF", desc = {} }
+local other = { kind = "module", target = "a.lua", feature = "Browse the library", desc = { "a note" } }
+
+H.eq(plan.mark(c1, "src/pages/c/[slug].astro", true), nil, "no pending plan, no words")
+
+plan.pending = { feature = "Take a checklist away as a PDF" }
+H.eq(plan.mark(c1, "src/pages/c/[slug].astro", true), "change", "a noted member whose file exists will change")
+H.eq(plan.mark(c2, "src/pages/print.astro", false), "create", "one whose file is absent will be created")
+H.eq(plan.mark(c3, "src/lib/site.js", true), nil, "an unnoted member is not the plan's to mark")
+H.eq(plan.mark(other, "a.lua", true), nil, "another feature's notes are just its descriptions")
+
+-- CLOSURE. The cast is checked against the plan it was given: each planned
+-- row flips to what actually happened, and a planned member the cast never
+-- touched says `skipped` rather than sitting there looking intended.
+plan.settle("some other feature", { changed = { "x" }, created = {} })
+H.eq(plan.pending.outcomes, nil, "a cast on another feature settles nothing")
+plan.settle("Take a checklist away as a PDF", { changed = { "src/pages/c/[slug].astro" }, created = {} })
+H.eq(plan.mark(c1, "src/pages/c/[slug].astro", true), "changed", "a planned change that happened says so")
+H.eq(plan.mark(c2, "src/pages/print.astro", false), "skipped", "a planned member the cast did not touch says SKIPPED")
+H.eq(plan.mark(c3, "src/lib/site.js", true), nil, "and an unplanned member still says nothing")
+
+-- `:w` is the acceptance gesture: writing the map is accepting it, and the
+-- plan's words have done their job.
+plan.clear()
+H.eq(plan.mark(c1, "src/pages/c/[slug].astro", true), nil, "a cleared plan marks nothing")
+
 H.done("plan_spec PASS")

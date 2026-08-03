@@ -444,6 +444,19 @@ function M.cast(root, buf, feature, intent, done)
       -- back; the rest is |scry-compose|.
       local n = #res.changed + #res.created
       local msg = ("[scry] %d file%s · ]q next · :ScryDiscard undoes it"):format(n, n == 1 and "" or "s")
+      local pending = require("scry.plan").pending
+      if pending and pending.feature == feature.name and pending.outcomes then
+        local skipped = 0
+        for _, claim in ipairs(feature.claims) do
+          local cpath = require("scry.map").claim_path(claim, require("scry.map").kinds_for(root))
+          if #(claim.desc or {}) > 0 and cpath and not pending.outcomes[cpath] then
+            skipped = skipped + 1
+          end
+        end
+        if skipped > 0 then
+          msg = msg .. (" · %d planned member%s SKIPPED"):format(skipped, skipped == 1 and "" or "s")
+        end
+      end
       if #res.refused > 0 then
         -- Never folded into the count. A refused path is a file the cast
         -- tried to write that nobody named, and it is the one thing here

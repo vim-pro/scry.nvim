@@ -146,6 +146,7 @@ function M.at(root, buf, intent, done)
   end
   say(("finding what `%s` is about…"):format(intent:sub(1, 40)))
 
+  local started = vim.uv.hrtime()
   require("conjurer").get_provider()({
     config = require("conjurer").config or {},
     system = built.system,
@@ -153,6 +154,11 @@ function M.at(root, buf, intent, done)
     intent = intent,
     cwd = root,
     timeout_ms = 120000,
+    -- The wait has to read as progress. A spinner with no words is a stall;
+    -- the model's own narration, with a clock, is something happening.
+    on_narrate = function(line)
+      say(("%s  %ds"):format(line:sub(1, 60), math.floor((vim.uv.hrtime() - started) / 1e9)))
+    end,
   }, function(err, result)
     vim.schedule(function()
       pcall(vim.api.nvim_buf_clear_namespace, buf, ns, 0, -1)

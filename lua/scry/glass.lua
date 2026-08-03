@@ -60,6 +60,10 @@ local HL = {
 
   -- claim verdicts
   ScryBacked = "DiagnosticOk",
+  -- The plan's states borrow the DIFF groups, because that is what they are:
+  -- a change and an addition the buffer knows about before it happens.
+  ScryPlanChange = "Changed",
+  ScryPlanCreate = "Added",
   ScryDiverged = "DiagnosticError",
   ScryUnchecked = "DiagnosticHint",
 
@@ -581,6 +585,30 @@ function M.render()
       local gap = VERDICT_AT - used
       parts[#parts + 1] = { (" "):rep(gap >= 2 and gap or 2) .. v.label, hl }
     end
+
+    -- WHAT THE PLAN SAYS ABOUT THIS ROW, as a word rather than a reading
+    -- exercise. The states were there — a note plus `✓ present` meant change,
+    -- a note plus `✗ absent` meant create — but a reader had to cross-check
+    -- two columns and the prose to know which kind of row they were on.
+    -- After the cast the same slot carries the closure: what actually
+    -- happened, and `skipped` for a planned member the cast never touched.
+    local cpath = mapmod.claim_path(claim, state.kinds)
+    local pmark = require("scry.plan").mark(
+      claim,
+      cpath,
+      cpath ~= nil and vim.fn.filereadable(state.root .. "/" .. cpath) == 1
+    )
+    if pmark then
+      local WORD = {
+        change = { "~ change", "ScryPlanChange" },
+        create = { "+ create", "ScryPlanCreate" },
+        changed = { "✓ changed", "ScryBacked" },
+        created = { "✓ created", "ScryBacked" },
+        skipped = { "✗ skipped", "ScryBuilding" },
+      }
+      local w = WORD[pmark]
+      parts[#parts + 1] = { (#parts > 0 and " · " or pad(claim.lnum)) .. w[1], w[2] }
+    end
     if explain.showing() then
       gloss(claim.lnum, explain.member(v))
     end
@@ -659,6 +687,10 @@ function M.next_action()
     if #feature.f.claims == 0 then
       -- Named and made of nothing.
       return "+ to find its files"
+    end
+    local pending = require("scry.plan").pending
+    if pending and pending.feature == feature.f.name and not pending.outcomes then
+      return "~ to build the plan"
     end
     return "~ to change it"
   end
@@ -1316,6 +1348,8 @@ function M.write()
   vim.fn.writefile(map_lines, state.root .. "/" .. config.map_path)
   require("scry.holdout").save(state.root, config, holdout_lines)
   vim.bo[state.buf].modified = false
+  -- Writing the map is accepting it: the plan's words have done their job.
+  require("scry.plan").clear()
   local where = require("scry.holdout").in_repo(state.root, config) and "IN the repo (weaker holdout)"
     or "outside the repo"
   vim.notify(

@@ -510,6 +510,32 @@ H.ok(lvirt[0] and lvirt[0]:find("%S") ~= nil, "a map of one feature still says h
 -- argument is real and the header carries the fact. Two views, two jobs.
 H.eq(fold_line(1):find("unread"), nil, "the scan view is unchanged")
 
+-- THE PLAN'S WORDS RENDER ON THE ROW. `~ change` and `+ create` were
+-- states a reader had to assemble from a note plus the verdict column; they
+-- are a word now, in the diff colors every scheme already has.
+require("scry.plan").clear()
+local planned_map = staged({
+  "feature planned one",
+  "  module exists.lua",
+  "    add the print styles",
+  "  module absent.lua",
+  "    the new sheet",
+  "  module quiet.lua",
+}, function()
+  return "backed"
+end)
+H.eq(#planned_map.features, 1, "one feature staged")
+-- exists.lua is real for this test; absent.lua is not
+vim.fn.writefile({ "x" }, "exists.lua")
+require("scry.plan").pending = { feature = "planned one" }
+glass.render()
+local pvirt = H.virt_by_row(glass._state.buf, ns2)
+H.ok(pvirt[1] and pvirt[1]:find("~ change", 1, true) ~= nil, "a noted member with a file reads `~ change`")
+H.ok(pvirt[3] and pvirt[3]:find("+ create", 1, true) ~= nil, "a noted member without one reads `+ create`")
+H.eq(pvirt[5] and pvirt[5]:find("change", 1, true), nil, "an unnoted member carries no plan word")
+vim.fn.delete("exists.lua")
+require("scry.plan").clear()
+
 -- WHAT TO DO NEXT, ON THE LINE YOU ARE ALREADY READING.
 --
 -- The header said `+ to draft` and nothing else, forever. It went wrong two

@@ -31,6 +31,71 @@
 -- outside the cast's power and stays yours.
 local M = {}
 
+-- THE PENDING PLAN, so the buffer can say which rows are part of it.
+--
+-- A plan note and a member's ordinary description are the same grammar —
+-- deliberately, since an executed plan's notes ARE decent descriptions — so
+-- the buffer alone cannot say "this row is about to change". This is that
+-- knowledge: which feature has a live plan, and (after the cast) what
+-- actually happened to each planned file.
+--
+-- Session state, like the last cast. It clears when the map is WRITTEN —
+-- `:w` is the acceptance gesture — or when a new plan replaces it.
+M.pending = nil
+
+--- What the plan says about this member, if anything.
+---
+--- Before the cast: `change` or `create`, derived from the note and the
+--- file — a noted member whose file exists will change, one whose file is
+--- absent will be created. After the cast: what actually happened, which is
+--- the closure — `changed`, `created`, or `skipped` for a planned member
+--- the cast did not touch. A member with no note is not the plan's to mark.
+---@param claim scry.Claim
+---@param path string? the file this member names
+---@param exists boolean
+---@return "change"|"create"|"changed"|"created"|"skipped"|nil
+function M.mark(claim, path, exists)
+  if not M.pending or claim.feature ~= M.pending.feature then
+    return nil
+  end
+  local noted = #(claim.desc or {}) > 0
+  if M.pending.outcomes then
+    local outcome = path and M.pending.outcomes[path]
+    if outcome then
+      return outcome
+    end
+    -- Planned, and the cast did not touch it. The one thing here worth a
+    -- louder word: the notes still say what was supposed to happen.
+    return noted and "skipped" or nil
+  end
+  if not noted then
+    return nil
+  end
+  return exists and "change" or "create"
+end
+
+--- The cast happened: settle the plan against what it actually did.
+---@param feature_name string
+---@param res { changed: string[], created: string[] }
+function M.settle(feature_name, res)
+  if not (M.pending and M.pending.feature == feature_name) then
+    return
+  end
+  local outcomes = {}
+  for _, path in ipairs(res.changed or {}) do
+    outcomes[path] = "changed"
+  end
+  for _, path in ipairs(res.created or {}) do
+    outcomes[path] = "created"
+  end
+  M.pending.outcomes = outcomes
+end
+
+--- Forget the plan. `:w` calls this — writing the map is accepting it.
+function M.clear()
+  M.pending = nil
+end
+
 local SYSTEM = table.concat({
   "You are planning one change to a software product. The change is",
   "described by an INTENT, and it lands on one FEATURE — a thing a person",
@@ -327,6 +392,7 @@ function M.give(root, buf, feature, intent, done)
         return
       end
       M.apply(buf, feature, kindset, planned)
+      M.pending = { feature = feature.name }
       pcall(vim.cmd, "normal! zv")
 
       -- The numbers a reader wants before deciding: how much of this is
