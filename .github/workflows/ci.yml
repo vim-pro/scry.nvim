@@ -30,6 +30,23 @@ jobs:
           neovim: true
           version: ${{ matrix.neovim-version }}
 
+      # scry does not degrade without ripgrep, it refuses: prohibitions,
+      # references and divergence all run through it, and the glass will not
+      # open at all when it is missing. Eight of the twenty-one specs exercise
+      # exactly that machinery, so a runner without rg is not testing scry —
+      # it is testing the error message. The README has listed it as a
+      # requirement all along; this is CI catching up to the README.
+      #
+      # Distro build, not a pinned one: the flags used are --files,
+      # --files-with-matches, --fixed-strings, --no-heading and --word-regexp,
+      # all of them ancient and none of them parsed for a format that shifts
+      # between versions.
+      - name: install ripgrep
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+
+      - name: ripgrep is really here
+        run: rg --version | head -1
+
       # Nightly tracks Neovim's unreleased HEAD, so a break there can be an
       # upstream regression rather than a bug in this plugin. Keep it
       # visible without blocking merges on stable.
