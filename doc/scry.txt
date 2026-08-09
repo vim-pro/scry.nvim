@@ -171,8 +171,6 @@ The map is plain text, versioned with the code it describes (default
       contains
         lua/auth/reset.lua:request_reset
         lua/auth/reset.lua:consume_link
-      calls
-        mailer::send
       never
         token.*log
       exercises
@@ -180,7 +178,7 @@ The map is plain text, versioned with the code it describes (default
 <
 - `feature <statement>` starts a feature. See |scry-altitude| for what
   belongs on that line — it is the one judgment the map asks of you.
-- `contains`, `calls`, `never`, `exercises` open a claim block; claims are
+- `contains`, `never`, `exercises` open a claim block; claims are
   indented four spaces and are that feature's EVIDENCE, never its peers.
 - **Everything else is prose.** There are no parse errors: a line is a claim
   or it is prose, preserved verbatim, never checked, never marked. Write as
@@ -343,17 +341,17 @@ Prose and a member are the same shape — `route /a` and `Prose here.` are
 both two words at two spaces — so what makes a line a member is that its
 kind is one this project has. That is why the parser takes the kinds.
 
-`contains` and `calls` still parse, and always will. `contains` was doing
-two jobs and its shape said which: with a symbol a definition, without one a
-file. Reading it as `def` and `module` is a renaming, not a
-reinterpretation, so no map anyone wrote changes meaning.
+`contains` still parses, and always will. It was doing two jobs and its
+shape said which: with a symbol a definition, without one a file. Reading it
+as `def` and `module` is a renaming, not a reinterpretation, so no map
+anyone wrote changes meaning. (`calls` is gone outright — a claim whose
+honest label was "this word occurs somewhere" was too weak to trust — and
+its lines read as prose now.)
 
 Claim targets differ by kind, because the claims differ in kind:
 
     contains   path:symbol            a definition exists at a location
     contains   path                   that file is part of this feature
-    calls      [hint::]symbol         target exists, and this feature
-                                      references it
     never      a ripgrep regex        zero matches in the footprint
     exercises  path[:assertion]       that spec passes — see |scry-exercised|
 
@@ -441,7 +439,7 @@ A feature's scope is the union of files its located claims name. `def`,
 `src/pages/{name}.astro` is `src/pages/c/[slug].astro`, the same
 substitution read backwards to discover names in the first place. A kind
 probed by `grep` contributes nothing, because a pattern can match anywhere
-and is not a place; neither is `calls`, which carries a hint, nor `never`.
+and is not a place; neither is `never`.
 Nothing declares a footprint, so it cannot drift from the claims it
 describes.
 
@@ -459,9 +457,9 @@ violations in files the feature does not own.
 
                                                               *scry-two-axes*
 The kinds sit on two axes, and it is worth seeing them that way rather than
-as a list of four:
+as a list:
 
-    contains / calls / never    STATIC — a definition node, a text match.
+    contains / never            STATIC — a definition node, a text match.
                                 Cheap, side-effect-free, recomputed on
                                 every check.
     exercises                   DYNAMIC — something was run and it passed.
@@ -766,8 +764,8 @@ conjurer rewrites a region of a buffer and needs one to rewrite.
 Two v0 limits worth knowing. The seeded entry points at the target file's
 first line — scry knows which file should define the symbol, not where in it
 the definition belongs, so the model decides placement and the conjurer's
-review is where you check it. And `calls` and `never` claims cannot be conjured:
-neither has a single obvious site to seed, and guessing one would be worse
+review is where you check it. And `never` claims cannot be conjured: a
+pattern has no single obvious site to seed, and guessing one would be worse
 than refusing.
 
 ------------------------------------------------------------------------------
@@ -1000,9 +998,8 @@ row it sits under and the verdict that row actually got.
 ==============================================================================
 WHERE A CLAIM TAKES YOU, in order. Evidence first, always: if the last check
 found a line for this claim, that is somewhere an engine actually looked, so
-it is the truest destination scry has. A `calls` claim lands on a real
-reference; a VIOLATED prohibition lands on the violation, which is the most
-useful jump here.
+it is the truest destination scry has. A VIOLATED prohibition lands on the
+violation, which is the most useful jump here.
 
 With no evidence it falls back to the claim's own text, and a
 `contains path:symbol` resolves its line through the SAME treesitter query
@@ -1463,7 +1460,7 @@ ScryFeatureName         What the feature is called. Default: bold, with no
                         structure without a hue, which leaves the only colors
                         on a folded map to the ones that mean something.
                                                              *hl-ScrySection*
-ScrySection             `contains`, `calls`, `exercises`. Default: Type.
+ScrySection             `contains`, `exercises`. Default: Type.
                                                                *hl-ScryNever*
 ScryNever               The `never` header and its patterns — set apart from
                         the other three, which say what the code contains
@@ -1530,10 +1527,6 @@ Every line here is a limit scry intends to keep stating plainly.
   implemented in it — the claim never said more than "this file is part of
   this feature", and the label is where that thinness has to show, because
   the feature rollup counts it like any other satisfied claim.
-- **`calls ✓ referenced (text)`** asserts the token occurs in the feature's
-  files and the target exists somewhere. It is NOT a resolved call: not
-  reachability, not the same symbol, not proof the call happens. Rung:
-  referenced < resolved < exercised.
 - **`never ✓ no matches (rg)`** asserts no textual match. It is not absence
   of behavior — `local ui = vim.ui; ui.input(...)` defeats it. The
   asymmetry matters: a VIOLATED prohibition is proof, and carries the line

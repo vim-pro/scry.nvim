@@ -21,7 +21,7 @@ function M.check()
   if vim.fn.executable("rg") == 1 then
     health.ok("ripgrep found (references and prohibitions)")
   else
-    health.error("ripgrep not found — calls and never claims cannot be checked", {
+    health.error("ripgrep not found — never claims cannot be checked", {
       "brew install ripgrep",
     })
   end

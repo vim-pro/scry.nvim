@@ -51,7 +51,7 @@ local HL = {
   -- otherwise untouched: structure without a hue, and the only colors left on
   -- a folded map are the ones that mean something.
   ScryFeatureName = false,
-  ScrySection = "Type", -- contains / calls / exercises
+  ScrySection = "Type", -- contains / exercises
   -- PreProc rather than the semantically tempting Exception: Exception
   -- collapses into Statement in the stock scheme, which is exactly where
   -- the `feature` keyword already lives, so a prohibition and a feature
@@ -196,7 +196,7 @@ end
 -- decide it — `  module src/page.tsx` and `  Search published checklists.`
 -- have the same shape — so the kinds in force are handed in, exactly as
 -- map.parse takes them.
-local SECTIONS = { contains = true, calls = true, never = true, exercises = true }
+local SECTIONS = { contains = true, never = true, exercises = true }
 
 ---@param line string
 ---@param kinds table<string, any>?

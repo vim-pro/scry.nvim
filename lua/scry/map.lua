@@ -31,7 +31,7 @@
 --
 -- Claim kinds sit on TWO axes, and the split is not cosmetic:
 --
---   contains / calls / never   STATIC evidence — a definition node, a text
+--   contains / never   STATIC evidence — a definition node, a text
 --     match. Cheap, side-effect-free, computed on every check.
 --   exercises                  DYNAMIC evidence — something was run and it
 --     passed. Slow, stateful, and it can go stale the instant you edit.
@@ -127,7 +127,6 @@ function M.parse(lines, known)
       section, member = nil, nil
     elseif feature then
       local sec = line:match("^  (contains)%s*$")
-        or line:match("^  (calls)%s*$")
         or line:match("^  (never)%s*$")
         or line:match("^  (exercises)%s*$")
       -- A TYPED MEMBER: `<kind> <name>` where a section header would be.
@@ -186,8 +185,8 @@ function M.parse(lines, known)
 end
 
 --- The file a claim names, if it names one. `contains path:symbol` and
---- `exercises path[:label]` locate themselves; `calls` carries a hint, not
---- a path, and `never` is a pattern — neither contributes a location.
+--- `exercises path[:label]` locate themselves; `never` is a pattern, not a
+--- place, so it contributes no location.
 ---
 --- A `contains` target with NO symbol names the file itself. That exists
 --- because divergence is file-level while footprints are symbol-derived, so
@@ -220,7 +219,7 @@ function M.claim_path(claim, kinds)
   -- The probe is a path template and the name is what fills it — the same
   -- substitution kinds.examples runs in reverse to discover names in the
   -- first place. A grep-probed kind still locates nothing, because a pattern
-  -- is not a place; so do `never` and `calls`.
+  -- is not a place; so does `never`.
   local spec = kinds and kinds[claim.kind]
   if spec and spec.path then
     return require("scry.kinds").expand(spec.path, claim.target, "none")

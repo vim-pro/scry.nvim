@@ -5,14 +5,10 @@ feature a user can start a session
   contains
     lua/auth.lua:create_session
     lua/auth.lua:validate_token
-  calls
-    store.lua::put
-    crypto.lua::verify
+    lua/store.lua:put
 
 feature a session can be refreshed
   An unexpired token can be traded for a fresh one without re-authenticating.
 
   contains
     lua/auth.lua:refresh_token
-  calls
-    store.lua::purge

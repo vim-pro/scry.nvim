@@ -122,8 +122,8 @@ local function verdict_col(needle)
 end
 H.eq(
   verdict_col("create_session"),
-  verdict_col("::put"),
-  "a 32-column claim and an 18-column one share a verdict column"
+  verdict_col("store.lua:put"),
+  "a long claim and a short one share a verdict column"
 )
 H.ok(virt[row_of("refresh_token")]:find("✗ absent", 1, true) ~= nil, "absent verdict rendered")
 

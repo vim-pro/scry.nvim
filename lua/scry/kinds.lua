@@ -39,10 +39,13 @@ M.BUILTIN = {
 -- prohibition and a passing spec are not things the product is MADE of.
 M.RELATION = { never = true, exercises = true }
 
--- Sections in the pre-kinds grammar. Kept parseable forever: a map is a
--- document someone wrote, and breaking it to tidy a vocabulary would be
--- the tool telling the author their work expired.
-M.LEGACY_SECTION = { contains = true, calls = true }
+-- Sections in the pre-kinds grammar. Kept parseable: a map is a document
+-- someone wrote, and breaking it to tidy a vocabulary would be the tool
+-- telling the author their work expired. (`calls` is the exception — it
+-- was cut, not renamed: a claim whose honest label was "this word occurs
+-- somewhere" was too weak to aim a cast with and too weak to trust as a
+-- check. Its lines read as prose now, which is what they always were.)
+M.LEGACY_SECTION = { contains = true }
 
 --- Desugar a legacy `contains` target to the kind it always meant.
 ---

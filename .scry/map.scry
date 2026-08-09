@@ -10,9 +10,8 @@ feature you can see what the product does and where it stands
   def lua/scry/glass.lua:open
   def lua/scry/glass.lua:render
   def lua/scry/feature.lua:verdict
+  def lua/scry/feature.lua:tally
   def lua/scry/debt.lua:header
-  calls
-    feature.lua::tally
   exercises
     tests/feature_spec.lua:features lead line one
     tests/glass_spec.lua
@@ -46,8 +45,6 @@ feature you can conjure a change you described
 
   def lua/scry/cascade.lua:build
   def lua/scry/cascade.lua:seed
-  calls
-    holdout.lua::assert_clean
   exercises
     tests/cascade_spec.lua
 

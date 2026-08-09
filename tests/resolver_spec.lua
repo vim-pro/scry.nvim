@@ -62,16 +62,6 @@ H.eq(v("def", "lua/auth.lua:validate_token").status, "backed", "validate_token d
 H.eq(v("def", "lua/auth.lua:refresh_token").status, "missing", "refresh_token absent")
 H.eq(v("def", "lua/auth.lua:refresh_token").label, "✗ absent", "absent label")
 
--- calls: backed / absent / unreferenced are three distinct outcomes
-H.eq(v("calls", "store.lua::put").status, "backed", "store.put referenced")
-H.eq(v("calls", "store.lua::put").label, "✓ referenced (text)", "calls label states text fidelity")
-H.eq(v("calls", "store.lua::put").fidelity, "rg-text", "calls fidelity")
-H.ok(#v("calls", "store.lua::put").evidence > 0, "reference evidence attached")
-H.eq(v("calls", "crypto.lua::verify").status, "missing", "crypto.verify absent (no such module)")
-H.eq(v("calls", "crypto.lua::verify").label, "✗ absent", "absent calls label")
-H.eq(v("calls", "store.lua::purge").status, "missing", "purge defined but unreferenced")
-H.eq(v("calls", "store.lua::purge").label, "✗ unreferenced", "unreferenced label distinct from absent")
-
 -- never: violated with evidence; clean
 local viol = v("never", "logging\\.debug")
 H.eq(viol.status, "violated", "logging.debug violated")

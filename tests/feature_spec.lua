@@ -16,8 +16,7 @@ local SRC = {
   "  contains",
   "    lua/auth/reset.lua:request_reset",
   "    lua/auth/reset.lua:consume_link",
-  "  calls",
-  "    mailer::send",
+  "    lua/mailer.lua",
   "  never",
   "    token.*log",
   "  exercises",
@@ -49,10 +48,10 @@ H.ok(m.features[1].claims[1].target == "lua/auth/reset.lua:request_reset", "firs
 -- it is a picked set of elements scattered across files. Deriving the scope
 -- from the claims means it cannot drift from what it is meant to describe.
 local fp = map.footprint(m.features[1])
-H.eq(#fp, 2, "footprint is the files the located claims name, deduplicated")
+H.eq(#fp, 3, "footprint is the files the located claims name, deduplicated")
 H.eq(fp[1], "lua/auth/reset.lua", "contains contributes its path — twice over, counted once")
-H.eq(fp[2], "tests/reset_spec.lua", "exercises contributes its spec, label stripped")
-H.ok(not vim.tbl_contains(fp, "mailer"), "calls carries a hint, not a path — it contributes nothing")
+H.eq(fp[2], "lua/mailer.lua", "a bare path contributes the file itself")
+H.eq(fp[3], "tests/reset_spec.lua", "exercises contributes its spec, label stripped")
 
 -- a feature that locates nothing has an empty footprint, and that is
 -- meaningful: an unscoped prohibition has nowhere to look
@@ -78,7 +77,7 @@ end
 local all_backed = report_of({
   ["lua/auth/reset.lua:request_reset"] = "backed",
   ["lua/auth/reset.lua:consume_link"] = "backed",
-  ["mailer::send"] = "backed",
+  ["lua/mailer.lua"] = "backed",
   ["token.*log"] = "clean",
   ["tests/reset_spec.lua:the link burns on use"] = "backed",
 })
@@ -108,7 +107,7 @@ H.eq(#m.features[1].claims, 5, "four structural claims and one exercised one")
 local structural = report_of({
   ["lua/auth/reset.lua:request_reset"] = "backed",
   ["lua/auth/reset.lua:consume_link"] = "backed",
-  ["mailer::send"] = "backed",
+  ["lua/mailer.lua"] = "backed",
   ["token.*log"] = "clean",
   ["tests/reset_spec.lua:the link burns on use"] = "backed",
 }, "ts-def")
@@ -122,12 +121,12 @@ H.ok(st.label:find("defined", 1, true) ~= nil, "and the label says which rung it
 local weak = report_of({
   ["lua/auth/reset.lua:request_reset"] = "backed",
   ["lua/auth/reset.lua:consume_link"] = "backed",
-  ["mailer::send"] = "backed",
+  ["lua/mailer.lua"] = "backed",
   ["token.*log"] = "clean",
   ["tests/reset_spec.lua:the link burns on use"] = "backed",
 }, "ts-def")
 for _, c in ipairs(m.claims) do
-  if c.target == "mailer::send" then
+  if c.target == "lua/mailer.lua" then
     weak.verdicts[map.claim_id(c)].fidelity = "file"
   end
 end
@@ -144,7 +143,7 @@ H.eq(v.backed, 5, "clean counts alongside backed")
 local one_broken = report_of({
   ["lua/auth/reset.lua:request_reset"] = "backed",
   ["lua/auth/reset.lua:consume_link"] = "backed",
-  ["mailer::send"] = "backed",
+  ["lua/mailer.lua"] = "backed",
   ["token.*log"] = "violated",
   ["tests/reset_spec.lua:the link burns on use"] = "backed",
 })
@@ -156,7 +155,7 @@ H.ok(vb.label:find("1 of 5", 1, true) ~= nil, "and counts what broke: " .. vb.la
 local half = report_of({
   ["lua/auth/reset.lua:request_reset"] = "backed",
   ["lua/auth/reset.lua:consume_link"] = "missing",
-  ["mailer::send"] = "missing",
+  ["lua/mailer.lua"] = "missing",
   ["token.*log"] = "clean",
   ["tests/reset_spec.lua:the link burns on use"] = "missing",
 })

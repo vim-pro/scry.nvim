@@ -55,10 +55,10 @@ syn match scryIntent "^    \S.*$" contained
 " distinguishable from a member's intent — the parser has always known which
 " opened, and now so does this.
 syn region scrySectionBlock
-      \ start="^  \%(contains\|calls\|exercises\)\s*$"
+      \ start="^  \%(contains\|exercises\)\s*$"
       \ end="^\%(\S\|  \S\)"me=s-1
       \ keepend contained contains=scrySection,scryClaim
-syn match scrySection "^  \%(contains\|calls\|exercises\)\s*$" contained
+syn match scrySection "^  \%(contains\|exercises\)\s*$" contained
 
 " A never-block runs until the next section header, feature, or dedented
 " line. A BLANK LINE DOES NOT END IT — the map's rule, not a shortcut here.

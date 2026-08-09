@@ -272,8 +272,11 @@ whose dependencies moved degrades to `– stale`.
   is correct — unrun is not a pass — but it means a map leaning on exercised
   evidence reads as all-building until `:ScryExercise` has run once. Worth
   knowing before it looks like a bug.
-- **Does `calls` earn its place** at `✓ referenced (text)` fidelity, or should it
-  move up to tree-sitter identifiers before it is trustworthy?
+- ~~**Does `calls` earn its place** at `✓ referenced (text)` fidelity?~~
+  Answered: no. Cut. Its honest label was "this word occurs somewhere" —
+  too weak to aim a cast with and too weak to trust as a check. If a real
+  resolved-reference engine ever lands, the claim can return at the
+  fidelity that would make it mean something.
 - ~~**What a machine-drafted feature list does to ownership**~~ — answered by
   making it literal rather than by argument: drafted claim ids are registered,
   the glass watcher declines to record them as authored, and they sit in the

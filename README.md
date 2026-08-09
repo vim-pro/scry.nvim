@@ -167,7 +167,7 @@ describe, and how much of what it describes does not hold?
 
 ## Two axes of evidence
 
-`contains`, `calls` and `never` are **static** — a definition node, a text
+`contains` and `never` are **static** — a definition node, a text
 match. Cheap and side-effect-free, so they run on every check. `exercises` is
 **dynamic**: a spec was run and it passed.
 
@@ -254,8 +254,6 @@ full. In short:
   exercised; v0 tops out at backed. Nothing here says your code *works*.
 - `contains ✓ defined` — a definition with that name exists. Nothing about
   its body.
-- `calls ✓ referenced (text)` — the token occurs and the target exists. Not
-  a resolved call, not reachability.
 - `never ✓ no matches (rg)` — no textual match, **not** absence of behavior.
   The asymmetry is the useful part: a violation is proof (with its line); a
   clean result is evidence.

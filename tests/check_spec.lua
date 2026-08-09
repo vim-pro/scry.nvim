@@ -26,9 +26,6 @@ local fake = {
   check_never = function(ctx, claim, cb)
     table.insert(calls, { claim = claim, cb = cb, globs = ctx.globs })
   end,
-  check_calls = function(ctx, claim, cb)
-    table.insert(calls, { claim = claim, cb = cb, globs = ctx.globs })
-  end,
 }
 
 local report

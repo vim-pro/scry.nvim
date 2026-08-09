@@ -13,8 +13,6 @@ local SRC = {
   "  contains",
   "    lua/conjurer/providers/cli.lua:request",
   "    lua/conjurer/providers/known.lua:resolve_api",
-  "  calls",
-  "    known.lua::resolve_api",
   "  never",
   "    vim\\.ui\\.",
   "",
@@ -41,17 +39,16 @@ local fp = map.footprint(m.features[1])
 H.eq(#fp, 2, "footprint is the two files the contains-claims name")
 H.eq(fp[1], "lua/conjurer/providers/cli.lua", "in order of first appearance")
 H.eq(#map.footprint(m.features[2]), 0, "a prose-only feature locates nothing")
-H.eq(#m.claims, 4, "four claims total")
+H.eq(#m.claims, 3, "three claims total")
 H.eq(#m.features[2].claims, 0, "prose-only feature has no claims")
 
 -- 3) claim details
-local c1, c2, c3, c4 = m.claims[1], m.claims[2], m.claims[3], m.claims[4]
+local c1, c3 = m.claims[1], m.claims[3]
 H.eq(c1.kind, "def", "claim 1 kind")
 H.eq(c1.target, "lua/conjurer/providers/cli.lua:request", "claim target")
-H.eq(c3.kind, "calls", "calls section")
-H.eq(c4.kind, "never", "never section")
-H.eq(c4.target, "vim\\.ui\\.", "never target is the verbatim pattern")
-H.eq(c4.feature, "providers", "claims know their feature")
+H.eq(c3.kind, "never", "never section")
+H.eq(c3.target, "vim\\.ui\\.", "never target is the verbatim pattern")
+H.eq(c3.feature, "providers", "claims know their feature")
 
 -- 4) a DEDENTED line ends a section, and a blank one does not. The blank
 -- line after the never-pattern reads like a terminator to a human; treating

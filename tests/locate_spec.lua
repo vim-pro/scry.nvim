@@ -57,7 +57,6 @@ H.eq(filelevel.why, "file", "not claiming to be a definition")
 -- 5) NOTHING IS INVENTED. A holding prohibition names a pattern, not a
 -- place; with no evidence there is nowhere to go and the answer is nil.
 H.eq(locate.target({ kind = "never", target = "print%(", feature = "f" }, nil, work), nil, "a clean never has no destination")
-H.eq(locate.target({ kind = "calls", target = "store.lua::put", feature = "f" }, nil, work), nil, "nor does an unevidenced calls")
 
 -- ...but a VIOLATED prohibition is the most useful jump scry has.
 local violated = locate.target(

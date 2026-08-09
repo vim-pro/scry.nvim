@@ -7,8 +7,8 @@
 -- THE ORDER OF PREFERENCE IS THE HONESTY. Evidence first, always: if the
 -- report has a line for this claim, that is a place the engine actually
 -- looked and found something, so it is the truest destination available. A
--- `calls` claim jumps to a real reference; a VIOLATED prohibition jumps to
--- the violation, which is the single most useful jump scry can offer.
+-- VIOLATED prohibition jumps to the violation, which is the single most
+-- useful jump scry can offer.
 --
 -- Only when there is no evidence does it fall back to the claim's own text,
 -- and the symbol's line is resolved by the same treesitter query that
@@ -16,8 +16,8 @@
 -- not mean. Failing that, line 1 of the file, which at least gets you there.
 --
 -- Nothing here guesses. A claim with no evidence and no path (a `never`
--- pattern that is holding, a `calls` hint with nothing found) has no
--- destination, and says so rather than inventing one.
+-- pattern that is holding) has no destination, and says so rather than
+-- inventing one.
 local M = {}
 
 --- Where this claim points.
