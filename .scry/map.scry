@@ -28,15 +28,13 @@ feature you can describe a change before you make it
     tests/feature_spec.lua:a feature may be named with no evidence
 
 feature the description can be edited without losing anything
-  The glass is two files composed into one buffer. Saving routes never-blocks
-  to the holdout and the rest to the map, and a parse/serialize round trip is
+  The glass is the map file as a buffer, and a parse/serialize round trip is
   byte-identical, so editing beliefs can never quietly drop one.
 
-  def lua/scry/glass.lua:compose
-  def lua/scry/glass.lua:split
+  def lua/scry/map.lua:parse
   def lua/scry/map.lua:serialize
   exercises
-    tests/glass_spec.lua:compose∘split is identity on composed input
+    tests/map_spec.lua
 
 feature you can conjure a change you described
   :Conjure on an absent claim seeds the quickfix list and hands off to
@@ -48,15 +46,15 @@ feature you can conjure a change you described
   exercises
     tests/cascade_spec.lua
 
-feature a rule the model never saw still holds afterwards
-  never-claims live outside the repository and are withheld from every
-  request, then checked once the code lands. A prohibition the generator was
-  shown proves nothing by being satisfied; one it never saw is evidence.
+feature a rule is told up front and enforced after
+  A feature's never-claims ride along with every cast, so the generator can
+  follow them — and the same patterns are re-checked against the code once
+  it lands, so a rule broken anyway is caught with the line that proves it.
 
-  def lua/scry/holdout.lua:assert_clean
-  def lua/scry/holdout.lua:path
+  def lua/scry/resolvers/ts_rg.lua:check_never
+  def lua/scry/cascade.lua:seed
   exercises
-    tests/cascade_spec.lua:assert_clean errors when a never-pattern appears
+    tests/cascade_spec.lua:the feature's prohibition rides in the intent
 
 feature you can prove a change works, and know when the proof goes stale
   :ScryExercise runs the specs behind exercises claims and records what each
@@ -105,9 +103,9 @@ feature a project carries its own settings
     tests/project_spec.lua
 
 feature you can find out whether scry can actually see your project
-  :checkhealth scry reports the two legs the resolver stands on, where the map
-  and holdout live, and whether conjurer is installed — before a missing
-  dependency shows up as a wall of unchecked verdicts.
+  :checkhealth scry reports the two legs the resolver stands on, where the
+  map lives, and whether conjurer is installed — before a missing dependency
+  shows up as a wall of unchecked verdicts.
 
   def lua/scry/health.lua:check
   def lua/scry/init.lua:setup

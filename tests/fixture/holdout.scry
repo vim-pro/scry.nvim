@@ -1,4 +1,0 @@
-feature a session can be refreshed
-  never
-    logging\.debug
-    io\.write

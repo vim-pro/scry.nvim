@@ -11,14 +11,13 @@ local ts_rg = require("scry.resolvers.ts_rg")
 local map = require("scry.map")
 
 local m = map.load(H.fixture .. "/map.scry")
-local hold = map.load(H.fixture .. "/holdout.scry")
 local S1 = "a user can start a session"
 local S2 = "a session can be refreshed"
 
 -- Each feature scopes its own claims now, so the ctx is per-feature and
 -- derived — never a declared glob.
 local function ctx_for(feature_name)
-  local f = map.feature(m, feature_name) or map.feature(hold, feature_name)
+  local f = map.feature(m, feature_name)
   return { root = H.fixture, globs = f and map.footprint(f) or {} }
 end
 
@@ -38,18 +37,12 @@ local function decide(claims)
 end
 
 local verdicts = decide(m.claims)
--- The holdout carries only never-patterns, which locate nothing; their scope
--- comes from the map feature of the same name.
-local hv = decide(hold.claims)
 
 local function v(kind, target)
   for _, feature in ipairs({ S1, S2 }) do
     local id = feature .. "\1" .. kind .. "\1" .. target
     if verdicts[id] then
       return verdicts[id]
-    end
-    if hv[id] then
-      return hv[id]
     end
   end
 end

@@ -38,7 +38,7 @@ local MAP = {
 }
 write(".scry/map.scry", MAP)
 local m = map.parse(MAP)
-local config = { map_path = ".scry/map.scry", holdout_path = "", sources = {} }
+local config = { map_path = ".scry/map.scry", sources = {} }
 
 -- 1) the claimed files are exactly the union of footprints; everything else
 -- is divergence
@@ -56,12 +56,6 @@ H.ok(not vim.tbl_contains(unclaimed, "tests/reset_spec.lua"), "so is an exercise
 -- 2) SCRY'S OWN BOOKKEEPING IS NOT PRODUCT. A fresh map must never open by
 -- accusing you of failing to describe the map.
 H.ok(not vim.tbl_contains(unclaimed, ".scry/map.scry"), "the map does not count against itself")
-local in_repo = { map_path = ".scry/map.scry", holdout_path = "holdout.scry", sources = {} }
-write("holdout.scry", { "feature x", "  never", "    nope" })
-local u2 = div.unclaimed(work, m, in_repo)
-H.ok(not vim.tbl_contains(u2, "holdout.scry"), "nor does an in-repo holdout")
--- ...and remove it again, so this check does not change the counts below
-vim.fn.delete(work .. "/holdout.scry")
 
 -- 3) THE POINT. Every feature done, and the map still describes a third of
 -- the product. Divergence is the only thing on the page that says so — the
@@ -87,7 +81,7 @@ H.ok(
 H.ok(first:find("of 6", 1, true) ~= nil, "against the number of files there are")
 
 -- 4) `sources` narrows what counts, for repos where everything is noise
-local lua_only = { map_path = ".scry/map.scry", holdout_path = "", sources = { "lua/**/*.lua" } }
+local lua_only = { map_path = ".scry/map.scry", sources = { "lua/**/*.lua" } }
 local u3 = div.unclaimed(work, m, lua_only)
 H.eq(#u3, 3, "narrowing to lua/ drops the orphan spec")
 H.ok(not vim.tbl_contains(u3, "tests/orphan_spec.lua"), "specifically that one")

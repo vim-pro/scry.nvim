@@ -155,11 +155,10 @@ its claims name, never declared — see `:h scry-altitude`.
 prose is preserved verbatim and never checked. The sentences carry the
 theory; the claims carry the check.
 
-**Prohibitions are a holdout.** `never` claims are withheld from the model
-that writes your code and checked afterwards. If the generator is shown the
-prohibition, its output satisfying it tells you nothing — it was asked to.
-A rule it never saw, checked after, is real evidence. That's why prohibitions
-are stored outside the repo by default.
+**Rules are told and enforced.** A feature's `never` claims ride along with
+every cast, so the generator can follow them — and the same patterns are
+re-checked against the code once it lands, whoever wrote it. A violation is
+reported with the line that proves it.
 
 
 ## Two axes of evidence
@@ -196,10 +195,9 @@ scry seeds the quickfix list with the target site and your intent, then hands
 off to [conjurer.nvim](https://github.com/vim-pro/conjurer.nvim) — which owns
 the casting and per-site review. **scry never conjures anything itself.**
 
-When you save the file, the withheld prohibitions run against the new code and
-the claim re-checks: `✗ absent` becomes `✓ defined` — and because
-you conjured it and it came true, it's yours. If the generated code trips a rule it never
-saw, you find out with the evidence line.
+When you save the file, the feature's prohibitions run against the new code
+and the claim re-checks: `✗ absent` becomes `✓ defined`. If the generated
+code trips a rule, you find out with the evidence line.
 
 ## Install
 
@@ -233,7 +231,6 @@ verdict. See `:h scry-mappings`.
 ```lua
 require("scry").setup({
   map_path = ".scry/map.scry",  -- versioned with the code it describes
-  holdout_path = "",            -- "" = never-claims outside the repo
   resolver = "",                -- "" = treesitter + ripgrep
   test = { cmd = {} },          -- how to run ONE spec; the path is appended.
                                 -- Empty = exercises claims stay "– unrun".
@@ -255,8 +252,6 @@ full. In short:
   The asymmetry is the useful part: a violation is proof (with its line); a
   clean result is evidence.
 - Verdicts describe **saved files** at a timestamp, which the header carries.
-- Holdout independence is against **leakage, not adversaries** — hidden from
-  a generator that reads your repo, not from one told to hunt your disk.
 - **Divergence is file-level and blunt.** A file a feature uses but never
   names reads as unclaimed, and `sources` decides what counts as a file. It
   answers "is anything undescribed", not "is the description any good".

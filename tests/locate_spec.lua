@@ -13,8 +13,7 @@ for _, f in ipairs({ "auth.lua", "store.lua", "logging.lua" }) do
 end
 vim.fn.mkdir(work .. "/.scry", "p")
 vim.fn.writefile(vim.fn.readfile(H.fixture .. "/map.scry"), work .. "/.scry/map.scry")
-require("scry").setup({ holdout_path = work .. "/holdout-test.scry" })
-vim.fn.writefile(vim.fn.readfile(H.fixture .. "/holdout.scry"), work .. "/holdout-test.scry")
+require("scry").setup({})
 
 -- 1) A `contains` claim lands on the DEFINITION, not line 1 and not the
 -- first textual mention. The line comes from the same treesitter query that

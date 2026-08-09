@@ -26,7 +26,7 @@ local M = {}
 ---  completes inside a single tick and a timestamp comparison would call
 ---  every fresh run stale forever.
 
---- Cache file for a project root. Outside the repo, keyed like the holdout —
+--- Cache file for a project root. Outside the repo, in stdpath("state") —
 --- run results are machine-local facts, not something to commit.
 ---@param root string
 ---@return string

@@ -21,19 +21,11 @@
 -- "you do the deciding" true rather than aspirational, and it means the
 -- report you ran to find the gap is the same report that closes it.
 --
--- THE HOLDOUT IS NOT INVOLVED, and pretending otherwise would be worse than
--- saying so. A prohibition is withheld from CODE requests because a rule the
--- generator was shown proves nothing by being satisfied. This request
--- produces map text, not code, so there is no result for a leaked
--- prohibition to have been fitted to. Running assert_clean here would look
--- like a guarantee while guaranteeing nothing.
---
--- What DOES matter is that a drafting pass must not write prohibitions.
--- A never-claim lands outside the repository, unversioned, and silently
--- narrows every future cascade; one nobody read is worse than none at all.
--- The request says not to write them, and if one arrives anyway the glass
--- announces the routing on write ("N never-claims → holdout") — the same
--- notification that has always made storage routing non-silent.
+-- A DRAFTING PASS MUST NOT WRITE PROHIBITIONS. A rule is something a person
+-- chooses to impose; a machine-invented one silently narrows every future
+-- cast, and one nobody chose is worse than none at all. The request says
+-- not to write them, and if one arrives anyway it lands as ordinary map
+-- text under your eyes, where deleting it is `dd`.
 --
 -- THE GLASS IS THE REVIEW, not a diff tab. Conjurer's review compares two
 -- versions of a source region, which is the right surface for code and the

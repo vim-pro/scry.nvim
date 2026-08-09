@@ -12,3 +12,6 @@ feature a session can be refreshed
 
   contains
     lua/auth.lua:refresh_token
+  never
+    logging\.debug
+    io\.write

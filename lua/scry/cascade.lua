@@ -2,11 +2,12 @@
 -- seeds the quickfix list with the target site and hands the intent to
 -- conjurer's aggregate driver, which owns casting and per-site review.
 --
--- The holdout is the point. Everything the conjurer will ever see is built
--- from exactly three inputs — the feature name, the claim's own target, and
--- an intent the user typed. Concern PROSE is deliberately excluded: prose
--- can restate a prohibition in words no scrubber could catch, so the channel
--- is closed rather than filtered. assert_clean is the tripwire on top.
+-- A feature's prohibitions RIDE ALONG. Telling the generator the rules up
+-- front is prevention; checking the code after it lands is detection; scry
+-- does both, because a violation avoided beats one caught. What is still
+-- withheld is the feature's SPEC PATHS from a code request — a request that
+-- names the test is a request to satisfy the test, which is the one thing
+-- an acceptance check must not be written to do (|scry-independence|).
 --
 -- Settlement: conjurer has no completion event and ripgrep reads DISK, so
 -- the honest trigger for re-checking is "the file was saved". Nothing is
@@ -87,22 +88,15 @@ local function recheck(reason)
   local root = active.root
   local config = require("scry.project").resolve(root)
   local mapmod = require("scry.map")
-  local holdout = require("scry.holdout")
 
-  local hold = holdout.load(root, config)
+  local m = mapmod.load(root .. "/" .. config.map_path)
   local nevers = {}
-  for _, c in ipairs(hold.claims) do
+  for _, c in ipairs(m.claims) do
     if c.kind == "never" and c.feature == active.feature then
       nevers[#nevers + 1] = c
     end
   end
   if #nevers > 0 then
-    -- Scope matters: a feature's `files` globs live in the MAP, its
-    -- prohibitions in the holdout. Checking the holdout alone would leave the
-    -- claims unscoped and search the whole project — reporting a violation in
-    -- a file the feature doesn't own. Merge the map's features (for footprints)
-    -- with the holdout's never claims.
-    local m = mapmod.load(root .. "/" .. config.map_path)
     local scoped = { lines = {}, features = m.features, claims = nevers }
     require("scry.check").run(scoped, {
       root = root,
@@ -192,39 +186,46 @@ end
 ---@param handoff boolean Call conjurer's :ConjureAll after seeding?
 function M.seed(root, claim, intent, handoff)
   local config = require("scry.project").resolve(root)
-  local holdout = require("scry.holdout")
   local built = M.build(claim, intent)
+  local m = require("scry.map").load(root .. "/" .. config.map_path)
 
-  -- The tripwire: nothing that leaves here may contain the text of something
-  -- that will be CHECKED against the result.
-  --
-  -- That is this feature's nevers — scoped deliberately, and it mirrors
-  -- recheck() exactly. A different feature's prohibition is never evaluated
-  -- against this code (nevers are checked over their own feature's footprint), so
-  -- treating it as a leak would block honest cascades: "session" is billing's
-  -- prohibition and the sessions feature's whole vocabulary.
-  local hold = holdout.load(root, config)
-  local withheld = {}
-  for _, c in ipairs(hold.claims) do
+  -- THE FEATURE'S PROHIBITIONS RIDE ALONG. A rule the generator is told is
+  -- a rule it can follow; the same rule is re-checked once the code lands
+  -- (recheck), so telling costs nothing and prevents the redo round-trip.
+  -- Scoped to this feature — a different feature's prohibition is never
+  -- evaluated against this code, so it has no business in the request.
+  local nevers = {}
+  for _, c in ipairs(m.claims) do
     if c.kind == "never" and c.feature == claim.feature then
-      withheld[#withheld + 1] = c.target
+      nevers[#nevers + 1] = c.target
     end
   end
-  -- ...and, when conjuring CODE, this feature's spec paths. A code request
-  -- that names the test is a request to satisfy the test, which is the one
-  -- thing an acceptance check must not be written to do. Withholding the
-  -- path is all scry can enforce — the spec itself lives in the tree and a
-  -- generator that reads the repo will find it (see |scry-independence|).
+  if #nevers > 0 then
+    built.intent = built.intent
+      .. ("\nThe result must never contain text matching: %s"):format(table.concat(nevers, " · "))
+  end
+
+  -- What IS withheld from a code request: this feature's spec paths. A
+  -- request that names the test is a request to satisfy the test, which is
+  -- the one thing an acceptance check must not be written to do.
+  -- Withholding the path is all scry can enforce — the spec itself lives in
+  -- the tree and a generator that reads the repo will find it (see
+  -- |scry-independence|). The tripwire makes the guarantee testable.
   if claim.kind == "def" then
-    local m = require("scry.map").load(root .. "/" .. config.map_path)
+    local spec_paths = {}
     for _, c in ipairs(m.claims) do
       if c.kind == "exercises" and c.feature == claim.feature then
-        withheld[#withheld + 1] = c.target:match("^([^:]+):") or c.target
+        spec_paths[#spec_paths + 1] = c.target:match("^([^:]+):") or c.target
+      end
+    end
+    for _, path in ipairs(spec_paths) do
+      for _, s in ipairs({ built.intent, built.items[1].text }) do
+        if s and path ~= "" and s:find(path, 1, true) then
+          error(("[scry] independence leak: a spec path appears in an outgoing string (%q)"):format(path), 0)
+        end
       end
     end
   end
-  local outgoing = { built.intent, built.items[1].text }
-  holdout.assert_clean(outgoing, withheld)
 
   -- A claim can name a file that does not exist yet — that is the normal
   -- state of work not yet done. Conjurer rewrites a region of a buffer, so

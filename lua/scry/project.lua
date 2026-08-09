@@ -18,17 +18,6 @@
 --              and `def` because they hold in every language, and every
 --              kind above those describes one product and no other.
 --
--- One key is deliberately REFUSED:
---
---   holdout_path  the holdout lives outside the repo so a repo-reading
---                 generator cannot see it. Letting a committed file
---                 relocate it into the repo is exactly how you would
---                 defeat that — by sending someone a project that quietly
---                 publishes its own prohibitions. Note that `map_path` IS
---                 honored, and the asymmetry is the whole point: moving a
---                 file that is already committed changes nothing about who
---                 can read it.
---
 -- JSON rather than Lua on purpose. Executing code from a checked-out
 -- repository is what Neovim gates behind 'exrc', and scry has no business
 -- doing it silently for a config file.
@@ -58,23 +47,13 @@ function M.load(root)
     return {}, ("[scry] %s is not valid JSON — ignoring it"):format(path)
   end
 
-  local out, refused = {}, {}
+  local out = {}
   for key, value in pairs(decoded) do
     if HONORED[key] then
       out[key] = value
-    elseif key == "holdout_path" then
-      refused[#refused + 1] = key
     end
   end
-  local warning
-  if #refused > 0 then
-    table.sort(refused)
-    warning = ("[scry] %s sets %s; ignored — the repo does not get to say"):format(
-      path,
-      table.concat(refused, " and ")
-    )
-  end
-  return out, warning
+  return out, nil
 end
 
 --- The config that applies to `root`: your setup() with the project's own

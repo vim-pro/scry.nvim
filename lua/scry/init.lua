@@ -1,12 +1,11 @@
 -- scry.nvim — the surface you write software from: one buffer describing
 -- the product, checked against the real code. Conjuring is how code arrives
--- (conjurer.nvim); ownership is inferred from the work, never signed.
--- Verdicts are accounting, not correctness — see :h scry-honesty.
+-- (conjurer.nvim). Verdicts are accounting, not correctness — see
+-- :h scry-honesty.
 local M = {}
 
 ---@class scry.Config
 ---@field map_path string In-repo map file, relative to the project root.
----@field holdout_path string|"" Never-claims location; "" = stdpath state (outside the repo).
 ---@field resolver string|"" Resolver name; "" = the ts_rg default.
 ---@field test { cmd: string[] } How to run ONE spec: cmd with the spec path
 ---  appended. Exit 0 is passing. Empty = exercises claims stay unrun.
@@ -15,13 +14,10 @@ local M = {}
 
 ---@type scry.Config
 M.config = {
-  -- The belief map, versioned with the code it describes.
+  -- The belief map, versioned with the code it describes. Prohibitions
+  -- live in it like everything else — shared, versioned, and shown to a
+  -- generator up front as well as checked after.
   map_path = ".scry/map.scry",
-  -- Where never-claims live. Empty = outside the repo
-  -- (stdpath("state")/scry/holdout/...), so a repo-reading conjurer never
-  -- sees them. Setting an in-repo path weakens that guarantee — checkhealth
-  -- will say so.
-  holdout_path = "",
   -- Claim-checking engine. Empty = treesitter + ripgrep (lua-first).
   resolver = "",
   -- How to run one spec, for `exercises` claims: the spec's path is appended

@@ -1,14 +1,14 @@
 -- The thesis test. An absent claim becomes quickfix work, the conjurer casts
--- it, and the prohibition it never saw catches the result.
+-- it, and the prohibition — told to the generator up front AND re-checked
+-- after — catches a violating result.
 --
--- The load-bearing assertion: walk EVERY string that leaves scry and prove no
--- never-pattern text rides along. Independence isn't hoped for here, it's
--- checked.
+-- Two load-bearing walks: the feature's own prohibitions RIDE ALONG in the
+-- outgoing intent (prevention), and the feature's spec paths do NOT
+-- (independence of the check). Neither is hoped for here; both are checked.
 local H = dofile(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .. "/helpers.lua")
 
 local map = require("scry.map")
 local cascade = require("scry.cascade")
-local holdout = require("scry.holdout")
 
 -- A workspace copy of the fixture, so casts can really edit files.
 local work = vim.fn.tempname()
@@ -18,8 +18,7 @@ for _, f in ipairs({ "auth.lua", "store.lua", "logging.lua" }) do
   vim.fn.writefile(vim.fn.readfile(H.fixture .. "/lua/" .. f), work .. "/lua/" .. f)
 end
 vim.fn.writefile(vim.fn.readfile(H.fixture .. "/map.scry"), work .. "/.scry/map.scry")
-require("scry").setup({ holdout_path = work .. "/holdout.scry" })
-vim.fn.writefile(vim.fn.readfile(H.fixture .. "/holdout.scry"), work .. "/holdout.scry")
+require("scry").setup({})
 
 local m = map.load(work .. "/.scry/map.scry")
 local absent
@@ -40,38 +39,22 @@ H.eq(built.items[1].user_data.scry.feature, "a session can be refreshed", "entry
 H.eq(built.items[1].user_data.scry.target, absent.target, "and the claim it came from")
 H.eq(#vim.fn.getqflist({ items = 1 }).items, 0, "build() wrote nothing to the list (pure)")
 
--- 2) THE WITHHOLDING WALK: no never-pattern text in anything outgoing.
-local hold = map.load(work .. "/holdout.scry")
-local never_targets = {}
-for _, c in ipairs(hold.claims) do
-  if c.kind == "never" then
-    never_targets[#never_targets + 1] = c.target
-  end
-end
-H.ok(#never_targets >= 2, "the holdout actually has prohibitions to withhold")
-local outgoing = { built.intent, built.items[1].text, built.items[1].filename, tostring(built.symbol) }
-for _, pattern in ipairs(never_targets) do
-  for _, s in ipairs(outgoing) do
-    H.ok(not s:find(pattern, 1, true), ("no %q in outgoing %q"):format(pattern, s))
-  end
-  -- also the un-escaped, human form of the pattern (logging.debug vs logging\.debug)
-  local plain = pattern:gsub("\\", "")
-  for _, s in ipairs(outgoing) do
-    H.ok(not s:find(plain, 1, true), ("no %q (plain form) in outgoing %q"):format(plain, s))
-  end
-end
-
--- 3) the tripwire fires on a poisoned payload
-local poisoned = false
-local ok = pcall(function()
-  holdout.assert_clean({ "please avoid logging\\.debug here" }, never_targets)
-end)
-poisoned = not ok
-H.eq(poisoned, true, "assert_clean errors when a never-pattern appears in an outgoing string")
-H.eq(pcall(holdout.assert_clean, outgoing, never_targets), true, "and passes on the real payload")
+-- 2) PROHIBITIONS RIDE ALONG: seeding puts this feature's never-patterns in
+-- the outgoing intent, so the generator is told the rules it will be checked
+-- against. Prevention and detection, not one or the other.
+local seeded = cascade.seed(work, absent, "define refresh_token using the session store", false)
+H.ok(seeded.intent:find("logging\\.debug", 1, true) ~= nil, "the feature's prohibition rides in the intent")
+H.ok(seeded.intent:find("io\\.write", 1, true) ~= nil, "all of them do")
+H.ok(seeded.intent:find("must never", 1, true) ~= nil, "stated as a rule, not decoration")
 
 -- 4) cascade accepts contains and exercises; nothing else
-local never_claim = hold.claims[1]
+local never_claim
+for _, c in ipairs(m.claims) do
+  if c.kind == "never" then
+    never_claim = c
+    break
+  end
+end
 H.eq(pcall(cascade.build, never_claim, "x"), false, "cascade refuses a never claim")
 
 -- 4a) an exercises claim cascades into a CHECK. The entry text asks for a
@@ -88,33 +71,20 @@ H.eq(
   "a claim naming only a file still builds"
 )
 
--- 4b) the tripwire is SCOPED to the feature being cascaded. A different
+-- 4b) the riding rules are SCOPED to the feature being cascaded. A different
 -- feature's prohibition is never checked against this code (nevers run over
--- their own feature's footprint), so treating it as a leak would block honest
--- work — a word one feature forbids is often another's whole vocabulary.
-vim.fn.writefile({
-  "feature " .. FEATURE,
-  "  never",
-  "    logging\\.debug",
-  "",
-  "feature billing",
-  "  never",
-  "    token", -- 'token' is this feature's vocabulary, billing's prohibition
-}, work .. "/holdout.scry")
-H.eq(
-  pcall(cascade.seed, work, absent, "define refresh_token from the stored token", false),
-  true,
-  "a foreign feature's prohibition does not block this cascade"
+-- their own feature's footprint), so it has no business in the request — a
+-- word one feature forbids is often another's whole vocabulary.
+local mapf0 = work .. "/.scry/map.scry"
+local base0 = vim.fn.readfile(mapf0)
+vim.fn.writefile(
+  vim.list_extend(vim.deepcopy(base0), { "", "feature billing", "  never", "    secret_key" }),
+  mapf0
 )
--- ...while this feature's own prohibition still does
-vim.fn.writefile({ "feature " .. FEATURE, "  never", "    refresh_token" }, work .. "/holdout.scry")
-H.eq(
-  pcall(cascade.seed, work, absent, "define refresh_token", false),
-  false,
-  "the feature's own prohibition still trips the tripwire"
-)
--- restore the fixture holdout for the rest of the spec
-vim.fn.writefile(vim.fn.readfile(H.fixture .. "/holdout.scry"), work .. "/holdout.scry")
+local scoped = cascade.seed(work, absent, "define refresh_token from the stored token", false)
+H.ok(scoped.intent:find("logging\\.debug", 1, true) ~= nil, "this feature's rule rides")
+H.eq(scoped.intent:find("secret_key", 1, true), nil, "billing's rule does not")
+vim.fn.writefile(base0, mapf0)
 
 -- 4c) INDEPENDENCE OF THE CHECK. When conjuring code, the feature's spec
 -- paths are withheld too. A code request that names the test is a request to
@@ -147,15 +117,14 @@ H.ok(vim.loop.fs_stat(work .. "/tests/auth_spec.lua") ~= nil, "seeding created t
 vim.fn.writefile(base, mapf)
 
 -- 5) seed the real list (no handoff), then simulate the conjurer writing a
--- VIOLATING implementation and saving: the withheld prohibition catches it.
+-- VIOLATING implementation and saving: a rule it was told, broken anyway,
+-- is still caught — telling does not replace checking.
 cascade.seed(work, absent, "define refresh_token", false)
 local items = vim.fn.getqflist({ items = 1 }).items
 H.eq(#items, 1, "list seeded")
 H.ok(items[1].text:find("refresh_token", 1, true) ~= nil, "entry text names the symbol")
-H.ok(items[1].text:find("logging", 1, true) == nil, "entry text carries no prohibition text")
 
--- the "conjured" result: correct-looking, and it logs a token (the trap the
--- generator never saw)
+-- the "conjured" result: correct-looking, and it logs a token anyway
 local auth = work .. "/lua/auth.lua"
 local lines = vim.fn.readfile(auth)
 local insert_at
@@ -200,14 +169,13 @@ end, 8000), "saving the seeded file fired the cascade's re-check")
 vim.notify = rn
 
 local joined = table.concat(warned, "\n")
-H.ok(joined:find("VIOLATED", 1, true) ~= nil, "the withheld prohibition caught the conjured code")
+H.ok(joined:find("VIOLATED", 1, true) ~= nil, "the prohibition caught the conjured code")
 H.ok(joined:find("logging", 1, true) ~= nil, "the violated pattern is named")
 H.ok(joined:find("lua/auth.lua:", 1, true) ~= nil, "with evidence: file and line")
 
--- 5b) the re-check is SCOPED to the feature's files. The feature's globs live
--- in the map and its prohibitions in the holdout, so checking the holdout
--- alone would leave claims unscoped and report violations in files the
--- feature doesn't own — a false violation costs more trust than a missed one.
+-- 5b) the re-check is SCOPED to the feature's files. An unscoped check would
+-- search the whole project and report violations in files the feature does
+-- not own — a false violation costs more trust than a missed one.
 local outsider = work .. "/lua/logging.lua" -- outside the feature's footprint
 local ol = vim.fn.readfile(outsider)
 table.insert(ol, #ol, 'local _unused = "logging.debug appears here too"')
@@ -234,7 +202,7 @@ H.ok(H.wait(function()
   local glass = require("scry.glass")
   local v = glass._state.report and glass._state.report.verdicts[map.claim_id(absent)]
   return v and v.status == "backed"
-end, 8000), "the claim that seeded the work is now backed (∅ unratified until ratified)")
+end, 8000), "the claim that seeded the work is now backed")
 
 cascade.stop()
 H.done("cascade_spec PASS")

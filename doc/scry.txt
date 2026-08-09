@@ -21,7 +21,7 @@ CONTENTS                                                       *scry-contents*
      Divergence .................................. |scry-divergence|
      Drafting the gap ............................ |scry-drafting|
   5. The header .................................. |scry-header|
-  6. The holdout ................................. |scry-holdout|
+  6. Prohibitions ................................ |scry-never|
   7. Conjuring from the glass .................... |scry-conjure|
   8. Exercised claims ............................ |scry-exercised|
      Moving around ............................... |scry-mappings|
@@ -101,9 +101,8 @@ it sat above every feature that arrived after it and went into
 document they are teaching you to write have no way out of it. The header
 says what to do, and `:Scry {intent}` (|scry-aim|) needs no reading at all.
 
-Editing the model is the primary gesture. `:write` saves it — and routes
-never-claims to the holdout file (|scry-holdout|), announcing where they
-went. Every render carries a header:
+Editing the model is the primary gesture; `:write` saves it. Every render
+carries a header:
 >
     scry · 9 features · 5 in place · 2 building · 1 broken · 1 to do   checked 40s ago (files on disk)
           21 claims · 15 backed · 3 missing · 1 violated · 2 unchecked
@@ -683,14 +682,11 @@ of the map, with its claims checked against the code, and
 none of that survives a diff view — so the draft lands in the buffer, `u`
 discards it, and nothing reaches the map file until you |:write|.
 
-Two things a drafting pass will not do. It will not write a `never` block: a
-prohibition lands outside the repository, unversioned, and narrows every
-future cascade, so one nobody read is worse than none. And it does not
-involve the holdout at all — a prohibition is withheld from CODE requests
-because a rule the generator was shown proves nothing by being satisfied,
-and this request produces map text, so there is no result for a leaked rule
-to have been fitted to. Running the tripwire here would look like a
-guarantee while guaranteeing nothing, which is worse than saying so.
+One thing a drafting pass will not do is write a `never` block. A rule is
+something a person chooses to impose; a machine-invented one silently
+narrows every future cast, and one nobody chose is worse than none. If one
+arrives anyway it lands as ordinary map text under your eyes, where deleting
+it is `dd`.
 
 ==============================================================================
 6. THE HEADER                                                    *scry-header*
@@ -713,32 +709,23 @@ thin map from reading as a described product.
 statusline: `scry 9f ✓6 ◐2 ✗1`, gaining a `–N` when anything is unchecked.
 
 ==============================================================================
-7. THE HOLDOUT                                                  *scry-holdout*
+7. PROHIBITIONS                                                   *scry-never*
 
-A `never` claim is a holdout: it is withheld from the generator and checked
-after. That restores independence mechanically. If the model that writes the
-code is also shown the prohibition, its output satisfying that prohibition
-tells you nothing — it was asked to satisfy it. A prohibition it never saw,
-checked afterwards, is real evidence.
+A `never` claim is a rule about the code: a pattern that must have zero
+matches in the feature's footprint. It lives in the map like every other
+claim — versioned with the code, shared with your team — and it works twice:
 
-This is why prohibitions and positive claims are stored apart. never-claims
-live OUTSIDE the repository by default, under `stdpath("state")`, keyed to
-the project path. The glass still shows them inline; only storage differs.
+**Told up front.** A cast carries the feature's prohibitions in the request,
+because a rule the generator is told is a rule it can follow. Prevention is
+cheaper than a redo.
 
-Two guarantees, deliberately not conflated:
+**Checked after.** Every `:Scry` re-checks the pattern against the files on
+disk, whoever wrote them — you, a cast, an agent you never met. A VIOLATED
+prohibition is proof and carries the line that proves it; a clean one is
+evidence of textual absence, not of behavior (|scry-honesty|).
 
-1. **Withheld from requests** — guaranteed and covered by tests. Everything
-   scry hands a conjurer is built from the feature name, the claim's own
-   target, and the intent you typed. Feature prose is excluded on purpose:
-   prose can restate a prohibition in words no scrubber could catch, so the
-   channel is closed rather than filtered.
-2. **Hidden from the filesystem** — true for a generator that reads your
-   repo; NOT true for one instructed to hunt your filesystem. Independence
-   here is against leakage, not against an adversary.
-
-The cost is honest too: out-of-repo prohibitions are per-machine and
-unversioned. Setting `holdout_path` to an in-repo file shares them with your
-team and gives up guarantee 2 — |:checkhealth| warns when you do.
+Telling does not replace checking: a rule the generator was told and broke
+anyway is caught exactly as loudly as one it never heard.
 
 ==============================================================================
 8. CONJURING FROM THE GLASS                                     *scry-conjure*
@@ -748,10 +735,9 @@ quickfix list with the target site and your intent, then hands off to
 conjurer's aggregate driver — which owns the casting and the per-site review
 (see |conjurer-aggregate|). scry never conjures anything itself.
 
-When you save a file the conjure seeded, scry re-checks: the withheld
+When you save a file the conjure seeded, scry re-checks: the feature's
 prohibitions run against the new code, and the claim that started the work
-re-checks too. So the loop closes visibly — `✗ absent` becomes `✓ defined`,
-and because you conjured it and it came true, it is yours.
+re-checks too. So the loop closes visibly — `✗ absent` becomes `✓ defined`.
 
 Saving is the trigger because ripgrep reads disk. Unwritten changes are
 invisible to scry, and the header says so.
@@ -777,9 +763,7 @@ mechanism, not a convention:
     2.  read it                                         ← the judgment act
     3.  :ScryExercise                                        → it must be RED
     4.  :Conjure on the absent `contains` claim    → conjures the CODE
-    5.  :ScryExercise                                        → green, and the
-                                                          holdout re-checks
-    6.  it is yours — you conjured it and it came true
+    5.  :ScryExercise                                        → green
 <
 Why in that order. If the check and the code are both generated from the same
 claim, they are not independent — they are two samples from one generator
@@ -791,15 +775,16 @@ code, their reading of the claim was an independent sample; remove that and
 So two things restore it, and both are enforced rather than advised:
 
 **The spec is withheld from the code request.** Conjuring a `contains` claim
-adds every spec path in that feature to the tripwire, exactly as it adds the
-feature's prohibitions. An intent that names the test is refused. Code written
-while looking at the test is code written to pass the test, which is the one
-thing an acceptance check must not be written to do.
+puts every spec path in that feature behind a tripwire: an intent that names
+the test is refused. Code written while looking at the test is code written
+to pass the test, which is the one thing an acceptance check must not be
+written to do. (Prohibitions are the opposite case — they ride ALONG in the
+request, because a rule is something you want followed, where a test is
+something you want independently met. See |scry-never|.)
 
-The limit is stated plainly: this is request-level withholding only. A
-never-pattern can live outside the repository; a spec has to be in the tree to
-run, so a generator instructed to read your repository will find it. Same
-distinction as |scry-holdout|, and it is kept sharp for the same reason.
+The limit is stated plainly: this is request-level withholding only. A spec
+has to be in the tree to run, so a generator instructed to read your
+repository will find it.
 
 **A check written before the code must fail.** One that passes against a
 feature nobody has built is asserting nothing — the commonest way a conjured
@@ -1339,10 +1324,11 @@ thing here.
 
 :Conjure            Turn the absent claim under the cursor into quickfix
                         work and hand it to conjurer, with the feature's
-                        prohibitions withheld. On an `exercises` claim it
-                        conjures the check; on a `contains` claim it conjures
-                        the code, additionally withholding the feature's spec
-                        paths. See |scry-conjure| and |scry-independence|.
+                        prohibitions riding along as constraints. On an
+                        `exercises` claim it conjures the check; on a
+                        `contains` claim it conjures the code, withholding
+                        the feature's spec paths. See |scry-conjure| and
+                        |scry-independence|.
 
 ==============================================================================
 11. CONFIGURATION                                         *scry-configuration*
@@ -1350,13 +1336,9 @@ thing here.
 setup({opts}) is optional. Defaults: >lua
 
     require("scry").setup({
-      -- The belief map, versioned with the code it describes.
+      -- The belief map, versioned with the code it describes. Prohibitions
+      -- live in it like everything else.
       map_path = ".scry/map.scry",
-
-      -- Where never-claims live. Empty = outside the repo, under
-      -- stdpath("state"), so a repo-reading generator never sees them.
-      -- An in-repo path shares them with your team and forfeits that.
-      holdout_path = "",
 
       -- Claim-checking engine. Empty = treesitter + ripgrep (lua-first).
       resolver = "",
@@ -1387,19 +1369,9 @@ The project wins for those keys, because it knows things your vimrc cannot.
 Unknown keys are ignored without complaint, so a newer scry writing a key
 this one has never heard of does not break it.
 
-`map_path` is honored while `holdout_path` is refused, and that asymmetry is
-deliberate: moving a file that is already committed changes nothing about who
-can read it, whereas the holdout's entire value is being unreadable.
-
 |:checkhealth| reports the config in effect here, project keys included — it
 is where you go to find out what scry thinks, so a `sources` the project has
 already overridden would send you to change the wrong setting.
-
-One key is REFUSED: `holdout_path`. The holdout lives outside the repository
-so that a repo-reading generator cannot find it. A committed file able to
-relocate it back INTO the repo is exactly how you would defeat that: hand
-someone a project that quietly publishes its own prohibitions. Refused, and
-the refusal is announced rather than silent.
 
 JSON rather than Lua deliberately. Executing code out of a checked-out
 repository is what Neovim gates behind |exrc|, and scry has no business doing
@@ -1533,16 +1505,12 @@ Every line here is a limit scry intends to keep stating plainly.
   label appears in the spec's source and the file passes. It is NOT proof
   that assertion ran, or that it is the reason the file passed. scry cannot
   see inside a run; it sees an exit code.
-- **An exercised claim is NOT held out the way a prohibition is.** A
-  never-pattern can live outside the repository; a spec cannot — it has to be
-  in the tree to run. So the guarantee is request-level only: scry never puts
-  a test's path or text into what it hands a conjurer. A generator that reads
-  your repository will find the test. See |scry-holdout| for why that
-  distinction is kept sharp.
+- **Spec-path withholding is request-level only.** scry never puts a test's
+  path or text into a code request it hands a conjurer (|scry-independence|),
+  but a spec has to be in the tree to run, so a generator that reads your
+  repository will find it.
 - **Verdicts describe saved files at a moment.** Unwritten buffers and edits
   made after the check are invisible. The timestamp travels with the render.
-- **Holdout independence is against leakage, not adversaries.** See
-  |scry-holdout| for the two guarantees and which is which.
 - **Divergence is file-level and blunt.** A file a feature uses but never
   names reads as unclaimed, and what counts as a file at all is `sources`.
   It answers "is anything undescribed", not "is the description good".
@@ -1557,9 +1525,8 @@ Every line here is a limit scry intends to keep stating plainly.
 
 `:checkhealth scry` reports: Neovim version, ripgrep and the lua treesitter
 parser (the resolver's two legs), where your map is and how many claims it
-holds, where the holdout lives — warning if it sits inside the repo — whether
-conjurer.nvim is installed (an ERROR when missing — it is required), and
-whether quickfix-pro is present.
+holds, whether conjurer.nvim is installed (an ERROR when missing — it is
+required), and whether quickfix-pro is present.
 
 ==============================================================================
 15. LICENSE                                                     *scry-license*

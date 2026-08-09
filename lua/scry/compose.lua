@@ -132,6 +132,23 @@ function M.request(root, feature, intent, kinds, read)
   out[#out + 1] = "INTENT:"
   out[#out + 1] = "  " .. intent
 
+  -- The feature's prohibitions ride along: a rule the generator is told is
+  -- a rule it can follow, and the same rule is re-checked against the code
+  -- once it lands — prevention and detection, not one or the other.
+  local nevers = {}
+  for _, claim in ipairs(feature.claims) do
+    if claim.kind == "never" then
+      nevers[#nevers + 1] = claim.target
+    end
+  end
+  if #nevers > 0 then
+    out[#out + 1] = ""
+    out[#out + 1] = "NEVER — the result must not contain text matching:"
+    for _, p in ipairs(nevers) do
+      out[#out + 1] = "  " .. p
+    end
+  end
+
   for _, f in ipairs(files) do
     local lines = read(f.path)
     out[#out + 1] = ""

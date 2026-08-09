@@ -134,9 +134,6 @@ local function is_scry_own(path, config)
   if path == config.map_path then
     return true
   end
-  if config.holdout_path and config.holdout_path ~= "" and path == config.holdout_path then
-    return true
-  end
   return path:match("^%.scry/") ~= nil
 end
 

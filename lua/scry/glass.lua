@@ -1,8 +1,6 @@
--- The glass: one editable buffer composed from two files — the in-repo map
--- and the out-of-repo holdout — with computed verdicts rendered as extmarks
--- and NEVER stored. Writing the glass parses the buffer and routes blocks
--- back: never-sections to the holdout, everything else to the map, with a
--- notification so storage routing is never silent.
+-- The glass: the map file as one editable buffer, with computed verdicts
+-- rendered as extmarks and NEVER stored. The buffer's text is your beliefs;
+-- everything beside it is scry's answer. Writing the glass writes the map.
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("scry.glass")
@@ -213,7 +211,7 @@ end
 local state = {
   root = nil,
   buf = nil,
-  map = nil, -- combined (map + holdout) parsed view of the glass buffer
+  map = nil, -- parsed view of the glass buffer
   report = nil,
   tally = nil,
   -- The kinds in force. The FOLD needs them for the same reason the parser
@@ -228,144 +226,10 @@ function M.current_tally()
 end
 
 -- ---------------------------------------------------------------------------
--- compose / split
--- ---------------------------------------------------------------------------
-
--- Interleave holdout never-blocks into their features: after a feature's
--- last line in the map, before the next feature header.
----@param map_lines string[]
----@param holdout_lines string[]
----@return string[]
-function M.compose(map_lines, holdout_lines)
-  local mapmod = require("scry.map")
-
-  -- Collect each holdout feature's never block lines (header excluded).
-  local never_blocks = {} -- name -> lines
-  do
-    local current, collecting = nil, false
-    -- Mirror of split()'s rule: a blank inside a block is held, and only
-    -- committed once another pattern proves it was interior. Without this,
-    -- the blanks split() now writes to the holdout would truncate the block
-    -- on the way back in, and patterns would vanish from the glass.
-    local held = {}
-    for _, line in ipairs(holdout_lines) do
-      local name = line:match("^feature%s+(.+)$")
-      if name then
-        current = vim.trim(name)
-        collecting = false
-        held = {}
-      elseif current then
-        if line:match("^  never%s*$") then
-          collecting = true
-          held = {}
-          never_blocks[current] = never_blocks[current] or {}
-          table.insert(never_blocks[current], line)
-        elseif collecting and line:match("^%s*$") then
-          held[#held + 1] = line
-        elseif collecting and line:match("^    %S") then
-          vim.list_extend(never_blocks[current], held)
-          held = {}
-          table.insert(never_blocks[current], line)
-        else
-          collecting = false
-          held = {}
-        end
-      end
-    end
-  end
-
-  local out = {}
-  local m = mapmod.parse(map_lines, mapmod.kinds_for(root))
-  local emitted = {}
-  for i, line in ipairs(map_lines) do
-    -- before the NEXT feature header (or EOF), flush the current feature's nevers
-    local name = line:match("^feature%s+(.+)$")
-    if name then
-      -- find which feature (if any) we're leaving
-      for _, c in ipairs(m.features) do
-        if c.lnum < i and not emitted[c.name] and never_blocks[vim.trim(c.name)] then
-          vim.list_extend(out, never_blocks[c.name])
-          emitted[c.name] = true
-        end
-      end
-    end
-    out[#out + 1] = line
-  end
-  for _, c in ipairs(m.features) do
-    if not emitted[c.name] and never_blocks[c.name] then
-      vim.list_extend(out, never_blocks[c.name])
-      emitted[c.name] = true
-    end
-  end
-  -- holdout features with no map feature: append whole
-  for name, block in pairs(never_blocks) do
-    if not emitted[name] and not mapmod.feature(m, name) then
-      out[#out + 1] = "feature " .. name
-      vim.list_extend(out, block)
-    end
-  end
-  return out
-end
-
---- Split glass lines back into map lines and holdout lines.
----@param lines string[]
----@return string[] map_lines, string[] holdout_lines, integer never_count
-function M.split(lines)
-  local map_lines, holdout_lines = {}, {}
-  local current_feature = nil
-  local emitted_holdout_header = {}
-  local in_never = false
-  local never_count = 0
-
-  -- Blank lines inside a never block are undecided until we see what follows.
-  -- A blank between two patterns is part of the block and must travel to the
-  -- holdout with them; a blank AFTER the last pattern is map layout. Holding
-  -- them here is what keeps a paragraph break from splitting a block in two
-  -- and depositing the tail — a live prohibition — into the repo.
-  local held = {}
-  local function flush_held(dest)
-    vim.list_extend(dest, held)
-    held = {}
-  end
-
-  for _, line in ipairs(lines) do
-    local name = line:match("^feature%s+(.+)$")
-    if name then
-      flush_held(map_lines)
-      current_feature = vim.trim(name)
-      in_never = false
-      map_lines[#map_lines + 1] = line
-    elseif line:match("^  never%s*$") then
-      flush_held(map_lines)
-      in_never = true
-      if current_feature and not emitted_holdout_header[current_feature] then
-        holdout_lines[#holdout_lines + 1] = "feature " .. current_feature
-        emitted_holdout_header[current_feature] = true
-      end
-      holdout_lines[#holdout_lines + 1] = line
-    elseif in_never and line:match("^%s*$") then
-      held[#held + 1] = line
-    elseif in_never and line:match("^    %S") then
-      flush_held(holdout_lines) -- the blanks were interior after all
-      holdout_lines[#holdout_lines + 1] = line
-      never_count = never_count + 1
-    else
-      flush_held(map_lines)
-      in_never = false
-      map_lines[#map_lines + 1] = line
-    end
-  end
-  flush_held(map_lines)
-  -- A feature that exists ONLY in the holdout leaves a bare header line in
-  -- map_lines with no content; keep it — harmless, and round-trip stable.
-  return map_lines, holdout_lines, never_count
-end
-
--- ---------------------------------------------------------------------------
 -- buffer + rendering
 -- ---------------------------------------------------------------------------
 
-local function combined_map()
+local function parsed_map()
   local mapmod = require("scry.map")
   state.kinds = mapmod.kinds_for(state.root)
   return mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), state.kinds)
@@ -385,7 +249,7 @@ function M.render()
   -- current is worse than pressing <Tab> again.
   vim.api.nvim_buf_clear_namespace(state.buf, diff_ns, 0, -1)
 
-  state.map = combined_map()
+  state.map = parsed_map()
   state.tally = header.count(state.map, state.report, state.root)
 
   -- THE GLOSS (`g?`). Virtual lines, off by default — see scry.explain for
@@ -1027,7 +891,7 @@ function M.check(cb)
   if not state.buf then
     return
   end
-  local m = combined_map()
+  local m = parsed_map()
   require("scry.check").run(m, { root = state.root, resolver = require("scry.resolver").get() }, function(report)
     state.report = report
     M.render()
@@ -1107,8 +971,6 @@ function M.open(root)
     return
   end
 
-  local map_lines = require("scry.map").load(root .. "/" .. config.map_path).lines
-  local holdout_lines = require("scry.holdout").load(root, config).lines
   -- AN EMPTY MAP OPENS EMPTY. There used to be a block of instructions
   -- here for a project with no map. It was prose, so it parsed fine and
   -- never left — it sat above every feature that arrived after it and was
@@ -1117,7 +979,7 @@ function M.open(root)
   --
   -- The header already says what to do (`+ to draft`), and `:Scry {intent}`
   -- is the way in that does not need reading about. See |scry-aim|.
-  local composed = M.compose(map_lines, holdout_lines)
+  local composed = require("scry.map").load(root .. "/" .. config.map_path).lines
 
   -- ONE BLANK LINE AT THE TOP, and a real one. The gap between features is
   -- virtual, but there is no room above a buffer's first line for Neovim to
@@ -1293,27 +1155,16 @@ function M.open(root)
   M.check()
 end
 
---- Write the glass: split and save both files, notify the routing, re-check.
+--- Write the glass: save the map, re-check.
 function M.write()
   local config = require("scry.project").resolve(state.root)
   local lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
-  local map_lines, holdout_lines, never_count = M.split(lines)
   vim.fn.mkdir(vim.fn.fnamemodify(state.root .. "/" .. config.map_path, ":h"), "p")
-  vim.fn.writefile(map_lines, state.root .. "/" .. config.map_path)
-  require("scry.holdout").save(state.root, config, holdout_lines)
+  vim.fn.writefile(lines, state.root .. "/" .. config.map_path)
   vim.bo[state.buf].modified = false
   -- Writing the map is accepting it: the plan's words have done their job.
   require("scry.plan").clear()
-  local where = require("scry.holdout").in_repo(state.root, config) and "IN the repo (weaker holdout)"
-    or "outside the repo"
-  vim.notify(
-    ("[scry] map → %s · %d never-claim%s → holdout (%s)"):format(
-      config.map_path,
-      never_count,
-      never_count == 1 and "" or "s",
-      where
-    )
-  )
+  vim.notify("[scry] map → " .. config.map_path)
   M.check()
 end
 

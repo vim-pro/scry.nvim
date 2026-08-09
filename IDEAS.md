@@ -213,13 +213,17 @@ beside it is scry's answer.
 
 Not found in the literature above; these are scry's own arguments.
 
-**The holdout.** A `never` claim is withheld from the generator and checked
-afterward. If the model writing the code is shown the prohibition, its output
-satisfying that prohibition tells you nothing — it was asked to. The argument is
-imported from experimental method (held-out validation, pre-registration) rather
-than from software engineering. Two guarantees, never conflated: request-level
-withholding is hard and spec-tested; filesystem invisibility holds against a
-repo-reading generator, not against one told to hunt.
+**The holdout — since demoted.** A `never` claim was withheld from the
+generator and checked afterward, on the argument (imported from experimental
+method) that a rule the generator was shown proves nothing by being
+satisfied. Demoted because the goal is working code, not a clean experiment
+on the generator: withholding converted prevention into detection — the cast
+would innocently trip a rule it would have followed if told, and you paid a
+redo round-trip to preserve the evidentiary purity of a check that is
+textual anyway. Prohibitions now live in the map (versioned, shared), ride
+along with every cast, and are still checked after — prevention AND
+detection. What kept its teeth is the sibling idea below: independence of
+the CHECK, where withholding still earns its cost.
 
 **Check before code, and the vacuity gate.** When both the test and the
 implementation are generated from one sentence, they are two samples from one
@@ -264,10 +268,8 @@ whose dependencies moved degrades to `– stale`.
 - **Is `– unscoped` right** for a feature carrying prose and prohibitions but
   no located claims, or should that be refused at write time?
 - ~~**`sources` and `map_path` are project-scoped but live in a global
-  `setup()`.**~~ Answered: `.scry/config.json` honors `sources`, `test`,
-  `resolver`, and `map_path`, and refuses `holdout_path`. The refusal is the
-  interesting half — a committed file that could relocate the holdout back
-  into the repo is exactly how you would defeat it.
+  `setup()`.**~~ Answered: `.scry/config.json` honors the project-shaped
+  keys. (It once refused `holdout_path`; the refusal left with the holdout.)
 - **An unrun `exercises` claim keeps its whole feature out of `done`.** That
   is correct — unrun is not a pass — but it means a map leaning on exercised
   evidence reads as all-building until `:ScryExercise` has run once. Worth
