@@ -38,7 +38,6 @@ local RUNG = {
   ["present (file)"] = "the file is on disk. nothing has looked inside it",
   ["defined"] = "a definition by that name exists in that file. nothing about what it does",
   ["defined (text)"] = "a LINE there looks like a definition of it — no grammar for this language here, so it could be inside a comment",
-  ["referenced (text)"] = "that name appears in this feature's files. not a proven call",
   ["no matches (rg)"] = "no text matches it. a clean prohibition is evidence, not proof",
 }
 

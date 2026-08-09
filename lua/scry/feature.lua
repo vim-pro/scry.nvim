@@ -28,7 +28,7 @@ local ORDER = { none = 0, file = 1, ["rg-text"] = 2, ["text-def"] = 3, ["ts-def"
 -- stronger than the engine's own — the same rule the labels follow.
 local WORDING = {
   file = "✓ %d files exist",
-  ["rg-text"] = "✓ %d referenced",
+  ["rg-text"] = "✓ %d hold (text)",
   -- A text definition could be in a comment; the parser cannot be wrong
   -- about that. Same word, and the qualifier is what separates them.
   ["text-def"] = "✓ %d defined (text)",
@@ -124,8 +124,7 @@ function M.verdict(feature, report, root) -- luacheck: ignore root
     -- any of them.
     --
     -- The rungs are the engine's own (scry.resolver: file < rg-text < ts-def
-    -- < run), and the ladder is |scry-honesty|'s: referenced < resolved <
-    -- exercised. Rolling four `present (file)` verdicts up into the strongest
+    -- < run). Rolling four `present (file)` verdicts up into the strongest
     -- word on the page laundered the weakest evidence there is.
     --
     -- `done` now costs a RUN. Everything below it says what it actually is.

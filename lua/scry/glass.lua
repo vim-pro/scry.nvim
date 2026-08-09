@@ -71,14 +71,10 @@ local HL = {
   ScryDiverged = "DiagnosticError",
   ScryUnchecked = "DiagnosticHint",
 
-  -- feature states, which get their own groups because a reader scans this
-  -- column first
+  -- Feature states: four groups, which is the whole scan — holds, partly,
+  -- broken, not yet. "Structure is there" and "a spec ran" both read ✓;
+  -- the row's label says which one you got.
   ScryDone = "DiagnosticOk",
-  -- Everything a feature's claims assert HOLDS, and none of it was executed.
-  -- Its own group rather than ScryDone's, because "the structure is there"
-  -- and "a spec ran and passed" are different facts and a colorscheme should
-  -- be able to tell them apart.
-  ScryInPlace = "DiagnosticOk",
   ScryBroken = "DiagnosticError",
   ScryBuilding = "DiagnosticWarn",
   ScryTodo = "DiagnosticHint",
@@ -100,12 +96,12 @@ end
 -- reader spends most of their time in.
 local FEATURE_HL = {
   done = "ScryDone",
-  in_place = "ScryInPlace",
+  in_place = "ScryDone",
   broken = "ScryBroken",
   partial = "ScryBuilding",
   absent = "ScryTodo",
   unevidenced = "ScryTodo",
-  unknown = "ScryUnchecked",
+  unknown = "ScryTodo",
 }
 
 -- WHICH STATES WANT YOU, in the folded scan. Column one is the most valuable

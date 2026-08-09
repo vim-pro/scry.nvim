@@ -24,9 +24,6 @@ H.ok(defined:find("definition", 1, true) ~= nil, "a definition verdict says a de
 H.ok(defined:find("nothing about what it does", 1, true) ~= nil, "and disclaims the body")
 H.ok(defined ~= file, "the two greens do not read the same, because they do not mean the same")
 
-local ref = explain.member({ status = "backed", label = "✓ referenced (text)" })
-H.ok(ref:find("not a proven call", 1, true) ~= nil, "a textual reference is not a call, and says so")
-
 -- THE ASYMMETRY, which is the honesty ledger's central claim: a violated
 -- prohibition is PROOF, a clean one is only evidence.
 local clean = explain.member({ status = "clean", label = "✓ no matches (rg)" })

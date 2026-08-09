@@ -105,7 +105,7 @@ Editing the model is the primary gesture. `:write` saves it — and routes
 never-claims to the holdout file (|scry-holdout|), announcing where they
 went. Every render carries a header:
 >
-    scry · 9 features · 5 done · 2 building · 1 broken · 1 to do   checked 40s ago (files on disk)
+    scry · 9 features · 5 in place · 2 building · 1 broken · 1 to do   checked 40s ago (files on disk)
           21 claims · 15 backed · 3 missing · 1 violated · 2 unchecked
 <
 Features lead, because the question a reader arrives with is what the
@@ -123,7 +123,8 @@ unchecked column appears only when it is non-zero, and it is there so that
 claims no engine ever answered. See |scry-debt|.
 
 Each feature carries the state its own evidence adds up to — nothing here is
-authored:
+authored. The scan is four states — holds (✓), partly (◐), broken (✗), not
+yet (–) — and the row's label says the finer fact:
 
     ✓ done             every claim holds AND something was run to prove it
     ✓ 4 files exist    every claim holds and NOTHING RAN — the rung it got
@@ -147,7 +148,7 @@ So the label carries the rung the engine actually reached:
     ✓ done                 something was executed and passed
     ✓ 4 defined            definition NODES by those names exist
     ✓ 4 defined (text)     lines there look like definitions of them
-    ✓ 4 referenced         those names appear in the feature's files
+    ✓ 4 hold (text)        text-level checks came back clean, no more
     ✓ 4 files exist        the files are on disk, and that is all
 
 A RUN PROMOTES; IT IS NOT AVERAGED IN. "Was any of this executed" and "how
@@ -1488,14 +1489,9 @@ FEATURE STATES ~
 
 The column a reader scans first, so each state gets its own group.
                                                                 *hl-ScryDone*
-ScryDone                ✓ done — every claim holds AND something ran.
-                        Default: DiagnosticOk.
-
-                                                             *hl-ScryInPlace*
-ScryInPlace             Every claim holds and nothing ran. Default:
-                        DiagnosticOk. Its own group because "the structure is
-                        there" and "a spec passed" are different facts, and a
-                        colorscheme should be able to say so.
+ScryDone                The ✓ column — every claim holds. Whether something
+                        ran is the row's label (`✓ done` only when it did),
+                        not a second color. Default: DiagnosticOk.
                                                               *hl-ScryBroken*
 ScryBroken              ✗ broken. Default: DiagnosticError.
                                                             *hl-ScryBuilding*

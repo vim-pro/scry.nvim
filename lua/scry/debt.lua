@@ -151,9 +151,14 @@ function M.parts(d, at, action)
   -- features · 14 done` says the same number twice; `14 features, all done`
   -- says it once and reads as the sentence it is. The folded scan follows
   -- this rule too — see glass.foldtext.
-  local states = { { d.done, "done", "ScryDone" }, { d.in_place, "in place", "ScryInPlace" },
+  -- FOUR WORDS, not one per internal state. The scan wants "does it hold /
+  -- partly / broken / not yet", and the finer facts stay where they belong:
+  -- the row's own label (`✓ done` only when something ran) and `g?`. The
+  -- conservative word covers the merged bucket — "in place" never overclaims
+  -- an exercised feature, where "done" would overclaim a structural one.
+  local states = { { d.done + d.in_place, "in place", "ScryDone" },
     { d.building, "building", "ScryBuilding" }, { d.broken, "broken", "ScryBroken" },
-    { d.todo, "to do", "ScryTodo" }, { d.unknown, "unknown", "ScryUnchecked" } }
+    { d.todo + d.unknown, "to do", "ScryTodo" } }
   local only, folded = nil, false
   for _, st in ipairs(states) do
     if st[1] > 0 then
@@ -166,14 +171,9 @@ function M.parts(d, at, action)
   end
 
   if not folded then
-    add(d.done, "done", "ScryDone")
-    add(d.in_place, "in place", "ScryInPlace")
-    -- Immediately after done, and before anything else: this is the number
-    -- that keeps "N done" from being read as "N finished".
-    add(d.building, "building", "ScryBuilding")
-    add(d.broken, "broken", "ScryBroken")
-    add(d.todo, "to do", "ScryTodo")
-    add(d.unknown, "unknown", "ScryUnchecked")
+    for _, st in ipairs(states) do
+      add(st[1], st[2], st[3])
+    end
   end
   -- QUALIFIED, because until reach has run this is computed as though reach
   -- does not exist — a file a feature REACHES is described by that feature,
@@ -308,9 +308,9 @@ function M.statusline()
   local unchecked = d.unchecked > 0 and (" –%d"):format(d.unchecked) or ""
   return ("scry %df ✓%d ◐%d ✗%d%s"):format(
     d.features,
-    d.done,
+    d.done + d.in_place,
     d.building,
-    d.broken + d.todo,
+    d.broken + d.todo + d.unknown,
     unchecked
   )
 end

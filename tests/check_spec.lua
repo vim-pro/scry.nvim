@@ -127,8 +127,8 @@ for _, seg in ipairs(seg1) do
 end
 H.eq(by_text["scry"], "ScryHeaderDim", "the name of the tool is not the news")
 for text, group in pairs(by_text) do
-  if text:find("done") then
-    H.eq(group, "ScryDone", "a done count reads as done")
+  if text:find("in place") then
+    H.eq(group, "ScryDone", "an in-place count reads as ✓")
   elseif text:find("broken") then
     H.eq(group, "ScryBroken", "and broken as broken")
   end
