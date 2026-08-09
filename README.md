@@ -2,37 +2,27 @@
 
 [![CI](https://github.com/vim-pro/scry.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/vim-pro/scry.nvim/actions/workflows/ci.yml)
 
-**Scry your software.** Look into your codebase and see the product it
-describes. Then conjure the changes you want.
+**Scry your software.** A map of what your project does — plain sentences,
+checked against the code — that you can aim AI edits at.
 
 **[scry.vim.pro](https://scry.vim.pro)** · `:h scry`
 
 ## Operators, one noun up
 
-Vim's bargain is operators × text objects. `d2w`, `ci"`, `>ap` — small
-orthogonal verbs applied to precisely addressed nouns, repeatable with `.`,
-fannable with `:g`. That grammar is why vim survives every editor that
-tried to replace it.
+Vim's grammar is operators × text objects: `d2w`, `ci"`, `>ap` — verbs
+applied to addressed nouns, repeatable with `.`, fannable with `:g`.
+[conjurer.nvim](https://conjurer.vim.pro) applies it to generated edits:
+`~{motion}` rewrites a region toward an intent.
 
-[conjurer.nvim](https://conjurer.vim.pro) ported the grammar to generated
-edits: `~{motion}` is an operator whose effect is *rewrite this region
-toward an intent*. Same verbs, same nouns, new effect.
+**scry raises the noun** from a region in a file to a capability. Put the
+cursor on `Tailor a checklist to your own situation`, press `~`, say what
+you want. The change lands across `compile.ts`, `c/[slug].astro`,
+`copy.astro` and `c/index.astro` — four files, one intent, without opening
+any of them. `.` repeats it on the next feature;
+`:g/^feature.*export/normal ~` fans it across every capability that
+matches.
 
-**scry raises the noun.** Not a region in a file — a capability. The glass
-is not a report you read; it is the noun-space you aim at.
-
-Put the cursor on `Tailor a checklist to your own situation`, press `~`,
-say what you want. The change lands across `compile.ts`, `c/[slug].astro`,
-`copy.astro` and `c/index.astro`. Four files, one intent, and you never
-opened one.
-
-`.` repeats it on the next feature. `:g/^feature.*export/normal ~` fans it
-across every capability that matches. Nothing new to learn — you already
-know the grammar; scry just gives it a bigger noun.
-
-You don't sit down wanting to look at a map. You sit down wanting to do
-something, and the map is how scry finds the capability it belongs to — so
-say what you want and it aims you:
+Usually you start from an intent, not from the map:
 
 ```
 :Scry add a PDF export
@@ -55,14 +45,12 @@ feature Take a checklist away as a PDF
 ```
 
 What exists, what will change (`~ change`), what gets created (`+ create`),
-what gets removed, what this change doesn't touch — one screen, with the
-states rendered in the diff colors your scheme already has. Alter it by
-editing lines; it's your buffer. Discard it with `u`. Build it with `~`,
-pre-filled with what you said — the cast carries your edited notes, so it
-executes the plan you approved rather than re-deriving one, and afterwards
-each planned row flips to what actually happened. A planned member the cast
-never touched reads `✗ skipped`, because an approved plan and a cast that
-quietly did four fifths of it must not look the same.
+and what this change doesn't touch — on one screen, in the diff colors your
+scheme already has. Alter the plan by editing lines; discard it with `u`;
+build it with `~`, pre-filled with what you said. The cast carries your
+edited notes, so it executes the plan you approved rather than re-deriving
+one, and afterwards each planned row flips to what actually happened — a
+planned member the cast never touched reads `✗ skipped`.
 
 The cast ends in a review tab: the glass on top — the plan still in view —
 and below it, what's on disk against what the cast wrote, in vim's own
@@ -81,21 +69,18 @@ feature Read a checklist as markdown or JSON instead of a web page
   module src/pages/index.json.ts
 ```
 
-Everything under the first line arrived by pressing one key. Typing member
-paths by hand meant knowing the layout before you were allowed to describe
-the product, which is backwards. It's an ordinary buffer edit, so `u` takes
-it back.
+Everything under the first line arrived by pressing one key, so you don't
+need to know the file layout before you can describe the product. It's an
+ordinary buffer edit; `u` takes it back.
 
 Adding a capability is the same verb, because a member names its file
 before the file exists: `route print` names `src/pages/print.astro` whether
 or not anything is there yet. Write the feature you want with the members it
 should have, and cast — absent members are files to create.
 
-Everything else here exists to keep that noun real. The checks tell you
-whether what you asked for actually landed; the kinds tell a member where
-its file lives. Neither is the point. The point is that you can put a
-cursor on a capability, and the rest keeps the map from lying about what
-it's made of.
+The rest of scry keeps that map accurate. Checks say whether each claim
+holds; kinds say which file a member names. Open the glass and every line
+is checked as it renders:
 
 ```
 scry · 3 features · 1 building · 1 broken · 1 to do · 4 of 10 files undescribed   checked 40s ago
@@ -123,40 +108,35 @@ feature sessions expire                                          – no evidence
   Named, with nothing checkable under it yet.
 ```
 
-One editable buffer. Features are the line you scan; claims are the evidence
-under them. Everything to the right is scry's answer, computed and never
-stored.
+One editable buffer. Feature lines carry a rolled-up state; the claims
+under them carry per-claim verdicts. Verdicts are computed on every check
+and never stored in the file.
 
-## What keeps the noun real
+## How the map stays accurate
 
-A capability you can aim at has to be true — a map that lies is a map you
-stop trusting with `~`. Four rules hold it up:
-
-**Features sit at sea level; claims are their evidence.** A feature is one
+**Features are user-level; claims are their evidence.** A feature is one
 thing a user can accomplish, named the way they'd name it — not "the auth
-system" (a grouping) and not "validate the token" (a subfunction, which is
-what a claim already is). One thing, one sitting, and it matters that you
-can do many. A feature's scope is *derived* from the files its claims name,
-never declared. Prose is welcome and never checked — the sentences carry
-the theory; the claims carry the check. See `:h scry-altitude`.
+system" (a grouping) and not "validate the token" (that's a claim). A
+feature's scope is derived from the files its claims name, never declared.
+Prose between claims is preserved and never checked. See `:h scry-altitude`.
 
-**The map's coverage is checkable too.** Every feature can read done while
-the map describes a fraction of the product, so the header counts the files
-no feature claims and `:ScryUnclaimed` lists them. `+` fills the gap: a
+**Coverage is checked too.** Every feature can read done while the map
+describes a fraction of the product, so the header counts the files no
+feature claims and `:ScryUnclaimed` lists them. `+` fills the gap: a
 conjurer drafts features for the undescribed files, into the glass, where
-you read them — checked like anything you typed, `u` to discard, nothing
-saved until `:w`. The machine types; you decide. See `:h scry-drafting`.
+you review them — checked like anything you typed, `u` to discard, nothing
+saved until `:w`. See `:h scry-drafting`.
 
 **Rules are told and enforced.** A feature's `never` claims ride along with
 every cast, so the generator can follow them — and the same patterns are
 re-checked against the code once it lands, whoever wrote it. A violation is
 reported with the line that proves it.
 
-**A generated test must not grade its own homework.** Conjure the **check**
-first, confirm it goes **red**, then conjure the code *with the spec
-withheld from the request*. Two generations from one sentence share its
-misreadings; a suite written by whoever wrote the code proves only that the
-generator was self-consistent. See `:h scry-independence`.
+**Generated tests are kept independent of generated code.** Conjure the
+check first, confirm it fails, then conjure the code with the spec withheld
+from the request. A test and an implementation generated from the same
+sentence share the same misreadings, so a passing suite would only show the
+generator agreed with itself. See `:h scry-independence`.
 
 ## Evidence, briefly
 
@@ -184,10 +164,10 @@ Requires Neovim 0.10+, **ripgrep**, and the lua treesitter parser (bundled).
 scry conjures through it. [quickfix-pro.nvim](https://quickfix.vim.pro) is
 optional polish for the list.
 
-Reach — what a feature's entry points actually pull in, so you don't
-hand-enumerate them — needs nothing installed. It follows import specifiers
-with a file read, which is why it works on `.astro` routes and Lua modules
-that no name resolver reads.
+Reach — finding what a feature's entry points pull in, so you don't
+hand-enumerate them — needs nothing installed: it follows import specifiers
+by reading files, so it works on `.astro` routes and Lua modules that no
+name resolver handles.
 
 `:Scry` to start. `:checkhealth scry` to verify.
 
@@ -212,43 +192,36 @@ require("scry").setup({
 
 ## What scry does not claim
 
-This matters more than the feature list, and `:h scry-honesty` states it in
-full. In short:
+The full list is `:h scry-honesty`. In short:
 
-- **"backed" means accounted for, not correct.** claimed → backed →
-  exercised; v0 tops out at backed. Nothing here says your code *works*.
+- **"backed" means accounted for, not correct.** Nothing here says your
+  code *works*.
 - `contains ✓ defined` — a definition with that name exists. Nothing about
   its body.
 - `never ✓ no matches (rg)` — no textual match, **not** absence of behavior.
-  The asymmetry is the useful part: a violation is proof (with its line); a
-  clean result is evidence.
+  A violation is proof (with its line); a clean result is only evidence.
 - Verdicts describe **saved files** at a timestamp, which the header carries.
-- **Divergence is file-level and blunt.** A file a feature uses but never
-  names reads as unclaimed, and `sources` decides what counts as a file. It
-  answers "is anything undescribed", not "is the description any good".
-  Narrowing `sources` is the one move that can make it lie — excluding a
-  test runner is honest, excluding product to drop the count is not, and
-  scry cannot tell the two apart for you.
-- **`contains path` with no symbol claims only that the file exists.** It is
-  there for files that define nothing nameable, so an unclaimed file always
-  has a remedy. It renders `✓ present (file)` — a map of
-  bare paths is a list of files, which is what features exist to prevent.
-- **Scry tells you its own ceiling.** Once per project it names the one thing
-  that would most improve your answers, counted from your own claims —
-  *"12 claims stop at `defined (text)` — no grammar here for astro
-  typescript"* — and refuses to open at all without ripgrep, because a
-  prohibition that has quietly stopped being checked is worse than no glass.
-- **A `def` is answerable in every language, at one of two rungs.** Where a
-  treesitter grammar is installed you get `✓ defined` — a definition node.
-  Everywhere else you get `✓ defined (text)`: a line that looks like one,
-  which cannot tell a definition from the same words in a comment. The label
-  is which rung answered. `:checkhealth scry` says what your machine parses.
-- **A feature is only as strong as its weakest claim, and `done` costs a
-  run.** Four claims that each say "the file is on disk" roll up to
-  `✓ 4 files exist`, never `✓ done` — a feature cannot be better established
-  than its least-established part. `✓ done` requires an `exercises` claim
-  that actually ran. Press `g?` in the glass and it will say which rung you
-  got and what it does not assert.
+- **Divergence is file-level.** A file a feature uses but never names reads
+  as unclaimed, and `sources` decides what counts as a file. It answers "is
+  anything undescribed", not "is the description any good" — and narrowing
+  `sources` to shrink the count is a lie scry can't detect.
+- **`contains path` with no symbol claims only that the file exists.** It
+  exists for files that define nothing nameable, and renders
+  `✓ present (file)`.
+- **Scry reports its own limits.** Once per project it names the one thing
+  that would most improve its answers — e.g. *"12 claims stop at
+  `defined (text)` — no grammar here for astro typescript"* — and it
+  refuses to open without ripgrep, since without it `never` claims would
+  silently stop being checked.
+- **A `def` is answerable in every language, at one of two levels.** With a
+  treesitter grammar installed you get `✓ defined` — a definition node.
+  Otherwise `✓ defined (text)`: a line that looks like a definition, which
+  could be a comment. The label says which one answered; `:checkhealth
+  scry` says what your machine parses.
+- **A feature reads as its weakest claim, and `done` requires a run.** Four
+  claims that each say "the file is on disk" roll up to `✓ 4 files exist`,
+  never `✓ done`. `✓ done` requires an `exercises` claim that actually ran.
+  `g?` in the glass explains each verdict's limits inline.
 
 ## Development
 
@@ -258,8 +231,8 @@ full. In short:
 
 ## Notes
 
-- The verb split: conjurer is the arrow, quickfix-pro is presentation, scry
-  is the glass. conjurer is required; quickfix-pro is optional.
-- v0 checks lua (treesitter definitions) and any language ripgrep can search
-  (references, prohibitions). Other languages render `– unchecked`, never a
-  pass.
+- Division of labor: conjurer generates edits, quickfix-pro presents lists,
+  scry holds the map. conjurer is required; quickfix-pro is optional.
+- v0 checks lua definitions with treesitter and any language ripgrep can
+  search (file presence, prohibitions). Other languages render
+  `– unchecked`, never a pass.

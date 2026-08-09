@@ -342,10 +342,10 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   <div class="wisp" style="left:71%; top:44%; width:4px; height:4px; --t:13s; --d:6s; --o:.45;"></div>
   <div class="wisp" style="left:84%; top:62%; width:3px; height:3px; --t:16s; --d:1.5s; --o:.3;"></div>
   <div class="wisp" style="left:55%; top:72%; width:3px; height:3px; --t:14s; --d:8s; --o:.3;"></div>
-  <div class="rel eyebrow">through the looking glass</div>
+  <div class="rel eyebrow">scry.nvim</div>
   <h1 class="rel">Scry your <em>software</em>.</h1>
-  <p class="rel sub">Look into your codebase and see the product it describes.
-  Then conjure the changes you want.</p>
+  <p class="rel sub">A map of what your project does — plain sentences, checked
+  against the code — that you can aim AI edits at.</p>
 
   <div class="rel summoning" id="summoning">
     <span class="install-chip">
@@ -361,7 +361,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <section class="glass-sect" id="glass">
   <div class="glass-caption">
     <span class="t">The glass</span>
-    <span class="s">one change, from a sentence to signed work</span>
+    <span class="s">one change, from a sentence to a passing check</span>
   </div>
   <div class="narrate"><span id="termNarrate">&nbsp;</span></div>
   <div class="terminal">
@@ -411,8 +411,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       </div>
     </div>
 
-    <p><strong>scry raises the noun.</strong> Not a region in a file — a capability.
-    The glass is not a report you read; it is the noun-space you aim at.</p>
+    <p><strong>scry raises the noun</strong> from a region in a file to a
+    capability.</p>
     <p>Put the cursor on <code>Tailor a checklist to your own situation</code>, press
     <code>~</code>, say what you want. The change lands across <code>compile.ts</code>,
     <code>c/[slug].astro</code>, <code>copy.astro</code> and <code>c/index.astro</code>.
@@ -424,10 +424,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     does: <code>route print</code> names <code>src/pages/print.astro</code> whether or
     not anything is there yet. Write the feature you want with the members it should
     have, and cast — absent members are files to create.</p>
-    <p><strong>Everything else here exists to make that address real.</strong> The
-    checks say whether what you asked for actually landed. The kinds say where a
-    member's file lives. Neither is the point. The point is that a capability has an
-    address you can put a cursor on.</p>
+    <p>The rest of scry keeps that map accurate: the checks say whether what you
+    asked for actually landed, and the kinds say where a member's file lives.</p>
   </div>
 </section>
 
@@ -453,10 +451,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <div class="v"><span class="g vd">✗ not yet</span><span class="d">a feature with nothing holding under it</span></div>
       <div class="v"><span class="g vu">◐ 2 of 5</span><span class="d">real progress — some evidence holds</span></div>
       <div class="v"><span class="g vd">✗ absent</span><span class="d">one claim: named, not yet real</span></div>
-      <p class="b" style="margin-top:10px">The state you create <strong>on purpose</strong>.
-      A new feature is part of the product that isn't real yet; a bug fix is a
-      behavior that doesn't hold yet. Your worklist and your product are the
-      same document. <code>~</code> on the feature takes it from here.</p>
+      <p class="b" style="margin-top:10px">An absent claim is work to do, written
+      in the same file as everything that already holds. <code>~</code> on the
+      feature takes it from here.</p>
     </div>
     <div class="water omen">
       <div class="depth">Broken</div>
@@ -464,12 +461,12 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <div class="v"><span class="g vd">✗ broken (1 of 4)</span><span class="d">a feature that regressed; outranks everything else</span></div>
       <div class="v"><span class="g vd">✗ VIOLATED</span><span class="d">a rule was broken — with the line that broke it</span></div>
       <div class="v"><span class="g vd">✗ FAILING</span><span class="d">a behavior regressed — with the failure in hand</span></div>
-      <p class="b" style="margin-top:10px">A broken rule is <strong>proof</strong>. A rule
-      that merely looks intact is evidence — the glass keeps that distinction for you.</p>
+      <p class="b" style="margin-top:10px">A broken rule comes with the line that
+      broke it. An intact one only means the pattern didn't match.</p>
     </div>
     <div class="water murk">
       <div class="depth">Unknown</div>
-      <div class="gloss">what the glass would rather admit than guess — never counted as done</div>
+      <div class="gloss">what nothing has answered — never counted as done</div>
       <div class="v"><span class="g vn">– unchecked</span><span class="d">the glass can't read this part yet</span></div>
       <div class="v"><span class="g vn">– unrun</span><span class="d">nobody has asked for proof yet</span></div>
       <div class="v"><span class="g vn">– stale</span><span class="d">the proof predates your latest change</span></div>
@@ -484,8 +481,8 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     product, so the header counts the files <em>no feature claims</em> —
     <code>12 of 58 files undescribed</code> — and <code>:ScryUnclaimed</code> lists them.
     Each one is a decision: give it to the feature that owns it, or name the
-    feature nobody wrote down. Without this, "everything done" would be
-    unfalsifiable.
+    feature nobody wrote down. Without it, "everything done" could just mean a
+    small map.
   </div>
 </section>
 
@@ -499,16 +496,15 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <div class="stage">
       <div class="k">name it</div>
       <div class="t">Describe the change as part of the product.</div>
-      <div class="b">It surfaces as work to do. If you can't describe it, you don't
-      know what you're asking for yet — and finding that out took one sentence
-      instead of one afternoon.</div>
+      <div class="b">It surfaces as work to do, in the same file as everything
+      the product already does.</div>
     </div>
     <div class="stage">
-      <div class="k">the proof comes first</div>
+      <div class="k">the check comes first</div>
       <div class="t">Before any code, you get the test.</div>
       <div class="b">Short, readable, and it fails — the feature doesn't exist yet.
-      Reading it is how you check the machine heard what you meant, while it's
-      still one page instead of a diff.</div>
+      Reading it is how you check the machine understood you, while it's one
+      page instead of a diff.</div>
     </div>
     <div class="stage">
       <div class="k">let the conjurer type</div>
@@ -520,10 +516,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     </div>
     <div class="stage gold">
       <div class="k">and it holds</div>
-      <div class="t">The proof passes, and the map says so.</div>
-      <div class="b">You asked for it, read the test, watched fail become pass —
-      and the rules were re-checked against what actually landed. The sentence
-      you wrote is now a thing the product does.</div>
+      <div class="t">The check passes, and the map says so.</div>
+      <div class="b">The feature reads <code>✓ done</code>, and the rules were
+      re-checked against what actually landed — not taken on trust.</div>
     </div>
   </div>
 </section>
@@ -543,7 +538,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
           <tr><td><span class="hg">+</span></td><td>Fill in what is missing here — again to stop a pass.</td></tr>
           <tr><td><span class="hg">&lt;Tab&gt;</span></td><td>Show or hide what a feature is made of.</td></tr>
           <tr><td><span class="hg">&lt;CR&gt;</span></td><td>Open what this line is about — the code, or the evidence.</td></tr>
-          <tr><td><span class="hg">]f</span> <span class="hg">[f</span></td><td>Next or previous feature that wants you.</td></tr>
+          <tr><td><span class="hg">]f</span> <span class="hg">[f</span></td><td>Next or previous feature that needs attention.</td></tr>
           <tr><td><span class="hg">g?</span></td><td>Explain what this buffer is telling you.</td></tr>
         </tbody>
       </table>
@@ -553,7 +548,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
           <tr><td><span class="hg">:Scry</span></td><td>Open the glass. Everything is checked the moment you look.</td></tr>
           <tr><td><span class="hg">:ScryCheck</span></td><td>Look again — fresh verdicts from what's on disk.</td></tr>
           <tr><td><span class="hg">:ScryConjure</span></td><td>What <span class="hg">~</span> does, as a command.</td></tr>
-          <tr><td><span class="hg">:ScryExercise</span></td><td>Run the proofs. The only command that executes your code.</td></tr>
+          <tr><td><span class="hg">:ScryExercise</span></td><td>Run the specs. The only command that executes your code.</td></tr>
           <tr><td><span class="hg">:ScryUnclaimed</span></td><td>List the files no feature describes, in the quickfix list.</td></tr>
           <tr><td><span class="hg">:ScryDiscard</span></td><td>Drop the last cast's unsaved changes.</td></tr>
           <tr><td><span class="hg">:ScryTidy</span></td><td>Gather every block of a re-opened feature into one.</td></tr>
@@ -576,20 +571,20 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 <!-- ========================= won't flatter =========================== -->
 <section class="flatter" id="flatter">
   <div class="section-head">
-    <h2>The glass doesn't <em>flatter</em></h2>
-    <div class="s">its limits, stated as plainly as its verdicts</div>
+    <h2><em>Limits</em></h2>
+    <div class="s">what the verdicts do and don't assert</div>
   </div>
   <div class="limits">
-    <div class="row"><b>The description is yours either way.</b> A model may
-    draft it, but a draft is ordinary text under your eyes — checked like
-    anything you typed, discarded with <code>u</code>, saved only by you.</div>
+    <div class="row"><b>A draft is ordinary text.</b> A model may draft the
+    description, but it lands in the buffer — checked like anything you typed,
+    discarded with <code>u</code>, saved only by you.</div>
     <div class="row"><b>Done means accounted for, not right.</b> The glass says the
-    product matches its description — not that the description was wise.</div>
+    product matches its description — not that the description is right.</div>
     <div class="row"><b>Every ✓ names its evidence,</b> and never claims more than
     what was actually seen. The full ladder of what each label does and doesn't
     assert is a chapter of the manual.</div>
-    <div class="row"><b>A rule can be dodged in ways the glass can't see.</b> That's
-    why a broken rule is proof and an intact one is only evidence.</div>
+    <div class="row"><b>A rule can be dodged in ways a text match can't see.</b>
+    A broken rule is proof; an intact one is only evidence.</div>
     <div class="row"><b>The glass reads saved work.</b> What you haven't written yet
     is invisible, and every answer says when it looked.</div>
     <div class="row"><b>Withholding the test is request-level only.</b> The
@@ -602,7 +597,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
 <!-- =============================== CTA =============================== -->
 <section class="cta">
-  <div class="line">Start the next change <em>here</em>.</div>
+  <div class="line">Start with <em>:Scry</em>.</div>
   <span class="install-chip">
     <span class="cm">vim.pack.add</span>
     <span>{ "vim-pro/scry.nvim" }</span>
@@ -613,7 +608,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <a href="https://conjurer.vim.pro">conjurer.nvim</a>
     <a href="#flatter">limits</a>
   </div>
-  <div class="mit">MIT · the glass is where you work · conjurer types · the list reviews</div>
+  <div class="mit">MIT · requires conjurer.nvim · ripgrep · nvim 0.10+</div>
 </section>
 
 </div>
@@ -721,7 +716,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   if (reduced) {
     render({ hdr: H_TODO, hdr2: D_TODO, settled: true, featVd: V.fPart,
              copyVd: V.abs, specVd: V.unrun });
-    narEl.innerHTML = "A capability you haven't built yet is <b>work to do</b>, written in the same place as everything the product already does.";
+    narEl.innerHTML = "A capability you haven't built yet is <b>work to do</b>, written in the same file as everything the product already does.";
   } else {
     var t = 0, steps = [], timers = [];
     var at = function (d, fn) { t += d; steps.push([t, fn]); };
@@ -741,7 +736,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
       // ─── I. the glass opens ───
       at(0, function () {
-        say("Open the glass and the product describes itself — every line checked against the code as it renders.");
+        say("Open the glass: every line is checked against the code as it renders.");
         window.__st = { hdr: H_OPEN + '<span class="spin">◴</span>', settled: false };
         render(window.__st);
         actEl.textContent = ":Scry"; noteEl.innerHTML = "&nbsp;";
@@ -752,12 +747,12 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
                         copyVd: V.abs, specVd: V.unrun };
         render(window.__st);
         noteEl.textContent = "two members hold · one names a file that isn't there";
-        say('<b>route copy</b> reads <b>✗ absent</b>. An address exists before the file does — so the work to do is already written down, at the altitude you think in.');
+        say('<b>route copy</b> reads <b>✗ absent</b>. A member can name a file that does not exist yet, so the work to do is written down.');
       });
 
       // ─── II. aim the operator at the capability ───
       at(2900, function () {
-        say('Put the cursor on the <b>feature</b> and press <b>~</b>. The noun is the whole capability, not a region in a file.');
+        say('Put the cursor on the <b>feature</b> and press <b>~</b>. The operator applies to the whole capability, not a region in a file.');
         window.__st.onFeature = true;
         render(window.__st);
         posEl.textContent = "4:1";
@@ -768,7 +763,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
       at(900, function () {
         modeEl.textContent = "SCRY"; modeEl.className = "mode";
-        say("The check comes first. You read it — it's short, and it says what done means.");
+        say("The check comes first. You read it — it's short, and it says what passing means.");
         actEl.innerHTML = '<span class="intent">casting…</span>';
         window.__st.specVd = V.work;
         window.__st.specFresh = false;
@@ -815,7 +810,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
       // ─── IV. and it holds ───
       at(2600, function () {
-        say('You asked for it, read the check, watched fail become pass. The sentence you wrote is now a thing the product <b>does</b>.');
+        say('The check passes, the rules hold, and the map records it: <b>✓ done</b>.');
         actEl.innerHTML = "&nbsp;";
         window.__st.copyVd = V.file;
         window.__st.specVd = V.pass;
