@@ -182,7 +182,7 @@ H.eq(fname.bold, true, "it is bold, which is structure rather than hue")
 -- The caveat travels with the counts, at whatever width the line was fitted
 -- to; debt.winbar's own spec pins what a narrow window drops.
 H.ok(
-  require("scry.debt").winbar(glass._state.debt, nil):find("files on disk", 1, true) ~= nil,
+  require("scry.header").winbar(glass._state.tally, nil):find("files on disk", 1, true) ~= nil,
   "and so does the disk caveat"
 )
 
@@ -588,7 +588,7 @@ vim.api.nvim_win_set_cursor(0, { 3, 0 })
 H.ok(glass.next_action():find("+", 1, true) ~= nil, "on a feature made of nothing, the way to fill it is")
 -- IT IS NEVER SILENT. "I do not know what to do here" is the state this
 -- exists to remove, and a fully described project sat in it permanently.
-glass._state.debt = { unclaimed = 0 }
+glass._state.tally = { unclaimed = 0 }
 vim.api.nvim_win_set_cursor(0, { 1, 0 })
 H.ok(glass.next_action() ~= nil, "and there is always something to say")
 

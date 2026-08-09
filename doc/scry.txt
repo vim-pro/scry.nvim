@@ -20,7 +20,7 @@ CONTENTS                                                       *scry-contents*
   4. Verdicts .................................... |scry-verdicts|
      Divergence .................................. |scry-divergence|
      Drafting the gap ............................ |scry-drafting|
-  5. Theory-debt ................................. |scry-debt|
+  5. The header .................................. |scry-header|
   6. The holdout ................................. |scry-holdout|
   7. Conjuring from the glass .................... |scry-conjure|
   8. Exercised claims ............................ |scry-exercised|
@@ -120,7 +120,7 @@ computed and against what.
 `backed + missing + violated + unchecked` always equals the claim count. The
 unchecked column appears only when it is non-zero, and it is there so that
 "0 missing · 0 violated" can never be read as a clean bill of health for
-claims no engine ever answered. See |scry-debt|.
+claims no engine ever answered. See |scry-header|.
 
 Each feature carries the state its own evidence adds up to — nothing here is
 authored. The scan is four states — holds (✓), partly (◐), broken (✗), not
@@ -693,26 +693,24 @@ to have been fitted to. Running the tripwire here would look like a
 guarantee while guaranteeing nothing, which is worse than saying so.
 
 ==============================================================================
-6. THEORY-DEBT                                                     *scry-debt*
+6. THE HEADER                                                    *scry-header*
 
-Two separate numbers, never blended into one score:
+The map counted, never scored — separate numbers, no blended fraction.
 
-- **diverged** — claims that are missing or violated.
+A claim is always in exactly one verdict column — backed, missing, violated,
+or **unchecked**. Unchecked collects everything no engine could answer: no
+resolver for the language, a parse failure, a resolver error, or no check
+having run yet. It is not a pass, so it is counted rather than omitted; a
+column that vanished when empty of good news would let the reader infer
+safety by subtraction.
 
-A claim is also always in exactly one verdict column — backed, missing,
-violated, or **unchecked**. Unchecked collects everything no engine could
-answer: no resolver for the language, a parse failure, a resolver error, or
-no check having run yet. It is not a pass, so it is counted rather than
-omitted; a column that vanished when empty of good news would let the reader
-infer safety by subtraction.
+The claim count leads the evidence line, and that is deliberate:
+`0 violated / 3 claims` means your map is THIN, not that your repo is
+healthy — and the unclaimed-files count on the first line is what keeps a
+thin map from reading as a described product.
 
-The claim count leads every rendering, and that is deliberate: `0 diverged /
-3 claims` means your map is THIN, not that your repo is healthy. Until scry
-can report code that no claim covers, debt says nothing about unclaimed
-code.
-
-`require("scry.debt").statusline()` returns a compact string for your own
-statusline: `scry 14c ✓11 ✗2`, gaining a `–N` when anything is unchecked.
+`require("scry.header").statusline()` returns a compact string for your own
+statusline: `scry 9f ✓6 ◐2 ✗1`, gaining a `–N` when anything is unchecked.
 
 ==============================================================================
 7. THE HOLDOUT                                                  *scry-holdout*

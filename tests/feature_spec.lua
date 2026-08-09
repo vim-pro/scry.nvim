@@ -7,7 +7,7 @@ local H = dofile(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .
 
 local map = require("scry.map")
 local feat = require("scry.feature")
-local debt = require("scry.debt")
+local debt = require("scry.header")
 
 local SRC = {
   "feature a user can reset their password",

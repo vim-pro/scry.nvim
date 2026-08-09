@@ -98,21 +98,21 @@ end
 --- notification is gone the moment anything else prints. Someone who read it,
 --- blinked, and wondered what it said had nowhere to look. This is that
 --- somewhere.
----@param debt table?
+---@param tally table?
 ---@param limit table? the advice item, from scry.advice.best
 ---@return string?
-function M.header(debt, limit)
-  if not debt then
+function M.header(tally, limit)
+  if not tally then
     return nil
   end
   if limit then
     return ("%s · %s"):format(limit.say, limit.how)
   end
   return ("%d feature%s described here · %d file%s in this project no feature claims · everything below is computed, never stored"):format(
-    debt.features,
-    debt.features == 1 and "" or "s",
-    debt.unclaimed or 0,
-    (debt.unclaimed or 0) == 1 and "" or "s"
+    tally.features,
+    tally.features == 1 and "" or "s",
+    tally.unclaimed or 0,
+    (tally.unclaimed or 0) == 1 and "" or "s"
   )
 end
 

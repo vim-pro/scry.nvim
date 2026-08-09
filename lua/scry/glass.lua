@@ -215,7 +215,7 @@ local state = {
   buf = nil,
   map = nil, -- combined (map + holdout) parsed view of the glass buffer
   report = nil,
-  debt = nil,
+  tally = nil,
   -- The kinds in force. The FOLD needs them for the same reason the parser
   -- and the syntax file do: without them a member cannot be told from prose.
   kinds = nil,
@@ -223,8 +223,8 @@ local state = {
 
 M._state = state -- exposed for specs
 
-function M.current_debt()
-  return state.debt
+function M.current_tally()
+  return state.tally
 end
 
 -- ---------------------------------------------------------------------------
@@ -377,7 +377,7 @@ function M.render()
     return
   end
   local mapmod = require("scry.map")
-  local debt = require("scry.debt")
+  local header = require("scry.header")
   local feat = require("scry.feature")
   vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
   -- Peeked diffs go too: a render follows the moments the diff itself moves
@@ -386,7 +386,7 @@ function M.render()
   vim.api.nvim_buf_clear_namespace(state.buf, diff_ns, 0, -1)
 
   state.map = combined_map()
-  state.debt = debt.count(state.map, state.report, state.root)
+  state.tally = header.count(state.map, state.report, state.root)
 
   -- THE GLOSS (`g?`). Virtual lines, off by default — see scry.explain for
   -- why this is not the starter block returning.
@@ -404,13 +404,13 @@ function M.render()
     gloss(
       1,
       explain.header(
-        state.debt,
+        state.tally,
         require("scry.advice").best(state.map, state.report, require("scry.project").resolve(state.root))
       )
     )
   end
 
-  -- The header lives in the winbar (see scry.debt.winbar and M.winbar
+  -- The header lives in the winbar (see scry.header.winbar and M.winbar
   -- below), not in an extmark. It used to be virt_lines above line 1, which
   -- Neovim does not draw — there is no room above a buffer's first line —
   -- so it was invisible on precisely the map a new user opens first.
@@ -645,7 +645,7 @@ end
 --- check without anything having to remember to update it.
 ---@return string
 function M.winbar()
-  if not (state.buf and vim.api.nvim_get_current_buf() == state.buf and state.debt) then
+  if not (state.buf and vim.api.nvim_get_current_buf() == state.buf and state.tally) then
     return ""
   end
   local action = M.next_action()
@@ -656,7 +656,7 @@ function M.winbar()
   -- blank. pcall on top so a future restriction degrades to an unfitted
   -- line rather than to an empty one.
   local ok, width = pcall(vim.fn.winwidth, 0)
-  return require("scry.debt").winbar(state.debt, state.report and state.report.at, ok and width or nil, action)
+  return require("scry.header").winbar(state.tally, state.report and state.report.at, ok and width or nil, action)
 end
 
 --- What to do next, from where the cursor is.
@@ -695,7 +695,7 @@ function M.next_action()
     end
     return "~ to change it"
   end
-  if (state.debt or {}).unclaimed and state.debt.unclaimed > 0 then
+  if (state.tally or {}).unclaimed and state.tally.unclaimed > 0 then
     return "+ to draft"
   end
   if #((state.map or {}).features or {}) == 0 then
@@ -1138,7 +1138,7 @@ function M.open(root)
     -- actually in the buffer.
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, composed)
     state.report = nil
-    state.debt = nil
+    state.tally = nil
   else
     buf = vim.api.nvim_create_buf(true, false)
     vim.api.nvim_buf_set_name(buf, "scry://glass")

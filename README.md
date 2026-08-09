@@ -161,9 +161,6 @@ prohibition, its output satisfying it tells you nothing — it was asked to.
 A rule it never saw, checked after, is real evidence. That's why prohibitions
 are stored outside the repo by default.
 
-**Theory-debt is a number.** How much of your system does the map fail to
-describe, and how much of what it describes does not hold?
-`scry 9f ✓6 ◐2 ✗1`.
 
 ## Two axes of evidence
 

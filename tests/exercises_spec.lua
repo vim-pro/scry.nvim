@@ -112,7 +112,7 @@ H.eq(v.status, "unchecked", "a pass from before the edit is no longer a pass")
 H.ok(v.label:find("stale", 1, true) ~= nil, "and names the reason: " .. v.label)
 
 -- ...and it lands in the unchecked column rather than vanishing from the count
-local d = require("scry.debt").count(map.parse({ "feature calc", "  contains", "    lua/calc.lua:add", "  exercises", "    tests/green_spec.lua" }), nil)
+local d = require("scry.header").count(map.parse({ "feature calc", "  contains", "    lua/calc.lua:add", "  exercises", "    tests/green_spec.lua" }), nil)
 H.eq(d.unchecked, 2, "unrun/stale claims are counted, not omitted")
 H.eq(d.backed + d.missing + d.violated + d.unchecked, d.claims, "the columns still account for everything")
 

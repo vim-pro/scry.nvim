@@ -1,11 +1,9 @@
--- Theory-debt: separate numbers, never one blended fraction. Unratified
--- and diverged are different kinds of wrongness, and the claim count leads
--- every rendering — "0 diverged / 3 claims" must read as a THIN map, not a
--- healthy repo. Debt is coverage-blind until exists-unclaimed lands, and
--- the docs say so.
+-- The header: the map counted, never scored. Separate numbers rather than
+-- one blended fraction, with the claim count leading every rendering —
+-- "0 violated / 3 claims" must read as a THIN map, not a healthy repo.
 local M = {}
 
----@class scry.Debt
+---@class scry.Tally
 ---@field claims integer
 ---@field backed integer  backed or clean verdicts.
 ---@field missing integer
@@ -26,8 +24,7 @@ local M = {}
 ---  third verdict: without it, every feature can be done while the map
 ---  describes a tenth of the product, and nothing would say so.
 
---- Count a map + report into debt numbers. A claim can count on both the
---- diverged and unratified axes; each axis counts it once.
+--- Count a map + report into the header's numbers.
 ---
 --- backed + missing + violated + unchecked == claims, always. That identity
 --- is the honesty property: a claim no engine could answer must show up
@@ -37,7 +34,7 @@ local M = {}
 ---@param report scry.Report?
 ---@param root string? Project root; without it nothing counts as owned, and
 ---  divergence cannot be computed.
----@return scry.Debt
+---@return scry.Tally
 function M.count(map_, report, root)
   local mapmod = require("scry.map")
   local counts = require("scry.feature").tally(map_, report, root)
@@ -102,7 +99,7 @@ end
 --- not how many subfunctions resolved. Claim-level numbers follow on a
 --- second line: they are the evidence behind the first, and reading them
 --- first is the altitude mistake the whole map exists to avoid.
----@param d scry.Debt
+---@param d scry.Tally
 ---@param at integer? report timestamp
 ---@return string
 function M.header(d, at)
@@ -126,7 +123,7 @@ end
 --- of which is news. The counts ARE states, and they are the only thing on
 --- the line worth a color, so they get the same groups the state column
 --- uses and everything around them recedes.
----@param d scry.Debt
+---@param d scry.Tally
 ---@param at integer?
 ---@return table[] line1 {text, group} pairs
 ---@return table[] line2
@@ -243,7 +240,7 @@ end
 --- is what a reader scans, and the claim-level evidence is what a narrow
 --- window gives up. The ellipsis says it was cut, since cut off must not read
 --- as absent — the distinction the unchecked column exists for.
----@param d scry.Debt
+---@param d scry.Tally
 ---@param at integer? report timestamp
 ---@param width integer? columns available; unlimited when nil
 ---@return string
@@ -301,7 +298,7 @@ end
 ---@return string
 function M.statusline()
   local glass = require("scry.glass")
-  local d = glass.current_debt()
+  local d = glass.current_tally()
   if not d then
     return ""
   end

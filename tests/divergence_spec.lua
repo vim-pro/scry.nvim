@@ -7,7 +7,7 @@ local H = dofile(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .
 
 local map = require("scry.map")
 local div = require("scry.divergence")
-local debt = require("scry.debt")
+local debt = require("scry.header")
 
 if vim.fn.executable("rg") ~= 1 then
   H.fail("ripgrep is required for divergence (and this spec)")

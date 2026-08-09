@@ -1,10 +1,10 @@
 -- Reflexion fan-out with a fake resolver (recorded {claim, cb}, answered by
--- hand — conjurer's aggregate_spec pattern), plus debt arithmetic.
+-- hand — conjurer's aggregate_spec pattern), plus header arithmetic.
 local H = dofile(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .. "/helpers.lua")
 
 local map = require("scry.map")
 local check = require("scry.check")
-local debt = require("scry.debt")
+local debt = require("scry.header")
 
 local SRC = {
   "feature a",
@@ -43,7 +43,7 @@ calls[3].cb({ status = "violated", fidelity = "rg-text", label = "✗ VIOLATED",
 H.ok(report ~= nil, "settled once, after the last verdict")
 H.ok(report.at > 0, "report is timestamped")
 
--- debt: the verdict axis, and only the verdict axis
+-- the tally: the verdict axis, and only the verdict axis
 local d = debt.count(m, report)
 H.eq(d.claims, 3, "claim count")
 H.eq(d.backed, 1, "backed")
@@ -67,7 +67,7 @@ H.ok(header:find("1 violated", 1, true) ~= nil, "violated shown")
 H.ok(header:find("files on disk", 1, true) ~= nil, "the disk caveat travels with every render")
 
 -- A claim no engine could answer must occupy a column of its own. The
--- reader's whole interaction with debt is glancing at this line: if unchecked
+-- reader's whole interaction with the header is glancing at this line: if unchecked
 -- claims are simply absent from it, "0 missing · 0 violated" reads as a clean
 -- bill of health for claims nothing ever looked at.
 local SRC2 = {
