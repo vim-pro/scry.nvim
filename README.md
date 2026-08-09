@@ -98,7 +98,7 @@ cursor on a capability, and the rest keeps the map from lying about what
 it's made of.
 
 ```
-scry · 3 features · 1 building · 1 broken · 1 to do · 4 unclaimed files   checked 40s ago
+scry · 3 features · 1 building · 1 broken · 1 to do · 4 of 10 files undescribed   checked 40s ago
       6 claims · 3 backed · 1 missing · 1 violated · 1 unchecked
 
 feature a user can reset their password                          ◐ 2 of 4
@@ -127,77 +127,48 @@ One editable buffer. Features are the line you scan; claims are the evidence
 under them. Everything to the right is scry's answer, computed and never
 stored.
 
-## The four ideas
+## What keeps the noun real
 
-**Every feature done is not the same as done.** A map whose features all
-read `✓ done` can still describe a fraction of the product, so the header
-counts the files no feature claims and `:ScryUnclaimed` lists them. Each one
-is a decision: add a claim to the feature that owns it, or name the feature
-nobody wrote down. This is reflexion's third verdict — see
-`:h scry-divergence`.
-
-**And `+` in the glass fills that gap — but a draft is not a belief.** The
-scrying pass asks a conjurer to write features for the unclaimed files, into
-the glass, where you read them — a dozen at a time, batch after batch, until
-the project is described or you stop it. A drafted claim arrives *unchecked*
-and stays that way until an engine answers it: a hundred machine-written
-lines are inventory until something confirms them, and the verdicts are what
-confirm them. The machine types; you decide. See `:h scry-drafting`.
+A capability you can aim at has to be true — a map that lies is a map you
+stop trusting with `~`. Four rules hold it up:
 
 **Features sit at sea level; claims are their evidence.** A feature is one
 thing a user can accomplish, named the way they'd name it — not "the auth
 system" (a grouping) and not "validate the token" (a subfunction, which is
-what a claim already is). Cockburn's tests: one thing, one sitting, and it
-matters that you can do many. A feature's scope is *derived* from the files
-its claims name, never declared — see `:h scry-altitude`.
+what a claim already is). One thing, one sitting, and it matters that you
+can do many. A feature's scope is *derived* from the files its claims name,
+never declared. Prose is welcome and never checked — the sentences carry
+the theory; the claims carry the check. See `:h scry-altitude`.
 
-**The map is prose plus claims.** Write as much explanation as you like —
-prose is preserved verbatim and never checked. The sentences carry the
-theory; the claims carry the check.
+**The map's coverage is checkable too.** Every feature can read done while
+the map describes a fraction of the product, so the header counts the files
+no feature claims and `:ScryUnclaimed` lists them. `+` fills the gap: a
+conjurer drafts features for the undescribed files, into the glass, where
+you read them — checked like anything you typed, `u` to discard, nothing
+saved until `:w`. The machine types; you decide. See `:h scry-drafting`.
 
 **Rules are told and enforced.** A feature's `never` claims ride along with
 every cast, so the generator can follow them — and the same patterns are
 re-checked against the code once it lands, whoever wrote it. A violation is
 reported with the line that proves it.
 
-
-## Two axes of evidence
-
-`contains` and `never` are **static** — a definition node, a text
-match. Cheap and side-effect-free, so they run on every check. `exercises` is
-**dynamic**: a spec was run and it passed.
-
-Structural claims say *where things are*; an exercised claim says *what
-holds*. Neither is the primary axis — adding a feature usually wants one of
-each, and fixing a bug often wants only the second.
-
-**Checking never runs anything.** `:Scry` reads what the last `:ScryExercise`
-recorded; only `:ScryExercise` executes. A glass that shelled out to your test
-suite whenever you opened it is a glass you'd stop opening. The price is
-staleness, so a run fingerprints the feature's files as it starts — move any
-of them and `✓ passing` degrades to `– stale`, which is not a pass.
-
-Both `contains` and `exercises` can be conjured, and the order is the mechanism:
-conjure the **check** first, confirm it goes **red**, then conjure
-the code *with the spec withheld*. Two generations from one sentence share its
-misreadings, so a suite written by whoever wrote the code proves only that the
+**A generated test must not grade its own homework.** Conjure the **check**
+first, confirm it goes **red**, then conjure the code *with the spec
+withheld from the request*. Two generations from one sentence share its
+misreadings; a suite written by whoever wrote the code proves only that the
 generator was self-consistent. See `:h scry-independence`.
 
-## Conjuring from the glass
+## Evidence, briefly
 
-An absent claim is a piece of work:
+`contains` and `never` are **static** — a definition node, a text match —
+so they re-run on every check. `exercises` is **dynamic**: a spec ran and
+passed. **Checking never runs anything** — only `:ScryExercise` executes,
+and a pass whose files have since moved degrades to `– stale`, which is not
+a pass.
 
-```vim
-:Conjure          " in the glass, on a ✗ absent claim
-```
-
-scry seeds the quickfix list with the target site and your intent, then hands
-off to [conjurer.nvim](https://github.com/vim-pro/conjurer.nvim) — which owns
-the casting and per-site review. **scry never conjures anything itself.**
-
-When you save the file, the feature's prohibitions run against the new code
-and the claim re-checks: `✗ absent` becomes `✓ defined`. If the generated
-code trips a rule, you find out with the evidence line.
+A single absent claim is also a piece of work: `:Conjure` on it seeds the
+quickfix list and hands off to conjurer — the smaller sibling of `~` on the
+whole feature. On save, the claim re-checks: `✗ absent` becomes `✓ defined`.
 
 ## Install
 

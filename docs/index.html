@@ -20,7 +20,7 @@
 <style>
 /* The conceit: a still, dark water. Everything on this page either sits ON
    the surface (panes, the terminal) or rises OUT of it (verdicts, ripples).
-   Mercury for what the glass shows, gold for the one human act (the seal),
+   Mercury for what the glass shows, gold for the human act — the intent,
    murk for what it honestly cannot see. */
 :root {
   --bg: #080d10;
@@ -52,7 +52,7 @@ a:hover { color: var(--text); }
 code { font-family: var(--mono); }
 
 .shell { width: 100%; }
-nav, .hero, .glass-sect, .grammar-sect, .waters-sect, .loop-sect, .seal-sect, .ref, .flatter, .cta {
+nav, .hero, .glass-sect, .grammar-sect, .waters-sect, .loop-sect, .ref, .flatter, .cta {
   padding-inline: max(48px, calc((100% - 1060px) / 2 + 48px));
 }
 .glass-sect { padding-inline: max(24px, calc((100% - 1060px) / 2 + 72px)); }
@@ -264,19 +264,6 @@ h2 em { font-style: italic; color: var(--mercury); }
 .gaze .b code { color: var(--text); }
 .gaze .b strong { color: var(--text); }
 
-/* ---------- the seal ---------- */
-.seal-sect { padding-block: 64px 20px; text-align: center; }
-.seal-card {
-  max-width: 620px; margin: 0 auto;
-  border: 1px solid rgba(201,169,78,0.3); border-radius: 14px;
-  padding: 34px 38px;
-  background: radial-gradient(ellipse 70% 100% at 50% 0%, rgba(201,169,78,0.07), rgba(201,169,78,0));
-}
-.seal-card .line { font-family: var(--mono); font-size: 14px; color: var(--text); }
-.seal-card .b { margin-top: 18px; font-size: 14px; color: var(--muted); text-align: left; }
-.seal-card .b code { color: var(--text); }
-.seal-card .b strong { color: var(--text); }
-
 /* ---------- reference ---------- */
 .ref { padding-block: 64px 18px; }
 .ref-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 26px; align-items: start; }
@@ -314,7 +301,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
-  nav, .hero, .glass-sect, .grammar-sect, .waters-sect, .loop-sect, .seal-sect, .ref, .flatter, .cta { padding-inline: 24px; }
+  nav, .hero, .glass-sect, .grammar-sect, .waters-sect, .loop-sect, .ref, .flatter, .cta { padding-inline: 24px; }
   nav { padding-block: 16px; }
   .nav-links .optional { display: none; }
   .hero { padding-block: 60px 24px; }
@@ -457,7 +444,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <div class="v"><span class="g vb">✓ done</span><span class="d">every piece of evidence under this feature holds</span></div>
       <div class="v"><span class="g vb">✓ present (file)</span><span class="d">the route, endpoint or module is on disk</span></div>
       <div class="v"><span class="g vb">✓ defined</span><span class="d">the named definition is there, in the file you said</span></div>
-      <div class="v"><span class="g vb">✓ referenced (text)</span><span class="d">the connection you described is there</span></div>
       <div class="v"><span class="g vb">✓ no matches (rg)</span><span class="d">the rule holds</span></div>
       <div class="v"><span class="g vb">✓ passing (ran 4m ago)</span><span class="d">the behavior holds, as of moments ago</span></div>
     </div>
@@ -478,7 +464,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <div class="v"><span class="g vd">✗ broken (1 of 4)</span><span class="d">a feature that regressed; outranks everything else</span></div>
       <div class="v"><span class="g vd">✗ VIOLATED</span><span class="d">a rule was broken — with the line that broke it</span></div>
       <div class="v"><span class="g vd">✗ FAILING</span><span class="d">a behavior regressed — with the failure in hand</span></div>
-      <div class="v"><span class="g vd">✗ unreferenced</span><span class="d">a connection you described no longer exists</span></div>
       <p class="b" style="margin-top:10px">A broken rule is <strong>proof</strong>. A rule
       that merely looks intact is evidence — the glass keeps that distinction for you.</p>
     </div>
@@ -489,7 +474,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       <div class="v"><span class="g vn">– unrun</span><span class="d">nobody has asked for proof yet</span></div>
       <div class="v"><span class="g vn">– stale</span><span class="d">the proof predates your latest change</span></div>
       <div class="v"><span class="g vn">– vacuous?</span><span class="d">it passes while proving nothing</span></div>
-      <div class="v"><span class="g vu">– unread 4 of 6</span><span class="d">drafted for you, and nobody has read it yet</span></div>
       <div class="v"><span class="g vn">– unscoped</span><span class="d">a rule on a feature that locates nothing yet</span></div>
     </div>
   </div>
@@ -528,34 +512,19 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     </div>
     <div class="stage">
       <div class="k">let the conjurer type</div>
-      <div class="t">The code arrives knowing the product — not the answers.</div>
-      <div class="b">Your rules and your test were <strong>kept from it</strong>. A
-      model that can see the test writes to pass the test; one that never saw it,
-      checked after, actually proved something.</div>
+      <div class="t">The code arrives knowing the product — and your rules.</div>
+      <div class="b">The feature's never-rules ride along, because a rule you
+      want followed is a rule you state. The test is <strong>kept from
+      it</strong>: a model that can see the test writes to pass the test; one
+      that never saw it, checked after, actually proved something.</div>
     </div>
     <div class="stage gold">
-      <div class="k">and it's yours</div>
-      <div class="t">The proof passes, and the work is yours.</div>
-      <div class="b">You asked for it, read the test, watched fail become pass. The
-      glass saw all of that happen — so it already knows whose work this is.</div>
+      <div class="k">and it holds</div>
+      <div class="t">The proof passes, and the map says so.</div>
+      <div class="b">You asked for it, read the test, watched fail become pass —
+      and the rules were re-checked against what actually landed. The sentence
+      you wrote is now a thing the product does.</div>
     </div>
-  </div>
-</section>
-
-<!-- ============================= the trail ============================ -->
-<section class="seal-sect" id="seal">
-  <div class="section-head">
-    <h2>The <em>trail</em></h2>
-    <div class="s">the work leaves a trail</div>
-  </div>
-  <div class="seal-card">
-    <div class="line">authored · conjured · red → green · settled</div>
-    <div class="b">Work leaves a trail on whatever it touches: you described it,
-    you conjured it, you watched its proof fail and then pass, it came true under
-    your hands. A piece of the product is <strong>yours</strong> when the trail
-    shows you passed through it — and a machine-drafted piece nobody has engaged
-    with stays <code style="color:var(--seal)">∅ untouched</code>, which is the
-    point. Change the description and the trail resets.</div>
   </div>
 </section>
 
@@ -611,9 +580,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     <div class="s">its limits, stated as plainly as its verdicts</div>
   </div>
   <div class="limits">
-    <div class="row"><b>The description is yours either way.</b> A model may draft
-    it, and a draft arrives untouched. The danger was never wrong guesses — it's
-    unowned pieces that read as understood.</div>
+    <div class="row"><b>The description is yours either way.</b> A model may
+    draft it, but a draft is ordinary text under your eyes — checked like
+    anything you typed, discarded with <code>u</code>, saved only by you.</div>
     <div class="row"><b>Done means accounted for, not right.</b> The glass says the
     product matches its description — not that the description was wise.</div>
     <div class="row"><b>Every ✓ names its evidence,</b> and never claims more than
@@ -623,12 +592,11 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     why a broken rule is proof and an intact one is only evidence.</div>
     <div class="row"><b>The glass reads saved work.</b> What you haven't written yet
     is invisible, and every answer says when it looked.</div>
-    <div class="row"><b>Kept-back rules guard against leakage, not adversaries.</b>
-    They keep honest generations honest; they don't survive a hunt.</div>
+    <div class="row"><b>Withholding the test is request-level only.</b> The
+    glass never puts a spec's path in a code request; a generator that reads
+    your whole repo will still find it.</div>
     <div class="row"><b>The conjurer chooses placement.</b> The glass knows which
     file the work belongs in, not where in it. Review is yours.</div>
-    <div class="row"><b>The trail stays with you.</b> A teammate's glass shows their
-    work, not yours.</div>
   </div>
 </section>
 
@@ -681,7 +649,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
 
   /* ---------- the glass demo ----------
      A narrated walkthrough of one whole change: open, describe, conjure the
-     check, watch it fail, conjure the code, watch it pass, and it's yours.
+     check, watch it fail, conjure the code, watch it pass, and it holds.
      Each act sets a line of narration and a terminal state, in order, so
      the whole story is readable in one place. */
   var body = document.getElementById("termBody");
@@ -692,7 +660,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   var narEl = document.getElementById("termNarrate");
 
   // The site's own verdict palette, reused rather than reinvented:
-  // .vb backed · .vd diverged · .vu untouched · .vn unknown.
+  // .vb backed · .vd diverged · .vu partial · .vn unknown.
   var V = {
     file:  '<span class="vb">✓ present (file)</span>',
     pass:  '<span class="vb">✓ passing (just now)</span>',
@@ -701,7 +669,6 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
     unrun: '<span class="vn">– unrun (:ScryExercise)</span>',
     clean: '<span class="vb">✓ no matches (rg)</span>',
     work:  '<span class="vn">◴ conjuring…</span>',
-    un:    '<span class="vu"> · ∅ untouched</span>',
     // feature verdicts, rolled up from the members below them
     fDone: '<span class="vb">✓ done</span>',
     fPart: '<span class="vu">◐ 2 of 4</span>',
@@ -747,13 +714,13 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
   var H_TODO = "scry · 4 features · 1 building · 12 of 58 files undescribed";
   var H_RED  = "scry · 4 features · 1 broken · 12 of 58 files undescribed";
   var H_DONE = "scry · 4 features · 4 done · 12 of 58 files undescribed";
-  var D_TODO = "      19 claims · 16 backed · 1 missing · 1 untouched";
-  var D_RED  = "      19 claims · 16 backed · 2 missing · 2 untouched";
+  var D_TODO = "      19 claims · 17 backed · 1 missing · 1 unchecked";
+  var D_RED  = "      19 claims · 16 backed · 2 missing · 1 violated";
   var D_DONE = "      19 claims · 19 backed";
 
   if (reduced) {
     render({ hdr: H_TODO, hdr2: D_TODO, settled: true, featVd: V.fPart,
-             copyVd: V.abs + V.un, specVd: V.unrun });
+             copyVd: V.abs, specVd: V.unrun });
     narEl.innerHTML = "A capability you haven't built yet is <b>work to do</b>, written in the same place as everything the product already does.";
   } else {
     var t = 0, steps = [], timers = [];
@@ -782,7 +749,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
       });
       at(1600, function () {
         window.__st = { hdr: H_TODO, hdr2: D_TODO, settled: true, featVd: V.fPart,
-                        copyVd: V.abs + V.un, specVd: V.unrun };
+                        copyVd: V.abs, specVd: V.unrun };
         render(window.__st);
         noteEl.textContent = "two members hold · one names a file that isn't there";
         say('<b>route copy</b> reads <b>✗ absent</b>. An address exists before the file does — so the work to do is already written down, at the altitude you think in.');
@@ -809,7 +776,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         noteEl.textContent = "conjurer writing the spec";
       });
       at(2200, function () {
-        window.__st.specVd = V.fail + V.un;
+        window.__st.specVd = V.fail;
         window.__st.specFresh = true;
         window.__st.featVd = V.fBrok;
         window.__st.hdr = H_RED;
@@ -819,25 +786,25 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         say("It has to fail. Nothing has been built yet, so a check that passed here would be proving nothing.");
       });
 
-      // ─── III. the code, written blind ───
+      // ─── III. the code, told the rules, blind to the check ───
       at(2800, function () {
-        say("Now the code — written without sight of that check, or of the rules this feature must never break.");
+        say("Now the code — told the rules this feature must never break, written without sight of the check.");
         window.__st.copyVd = V.work;
         window.__st.copyFresh = false;
         render(window.__st);
         noteEl.textContent = "conjuring · the never-rules riding along, the spec withheld";
       });
       at(2400, function () {
-        window.__st.copyVd = V.file + V.un;
+        window.__st.copyVd = V.file;
         window.__st.copyFresh = true;
         window.__st.featVd = V.fPart3;
         render(window.__st);
         noteEl.textContent = "src/pages/copy.astro written";
       });
       at(2000, function () {
-        say("It passes a check it never saw. That is evidence — and the rules it never saw still hold.");
+        say("It passes a check it never saw. That is evidence — and the rules it was told are re-checked, not taken on trust.");
         actEl.textContent = ":ScryExercise";
-        window.__st.specVd = V.pass + V.un;
+        window.__st.specVd = V.pass;
         window.__st.specFresh = true;
         window.__st.featVd = V.fDone;
         window.__st.hdr = H_DONE;
@@ -846,9 +813,9 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         noteEl.textContent = "green";
       });
 
-      // ─── IV. and it is yours ───
+      // ─── IV. and it holds ───
       at(2600, function () {
-        say('You asked for it, read the check, watched fail become pass. The glass saw all of that — so it knows the work is <b>yours</b>.');
+        say('You asked for it, read the check, watched fail become pass. The sentence you wrote is now a thing the product <b>does</b>.');
         actEl.innerHTML = "&nbsp;";
         window.__st.copyVd = V.file;
         window.__st.specVd = V.pass;
@@ -856,7 +823,7 @@ pre .k { color: var(--mercury); } pre .s { color: #b9c98a; } pre .c { color: var
         window.__st.specFresh = false;
         window.__st.onFeature = false;
         render(window.__st);
-        noteEl.textContent = "∅ untouched cleared — the trail runs through you";
+        noteEl.textContent = "the map and the code agree";
       });
       at(4200, function () { noteEl.innerHTML = "&nbsp;"; });
       at(600, build);
