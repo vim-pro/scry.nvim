@@ -18,8 +18,7 @@
 --              and `def` because they hold in every language, and every
 --              kind above those describes one product and no other.
 --
--- Two keys are deliberately REFUSED, and the refusals matter more than the
--- permissions:
+-- One key is deliberately REFUSED:
 --
 --   holdout_path  the holdout lives outside the repo so a repo-reading
 --                 generator cannot see it. Letting a committed file
@@ -29,10 +28,6 @@
 --                 honored, and the asymmetry is the whole point: moving a
 --                 file that is already committed changes nothing about who
 --                 can read it.
---   author        describes a person, not a repo. Not currently a config
---                 key at all — provenance retired it — but refused rather
---                 than merely unknown, so that if it ever returns a repo
---                 still cannot sign your name.
 --
 -- JSON rather than Lua on purpose. Executing code from a checked-out
 -- repository is what Neovim gates behind 'exrc', and scry has no business
@@ -67,7 +62,7 @@ function M.load(root)
   for key, value in pairs(decoded) do
     if HONORED[key] then
       out[key] = value
-    elseif key == "holdout_path" or key == "author" then
+    elseif key == "holdout_path" then
       refused[#refused + 1] = key
     end
   end

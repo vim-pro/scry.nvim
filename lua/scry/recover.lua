@@ -9,11 +9,10 @@
 -- authoring must start from a blank buffer.
 --
 -- The distinction that makes this safe is the one the whole plugin turns on:
--- a DRAFT is not a belief. A drafted feature has no ownership trail, so it
--- renders unchecked until something answers it — which is exactly
--- the honest reading of a hundred machine-written claims nobody has read yet.
--- It is inventory. It becomes a belief when you edit it, and editing is what
--- records the trail. So the machine does the typing and you do the deciding,
+-- a DRAFT is not a belief. It arrives as ordinary buffer text — claims
+-- checked like any other, verdicts saying whether it described anything real
+-- — and nothing reaches the map file until you :write. Reading and editing
+-- it is the review. So the machine does the typing and you do the deciding,
 -- which is the same division as everywhere else in scry.
 --
 -- SCOPED BY DIVERGENCE, NOT BY REPO. The worklist is the unclaimed files, so
@@ -45,11 +44,9 @@
 -- verdicts tell you whether it described anything real, `u` discards it, and
 -- nothing reaches the map file until you `:write`.
 --
--- That choice is also what keeps ownership honest. Passing conjurer an
--- `on_done` is what suppresses its review tab, and it is the same hook that
--- lets scry see which claims arrived and register them as drafted, so the
--- glass watcher does not record a machine's typing as your authorship. Those
--- two are one decision, not two.
+-- Passing conjurer an `on_done` is what suppresses its review tab, and it is
+-- the same hook that lets scry count which claims a batch added — the number
+-- the pass's progress guard watches.
 local M = {}
 
 --- Everything that leaves scry for a drafting pass. Pure — no buffer writes,
@@ -366,9 +363,9 @@ function M.draft(root, buf, map_, unclaimed)
     label = ("drafting %d of %d undescribed files (batch %d)"):format(#batch, #batch + remaining, pass.batches),
     note = ("scry: drafting features for %d file(s) no feature claims"):format(#unclaimed),
     -- Passing on_done is what keeps conjurer's review tab shut (see the
-    -- header) and is also the only moment scry can tell a drafted claim from
-    -- one you typed. It runs in the same tick as the splice, before the
-    -- glass watcher's TextChanged can reach the main loop, so nothing races.
+    -- header) and is also the moment scry can count what the batch added.
+    -- It runs in the same tick as the splice, before the glass watcher's
+    -- TextChanged can reach the main loop, so nothing races.
     on_done = function(err)
       if err then
         -- The placeholder block is inert prose and nothing was saved, so the

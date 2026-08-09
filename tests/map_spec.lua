@@ -1,5 +1,5 @@
--- The map parser: lossless round-trips, claim extraction, stamps, and the
--- rule that there are no parse errors — only claims and prose.
+-- The map parser: lossless round-trips, claim extraction, and the rule that
+-- there are no parse errors — only claims and prose.
 local H = dofile(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .. "/helpers.lua")
 
 local map = require("scry.map")
@@ -11,7 +11,7 @@ local SRC = {
   "  on the main loop. Transport only: no UI, no lists.",
   "",
   "  contains",
-  "    lua/conjurer/providers/cli.lua:request  -- @michael 2026-07-26 3f9a01",
+  "    lua/conjurer/providers/cli.lua:request",
   "    lua/conjurer/providers/known.lua:resolve_api",
   "  calls",
   "    known.lua::resolve_api",
@@ -47,11 +47,7 @@ H.eq(#m.features[2].claims, 0, "prose-only feature has no claims")
 -- 3) claim details
 local c1, c2, c3, c4 = m.claims[1], m.claims[2], m.claims[3], m.claims[4]
 H.eq(c1.kind, "def", "claim 1 kind")
-H.eq(c1.target, "lua/conjurer/providers/cli.lua:request", "stamped claim target excludes the stamp")
-H.eq(c1.stamp.user, "michael", "stamp user (without @)")
-H.eq(c1.stamp.date, "2026-07-26", "stamp date")
-H.eq(c1.stamp.hash, "3f9a01", "stamp hash")
-H.eq(c2.stamp, nil, "unstamped claim")
+H.eq(c1.target, "lua/conjurer/providers/cli.lua:request", "claim target")
 H.eq(c3.kind, "calls", "calls section")
 H.eq(c4.kind, "never", "never section")
 H.eq(c4.target, "vim\\.ui\\.", "never target is the verbatim pattern")
@@ -77,12 +73,6 @@ local weird = map.parse({
 })
 H.eq(#weird.claims, 1, "claim before the dedent parsed; line after it is prose")
 H.eq(weird.claims[1].target, "real.lua:sym", "the real claim survived its weird neighbors")
-
--- stamps from the ratification era still PARSE (legacy lines are claims with
--- a stamp field), they just no longer mean anything
-local legacy = map.parse({ "feature a", "  contains", "    x.lua:one  -- @w0zro 2026-07-26 abc123" })
-H.eq(legacy.claims[1].target, "x.lua:one", "legacy stamped claim still parses to its target")
-H.eq(legacy.claims[1].stamp.user, "w0zro", "and keeps its stamp as data")
 
 -- A FEATURE IS NAMED ONCE; ITS MEMBERS ACCUMULATE. Writing the name again
 -- re-opens it rather than starting a second feature with the same name.

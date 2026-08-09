@@ -67,11 +67,11 @@ syn region scryNeverBlock
       \ end="^\%(\S\|  \S\)"me=s-1
       \ keepend contained contains=scryNever,scryPattern
 syn match scryNever "^  never\s*$" contained
-syn match scryPattern "^    \S.*$" contained contains=scryStamp
+syn match scryPattern "^    \S.*$" contained
 
 " A claim, split like a quickfix row: the path you navigate by, the
 " punctuation that recedes, the symbol you are actually claiming.
-syn match scryClaim "^    \S.*$" contained contains=scryPath,scrySeparator,scrySymbol,scryStamp
+syn match scryClaim "^    \S.*$" contained contains=scryPath,scrySeparator,scrySymbol
 syn match scryPath "[^ :]\+" contained
 syn match scrySeparator ":" contained
 syn match scrySymbol "\%(:\)\@<=[A-Za-z0-9_.]\+" contained
@@ -80,11 +80,8 @@ syn match scrySymbol "\%(:\)\@<=[A-Za-z0-9_.]\+" contained
 " Defined AFTER scryPath so the kind word is not eaten by it — at equal
 " start positions Vim gives the later item priority.
 execute 'syn match scryMemberLine "^  \%(' . s:kinds . '\)\s\+\S.*$" contained'
-      \ . ' contains=scryKind,scryPath,scrySeparator,scrySymbol,scryStamp'
+      \ . ' contains=scryKind,scryPath,scrySeparator,scrySymbol'
 execute 'syn match scryKind "^  \zs\%(' . s:kinds . '\)\ze\s" contained'
-
-" Ratification-era stamps still parse and no longer mean anything.
-syn match scryStamp "\s\+--\s\+@\S\+\s\+\S\+\s\+\S\+$" contained
 
 hi def link scryProse ScryProse
 hi def link scryDescription ScryDescription
@@ -98,6 +95,5 @@ hi def link scryPattern ScryNever
 hi def link scryPath ScryPath
 hi def link scrySeparator ScrySeparator
 hi def link scrySymbol ScrySymbol
-hi def link scryStamp ScryStamp
 
 let b:current_syntax = "scry"

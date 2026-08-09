@@ -200,7 +200,7 @@ function M.parts(d, at, action)
   -- are looking at, and it always says something.
   if action then
     line1[#line1 + 1] = { " · ", "ScryHeaderDim" }
-    line1[#line1 + 1] = { action, "ScryUnread" }
+    line1[#line1 + 1] = { action, "ScryAction" }
   end
   line1[#line1 + 1] = { "   " .. when .. " (files on disk)", "ScryHeaderDim" }
 
@@ -297,9 +297,7 @@ end
 --- Compact string for the user's own statusline. Plain function, no
 --- statusline framework: `scry 9f ✓6 ◐2 ✗1` — features first. The `–` count appears only
 --- when something went unchecked, for the same reason the header carries it:
---- `✗0` must not be readable as "everything is accounted for". Unread
---- features fold into the `◐` count rather than the `✓` one: in six
---- characters the only thing worth preserving is that they are not finished.
+--- `✗0` must not be readable as "everything is accounted for".
 ---@return string
 function M.statusline()
   local glass = require("scry.glass")

@@ -16,14 +16,8 @@
 -- the first check settles every feature is in exactly that state, and
 -- showing it as progress would be a lie told at the least useful moment.
 --
--- THERE IS ONE AXIS HERE, AND IT IS EVIDENCE. There used to be a second: an
--- `unread` state, meaning every claim held and nobody had recorded reading
--- the description. It was the last of the ratification design — a whole
--- subsystem of per-machine trails, an ∅ marker on every row, and a word on
--- the line you scan — and none of it said anything about the code. A reader
--- looking at `– unread 4 of 4` learned nothing they could act on.
---
--- What is left says only what the evidence says.
+-- THERE IS ONE AXIS HERE, AND IT IS EVIDENCE. The state says only what the
+-- evidence says.
 local M = {}
 
 -- The engine's own ladder, weakest first. `run` is the only rung that says

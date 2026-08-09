@@ -158,12 +158,6 @@ the FLOOR is what you have: a feature cannot be better established than its
 least-established part, so one `module <path>` member drags the whole line
 down to `files exist`. That is the point.
 
-THERE IS ONE OTHER AXIS, AND IT IS GONE. `unread` meant every claim held and
-nobody had recorded reading the description. It came with a per-machine
-trail, an `∅` marker on every row, and a word on the line you scan — and none
-of it said anything about your code. It was the last of the ratification
-design.
-
 ==============================================================================
 3. THE MAP                                                          *scry-map*
 
@@ -1405,17 +1399,11 @@ can read it, whereas the holdout's entire value is being unreadable.
 is where you go to find out what scry thinks, so a `sources` the project has
 already overridden would send you to change the wrong setting.
 
-Two keys are REFUSED, and the refusals matter more than the permissions:
-
-`holdout_path` — the holdout lives outside the repository so that a
-repo-reading generator cannot find it. A committed file able to relocate it
-back INTO the repo is exactly how you would defeat that: hand someone a
-project that quietly publishes its own prohibitions. Refused, and the refusal
-is announced rather than silent.
-
-`author` — describes a person, not a repo. Not a live config key today (the
-trail replaced stamping), but refused rather than merely unknown, so a repo
-still cannot sign your name if it ever returns.
+One key is REFUSED: `holdout_path`. The holdout lives outside the repository
+so that a repo-reading generator cannot find it. A committed file able to
+relocate it back INTO the repo is exactly how you would defeat that: hand
+someone a project that quietly publishes its own prohibitions. Refused, and
+the refusal is announced rather than silent.
 
 JSON rather than Lua deliberately. Executing code out of a checked-out
 repository is what Neovim gates behind |exrc|, and scry has no business doing
@@ -1458,9 +1446,9 @@ ScryEvidence            Evidence lines under a violated prohibition.
 ScryProse               Prose — everything the parser did not recognize as
                         grammar, and therefore everything never checked.
                         Default: Comment.
-                                                               *hl-ScryStamp*
-ScryStamp               Ratification-era stamps, which still parse and no
-                        longer mean anything. Default: NonText.
+                                                              *hl-ScryAction*
+ScryAction              The header's what-to-do-next hint. Default:
+                        DiagnosticInfo.
 
 THE GRAMMAR ~
                                                              *hl-ScryKeyword*
@@ -1498,18 +1486,10 @@ ScryDiverged            Missing and violated verdicts. Default:
                         DiagnosticError.
                                                            *hl-ScryUnchecked*
 ScryUnchecked           Verdicts no engine answered. Default: DiagnosticHint.
-                                                           *hl-ScryUntouched*
-                        buffer with an alarm that only means "new".
-                                                          *hl-ScryUnratified*
-ScryUnratified          Deprecated, named for the ratification and ownership
-                        designs, both removed. Links to
-                        ScryUntouched so a config that styled it keeps
-                        working.
 
 FEATURE STATES ~
 
-The column a reader scans first, and there are seven states rather than
-four, so they get their own groups.
+The column a reader scans first, so each state gets its own group.
                                                                 *hl-ScryDone*
 ScryDone                ✓ done — every claim holds AND something ran.
                         Default: DiagnosticOk.
@@ -1523,9 +1503,6 @@ ScryInPlace             Every claim holds and nothing ran. Default:
 ScryBroken              ✗ broken. Default: DiagnosticError.
                                                             *hl-ScryBuilding*
 ScryBuilding            ◐ some evidence holding. Default: DiagnosticWarn.
-                                                              *hl-ScryUnread*
-ScryUnread              Fully backed, but nobody has read it — the drafted
-                        state. Default: DiagnosticInfo.
                                                                 *hl-ScryTodo*
 ScryTodo                Named with nothing standing yet. Default:
                         DiagnosticHint.
@@ -1585,8 +1562,6 @@ Every line here is a limit scry intends to keep stating plainly.
 - **A feature's state is only as good as its claims.** `✓ done` means every
   claim under it holds and someone here has read it — not that the feature
   works.
-- **The trail is per-machine.** Ownership events live in local state, like
-  run results — a teammate's glass shows their own trail, not yours.
 - **`– unchecked` is not a pass.** A language with no resolver renders as
   unchecked, deliberately, so silence never looks like agreement.
 

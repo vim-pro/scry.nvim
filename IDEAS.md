@@ -228,11 +228,13 @@ path is withheld from the code request, and a check that passes before the
 feature exists is flagged `– vacuous?` rather than counted. Red-green as a
 machine-enforced precondition.
 
-**Inferred provenance.** Ownership is not performed. Authoring a claim,
-conjuring it, watching its proof go red then green — the trail those actions
-leave is what clears `∅ untouched`, and editing a claim resets it. Replaces an
-earlier hash-stamped signing ceremony that was, in the end, one keystroke and
-therefore worthless.
+**Inferred provenance — since removed.** Ownership-as-a-trail (authoring,
+conjuring, red-then-green clearing an `∅ untouched` marker) replaced an
+earlier hash-stamped signing ceremony, and then followed it out: a
+per-machine record of whether you had engaged with text said nothing about
+the code, and vim does not track whether you read a buffer. What remains is
+textual — a draft is text you have not edited yet, and the verdicts beside
+it are the only state.
 
 **Two evidence axes.** `contains`/`calls`/`never` are static reads — cheap,
 recomputed every check. `exercises` is dynamic — something ran. Structural
@@ -278,16 +280,12 @@ whose dependencies moved degrades to `– stale`.
   untouched count until edited. A hundred untouched claims READS as inventory
   because that is what the header says it is.
 
-  Dogfooding the pass immediately found that this was not enough. Every
-  drafted claim was untouched and the header said so — on the second line,
-  among the claim counts — while the first line read `2 features · 2 done`.
-  The untouched count was never the line anyone scans. So `unread` is now a
-  feature state that displaces `done`: backed evidence plus no engagement is
-  its own thing, and it covers a freshly cloned map as well as a fresh draft,
-  since the trail is per-machine and does not travel with the file.
-
-  Still open: whether *drafted* and *never-engaged-with* should read
-  differently. Both are `unread` today and they are not quite the same thing.
+  Dogfooding the pass then found the register-and-mark design was watching
+  the reader instead of the code: `unread` displaced `done` for a while, and
+  the whole engagement axis was later removed (see "Inferred provenance —
+  since removed"). A draft is ordinary buffer text now — its claims checked
+  like anything you typed, `u` to discard, nothing saved until `:write` —
+  and that is the entire ownership story.
 
 ---
 

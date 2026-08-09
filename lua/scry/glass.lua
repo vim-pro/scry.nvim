@@ -42,7 +42,6 @@ local HL = {
   ScryIntent = "Comment",
   -- The kind word leads a member line and says what sort of thing it is.
   ScryKind = "Type",
-  ScryStamp = "NonText",
 
   -- the grammar
   ScryKeyword = "Statement", -- the word `feature`
@@ -73,7 +72,7 @@ local HL = {
   ScryUnchecked = "DiagnosticHint",
 
   -- feature states, which get their own groups because a reader scans this
-  -- column first and the seven states are not four
+  -- column first
   ScryDone = "DiagnosticOk",
   -- Everything a feature's claims assert HOLDS, and none of it was executed.
   -- Its own group rather than ScryDone's, because "the structure is there"
@@ -82,8 +81,10 @@ local HL = {
   ScryInPlace = "DiagnosticOk",
   ScryBroken = "DiagnosticError",
   ScryBuilding = "DiagnosticWarn",
-  ScryUnread = "DiagnosticInfo",
   ScryTodo = "DiagnosticHint",
+
+  -- The header's what-to-do-next hint.
+  ScryAction = "DiagnosticInfo",
 }
 for group, target in pairs(HL) do
   if target == false then
@@ -91,11 +92,6 @@ for group, target in pairs(HL) do
   else
     vim.api.nvim_set_hl(0, group, { link = target, default = true })
   end
-end
--- Named for the ratification and ownership designs, both gone. Kept linked so
--- a config that styled either does not error on a group that no longer exists.
-for _, dead in ipairs({ "ScryUnratified", "ScryUntouched" }) do
-  vim.api.nvim_set_hl(0, dead, { link = "NonText", default = true })
 end
 
 -- A feature's state to the group that renders it. Module scope because BOTH
@@ -172,7 +168,7 @@ end
 --- glass may not say something stronger than the verdict said.
 ---
 --- The whole label goes when the map does not discriminate: if every feature
---- reads `unread`, the header has already said so once and fourteen more
+--- reads the same, the header has already said so once and fourteen more
 --- copies are texture. A trailing `N of N` goes when nothing is missing:
 --- "3 of 3" is a longer way of writing what the absence of a fraction
 --- already writes.

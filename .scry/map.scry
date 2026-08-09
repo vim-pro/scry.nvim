@@ -82,17 +82,6 @@ feature you can find what the description does not cover
   exercises
     tests/divergence_spec.lua
 
-feature you can tell which parts nobody has engaged with
-  Doing the work leaves a trail on what it touched — authored, conjured, red
-  then green. A claim with no trail keeps its untouched marker, which is
-  exactly the state of machine-drafted description nobody has read.
-
-  def lua/scry/provenance.lua:owned
-  def lua/scry/provenance.lua:record
-  def lua/scry/provenance.lua:sync
-  exercises
-    tests/map_spec.lua
-
 feature the glass can check any language it has an engine for
   Claims are decided by a resolver behind an interface: treesitter for lua
   definitions, ripgrep for references and prohibitions. Fidelity travels with
@@ -111,7 +100,7 @@ feature the glass can check any language it has an engine for
 feature a project carries its own settings
   Which files count as product, and how to run one spec, are facts about a
   repo rather than about you. A repo states them in .scry/config.json and
-  wins — except for the two keys it must never set, which are refused aloud.
+  wins — except for the one key it must never set, which is refused aloud.
 
   def lua/scry/project.lua:load
   def lua/scry/project.lua:resolve
@@ -129,13 +118,11 @@ feature you can find out whether scry can actually see your project
 
 feature you can have the features drafted for you
   :ScryDraft sends the files no feature claims to a conjurer and the features
-  come back into the glass. A draft carries no ownership trail, so it reads
-  unread rather than done — inventory until you have been through it. The
-  machine types; you decide.
+  come back into the glass as ordinary text — checked like anything you
+  typed, and nothing reaches the map file until you write it. The machine
+  types; you decide.
 
   def lua/scry/recover.lua:build
   def lua/scry/recover.lua:draft
-  def lua/scry/feature.lua:engaged
-  def lua/scry/provenance.lua:mark_drafted
   exercises
     tests/recover_spec.lua

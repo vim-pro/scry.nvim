@@ -45,10 +45,9 @@ H.ok(explain.feature({ state = "unknown" }):find("NOT progress", 1, true) ~= nil
 H.ok(explain.feature({ state = "unevidenced" }):find("+", 1, true) ~= nil, "a bare name points at the way out")
 H.eq(explain.feature(nil), nil, "and nothing is explained about a feature with no verdict")
 
--- 3) THERE IS NO ENGAGEMENT AXIS TO EXPLAIN. `unread` was a state meaning
--- every claim held and nobody had recorded reading the description, and it
--- said nothing about the code. It is gone, and so is the sentence for it.
-H.eq(explain.feature({ state = "unread" }), nil, "a state that no longer exists explains nothing")
+-- 3) A state explain does not know renders no sentence rather than a wrong
+-- one.
+H.eq(explain.feature({ state = "no-such-state" }), nil, "an unknown state explains nothing")
 
 -- 4) IT IS OFF UNTIL ASKED FOR, and it is a reading mode rather than
 -- something about a project — which project you are looking at has nothing to

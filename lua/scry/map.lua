@@ -41,19 +41,13 @@
 -- the primary one.
 local M = {}
 
----@class scry.Stamp
----@field user string  From the "@name" token.
----@field date string  YYYY-MM-DD.
----@field hash string  6 hex chars of sha256(target).
-
 ---@class scry.Claim
 ---@field kind string An object kind (`module`, `def`, or one the project
 ---  declared) or a relation (`never`, `exercises`). See scry.kinds.
----@field target string Trimmed claim text, stamp excluded.
+---@field target string Trimmed claim text.
 ---@field desc string[] The member's OWN intent, indented under it. What a
 ---  member is for, as distinct from what the feature is for — and the only
 ---  thing a re-conjure could regenerate a member FROM.
----@field stamp scry.Stamp?
 ---@field lnum integer 1-based line in the parsed lines array.
 ---@field feature string Name of the feature this claim is evidence for.
 
@@ -66,11 +60,6 @@ local M = {}
 ---@field lines string[] The source of truth; serialize() returns these.
 ---@field features scry.Feature[]
 ---@field claims scry.Claim[] All claims across features, in order.
-
--- A claim line's optional trail suffix. The "  -- @" separator is
--- reserved: a never-pattern needing a literal "-- @user date hex" tail
--- would collide, and the docs say so.
-local STAMP_PAT = "^(.-)%s+%-%- (@%S+) (%d%d%d%d%-%d%d%-%d%d) (%x%x%x%x%x%x)%s*$"
 
 --- Parse a map.
 ---
@@ -95,12 +84,10 @@ function M.parse(lines, known)
   local member = nil -- the typed member a description would belong to
 
   local function claim_at(lnum, body, kind)
-    local target, user, date, hash = body:match(STAMP_PAT)
     local claim = {
       kind = kind,
-      target = target and vim.trim(target) or body,
+      target = body,
       desc = {},
-      stamp = user and { user = user:sub(2), date = date, hash = hash } or nil,
       lnum = lnum,
       feature = feature.name,
     }
@@ -165,7 +152,7 @@ function M.parse(lines, known)
         local body = line:match("^    (.-)%s*$")
         local kind = section
         if section == "contains" then
-          kind = kinds.of_contains(body:match(STAMP_PAT) or body)
+          kind = kinds.of_contains(body)
         end
         member = claim_at(lnum, body, kind)
       elseif member and line:match("^    %S") then

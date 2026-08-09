@@ -206,17 +206,9 @@ H.eq(
 )
 
 
--- THERE IS ONE AXIS HERE, AND IT IS EVIDENCE.
---
--- There used to be a second. `unread` meant every claim held and nobody had
--- recorded reading the description — a whole subsystem of per-machine trails,
--- an ∅ marker on every row, and a word on the line you scan, none of which
--- said anything about the code. `– unread 4 of 4` on a feature whose four
--- members each already showed their own verdict taught a reader nothing they
--- could act on. It was the last of the ratification design.
---
--- What is left says only what the evidence says: every claim holding is
--- `done`, whoever wrote it and whether or not anyone has been through it.
+-- THERE IS ONE AXIS HERE, AND IT IS EVIDENCE. The state says only what the
+-- evidence says: every claim holding reads the same, whoever wrote it and
+-- whether or not anyone has been through it.
 local drafted = map.parse({
   "feature you can sign in",
   "  contains",
@@ -228,14 +220,12 @@ for _, c in ipairs(drafted.claims) do
   all_backed.verdicts[map.claim_id(c)] = { status = "backed", fidelity = "ts-def", label = "✓ defined" }
 end
 H.eq(feat.verdict(drafted.features[1], all_backed).state, "in_place", "two definitions holding is `in place`")
--- A root used to switch on the engagement axis. It is accepted and ignored,
--- so no caller has to change shape and none of them can reintroduce it.
+-- The root parameter is accepted and ignored, so no caller has to change
+-- shape.
 local anywhere = vim.fn.tempname()
 vim.fn.mkdir(anywhere, "p")
 H.eq(feat.verdict(drafted.features[1], all_backed, anywhere).state, "in_place", "and a root changes nothing")
 H.eq(feat.tally(drafted, all_backed, anywhere).in_place, 1, "the header counts it as in place")
-H.eq(feat.tally(drafted, all_backed, anywhere).unread, nil, "and has no count for a state that is gone")
-H.eq(feat.engaged, nil, "the engagement test is gone, not merely unused")
 
 -- A half-backed feature reads as progress, which is the more useful reading
 -- and is not a claim of completion.

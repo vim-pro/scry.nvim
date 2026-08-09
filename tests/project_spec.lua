@@ -14,7 +14,6 @@ require("scry").setup({
   sources = { "from-setup/**" },
   test = { cmd = { "setup-runner" } },
   resolver = "",
-  author = "me",
   holdout_path = "",
 })
 
@@ -42,7 +41,6 @@ H.eq(resolved.resolver, "ts_rg", "and its resolver")
 -- the point: the map is already committed, so moving it changes nothing
 -- about who can read it. The holdout's whole value is being unreadable.
 H.eq(resolved.map_path, "docs/product.scry", "and where its map lives")
-H.eq(resolved.author, "me", "while keys the repo does not own are untouched")
 H.eq(resolved.holdout_path, "", "the holdout's location above all")
 
 -- 3) THE REFUSALS. holdout_path is why the holdout works: prohibitions live
@@ -55,17 +53,6 @@ H.eq(honored.holdout_path, nil, "the repo may NOT relocate the holdout")
 H.eq(honored.sources[1], "lua/**", "the rest of the same file is still honored")
 H.ok(warning ~= nil, "and the refusal is announced, not silent")
 H.ok(warning:find("holdout_path", 1, true) ~= nil, "naming what was ignored: " .. warning)
-
--- author describes a person, not a repo
-config_json({ author = "somebody-else" })
-local h2, w2 = project.load(work)
-H.eq(h2.author, nil, "the repo may not sign your name")
-H.ok(w2 and w2:find("author", 1, true) ~= nil, "also announced")
-
--- both at once, named together
-config_json({ author = "x", holdout_path = "y" })
-local _, w3 = project.load(work)
-H.ok(w3:find("author", 1, true) and w3:find("holdout_path", 1, true), "both named: " .. w3)
 
 -- 4) unknown keys are ignored quietly. A newer scry writing a key this one
 -- does not know must not break the older one.
