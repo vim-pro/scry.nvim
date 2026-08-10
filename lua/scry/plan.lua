@@ -109,8 +109,9 @@ local SYSTEM = table.concat({
   "<kind> <target>",
   "",
   "Rules:",
-  "- Repeat EVERY existing member, in order. Never leave one out: a member",
-  "  you omit silently shrinks the feature.",
+  "- Repeat EVERY existing member, in order, exactly as `<kind> <target>` —",
+  "  no arrows, no annotations, nothing after the target. A member you omit",
+  "  silently shrinks the feature.",
   "- Put a note under a member ONLY if this intent touches its file. An",
   "  untouched member is repeated bare, with no note.",
   "- ADD members for files this change needs that are not members yet, using",
@@ -147,23 +148,43 @@ function M.request(feature, intent, kindset, files, claimed, read)
   out[#out + 1] = "INTENT:"
   out[#out + 1] = "  " .. intent
 
+  -- Only the OBJECT members are the plan's to touch. A prohibition is not
+  -- work, and a spec claim's grammar (a section) is not the member shape the
+  -- plan emits — both stay in the block untouched, re-added by apply().
+  --
+  -- Members are listed bare, exactly as the model must repeat them: the
+  -- model echoes what it is shown, and a decorated listing came back with
+  -- its decorations attached — which then failed to match the original
+  -- claims and doubled every member on re-add.
+  local relations = require("scry.kinds").RELATION
+  local planable = {}
+  for _, claim in ipairs(feature.claims) do
+    if not relations[claim.kind] then
+      planable[#planable + 1] = claim
+    end
+  end
+
   out[#out + 1] = ""
-  if #feature.claims == 0 then
+  if #planable == 0 then
     -- Stated rather than left as an empty heading: a bare feature's plan IS
     -- its first members, and the model should know it is building from
     -- nothing rather than repeating an empty list.
     out[#out + 1] = "CURRENT MEMBERS: (none yet — every member you emit is new)"
   else
     out[#out + 1] = "CURRENT MEMBERS:"
-    for _, claim in ipairs(feature.claims) do
+    for _, claim in ipairs(planable) do
+      out[#out + 1] = ("  %s %s"):format(claim.kind, claim.target)
+    end
+    local missing = {}
+    for _, claim in ipairs(planable) do
       local path = mapmod.claim_path(claim, kindset)
-      local exists = path and read(path) ~= nil
-      out[#out + 1] = ("  %s %s%s%s"):format(
-        claim.kind,
-        claim.target,
-        path and ("  ->  " .. path) or "",
-        exists and "" or "   (DOES NOT EXIST YET)"
-      )
+      if path and read(path) == nil then
+        missing[#missing + 1] = path
+      end
+    end
+    if #missing > 0 then
+      out[#out + 1] = ""
+      out[#out + 1] = "Of those, these files do not exist yet: " .. table.concat(missing, ", ")
     end
   end
 
@@ -224,8 +245,20 @@ function M.parse(result, kindset)
     if line ~= "" and not line:match("^```") and not (line:find("<") and bare == "") then
       local kind, target = line:match("^([%w_]+)%s+(%S.*)$")
       if kind and kindset[kind] then
+        -- Echo-proofing: a model shown any decorated member listing tends
+        -- to repeat the decorations. A target never legitimately contains
+        -- " -> " or a trailing existence note, so both are stripped rather
+        -- than trusted into claim identity — an id that doesn't match the
+        -- original claim reads as a NEW member and doubles the old one.
+        target = vim.trim(target):gsub("%s+%-%>%s.*$", "")
+        target = target:gsub("%s*%(.-[Ee][Xx][Ii][Ss][Tt].-%)$", "")
         current = { kind = kind, target = vim.trim(target), notes = {} }
         members[#members + 1] = current
+      elseif kind and require("scry.kinds").RELATION[kind] then
+        -- A relation echoed back is not the plan's to write — apply()
+        -- re-adds the block's own relations in their section grammar. Noting
+        -- it here would attach spec text to the wrong member.
+        current = nil
       elseif current then
         current.notes[#current.notes + 1] = line
       end
@@ -286,10 +319,11 @@ function M.apply(buf, feature, kindset, planned)
     end
   end
 
+  local relations = require("scry.kinds").RELATION
   local out, seen = {}, {}
   for _, m in ipairs(planned) do
     local id = m.kind .. "\1" .. m.target
-    if not elsewhere[id] and not seen[id] then
+    if not relations[m.kind] and not elsewhere[id] and not seen[id] then
       seen[id] = true
       out[#out + 1] = "  " .. m.kind .. " " .. m.target
       for _, note in ipairs(m.notes) do
@@ -302,12 +336,32 @@ function M.apply(buf, feature, kindset, planned)
   -- place, with the notes it already had. Removing a member is `dd` — yours.
   for _, claim in ipairs(feature.claims) do
     local id = claim.kind .. "\1" .. claim.target
-    if not seen[id] and not elsewhere[id] then
+    if not relations[claim.kind] and not seen[id] and not elsewhere[id] then
       seen[id] = true
       out[#out + 1] = "  " .. claim.kind .. " " .. claim.target
       for _, note in ipairs(claim.desc or {}) do
         out[#out + 1] = "    " .. note
       end
+    end
+  end
+
+  -- RELATIONS COME BACK IN THEIR OWN GRAMMAR. A `never` or `exercises`
+  -- claim is a section with its targets indented under it — writing one
+  -- inline (`  exercises path`) produces a line the parser reads as PROSE,
+  -- which silently demotes the claim to unchecked the moment the plan is
+  -- saved. The plan never touches them; they survive verbatim.
+  for _, kind in ipairs({ "never", "exercises" }) do
+    local block = {}
+    for _, claim in ipairs(feature.claims) do
+      local id = claim.kind .. "\1" .. claim.target
+      if claim.kind == kind and not seen[id] and not elsewhere[id] then
+        seen[id] = true
+        block[#block + 1] = "    " .. claim.target
+      end
+    end
+    if #block > 0 then
+      out[#out + 1] = "  " .. kind
+      vim.list_extend(out, block)
     end
   end
 

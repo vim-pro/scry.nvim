@@ -175,4 +175,74 @@ H.eq(plan.mark(c3, "src/lib/site.js", true), nil, "and an unplanned member still
 plan.clear()
 H.eq(plan.mark(c1, "src/pages/c/[slug].astro", true), nil, "a cleared plan marks nothing")
 
+-- 5) ECHO-PROOFING, pinned from a live playthrough. Shown a decorated
+-- member listing, the model repeated the decorations; the polluted targets
+-- matched nothing, so every member was re-added bare — doubled — and the
+-- echoed `exercises` line degraded into a note on the member above it.
+-- Saving that plan would then have demoted the spec claim to prose.
+
+-- The request shows members bare and keeps relations out of the plan's
+-- hands entirely.
+local LEDGER = mapmod.parse({
+  "feature you can record an expense",
+  "  Appends a dated amount to the ledger file.",
+  "  def lua/ledger/record.lua:add",
+  "  never",
+  "    print\\(",
+  "  exercises",
+  "    tests/record_spec.lua:a recorded expense round-trips",
+}, KINDS).features[1]
+local lreq = plan.request(LEDGER, "add a way to delete an entry", KINDS, {}, nil, function()
+  return { "-- code" }
+end)
+H.ok(lreq.user:find("  def lua/ledger/record.lua:add\n", 1, true) ~= nil, "members are listed bare")
+H.eq(lreq.user:find("%-%>"), nil, "no arrow decorations to echo")
+H.eq(lreq.user:find("CURRENT MEMBERS.-never"), nil, "a prohibition is not a plannable member")
+H.eq(lreq.user:find("CURRENT MEMBERS.-exercises"), nil, "nor is a spec claim")
+
+-- The parser strips echoed decorations and drops echoed relations.
+local echoed = plan.parse(table.concat({
+  "def lua/ledger/record.lua:add  ->  lua/ledger/record.lua",
+  "  add M.delete(path, line_number)",
+  "exercises tests/record_spec.lua:a recorded expense round-trips  ->  tests/record_spec.lua",
+  "  add a test that deletes an entry",
+  "def lua/ledger/store.lua:remove   (DOES NOT EXIST YET)",
+  "  rewrite the file without the line",
+}, "\n"), KINDS)
+H.eq(#echoed, 2, "the echoed relation is dropped, not misread")
+H.eq(echoed[1].target, "lua/ledger/record.lua:add", "an echoed arrow is stripped from the target")
+H.eq(echoed[2].target, "lua/ledger/store.lua:remove", "an echoed existence note is stripped too")
+H.eq(#echoed[1].notes, 1, "the note under the member survives")
+H.eq(echoed[1].notes[1], "add M.delete(path, line_number)", "verbatim")
+
+-- Applying that plan neither doubles members nor loses the relations.
+local buf5 = vim.api.nvim_create_buf(false, true)
+vim.api.nvim_buf_set_lines(buf5, 0, -1, false, {
+  "feature you can record an expense",
+  "  Appends a dated amount to the ledger file.",
+  "  def lua/ledger/record.lua:add",
+  "  never",
+  "    print\\(",
+  "  exercises",
+  "    tests/record_spec.lua:a recorded expense round-trips",
+})
+local lfeat = mapmod.parse(vim.api.nvim_buf_get_lines(buf5, 0, -1, false), KINDS).features[1]
+plan.apply(buf5, lfeat, KINDS, echoed)
+local after5 = vim.api.nvim_buf_get_lines(buf5, 0, -1, false)
+local text5 = table.concat(after5, "\n")
+local _, adds = text5:gsub("lua/ledger/record%.lua:add", "")
+H.eq(adds, 1, "the planned member appears exactly once")
+local reparsed5 = mapmod.parse(after5, KINDS).features[1]
+H.eq(#reparsed5.claims, 4, "two defs, one never, one exercises — nothing doubled, nothing lost")
+local by_kind = {}
+for _, c in ipairs(reparsed5.claims) do
+  by_kind[c.kind] = (by_kind[c.kind] or 0) + 1
+end
+H.eq(by_kind.never, 1, "the prohibition survives the plan")
+H.eq(by_kind.exercises, 1, "the spec claim survives as a CLAIM, not prose")
+for _, c in ipairs(reparsed5.claims) do
+  H.eq(c.target:find("%-%>"), nil, "no claim target carries an echoed arrow: " .. c.target)
+end
+plan.clear()
+
 H.done("plan_spec PASS")
