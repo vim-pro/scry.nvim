@@ -66,6 +66,10 @@ local SYSTEM = table.concat({
   "each other: if a page and the endpoint it calls must agree, make them",
   "agree.",
   "",
+  "You may also be shown the rest of the product's map and the names other",
+  "files define. That is context: call into it, match its real names and",
+  "shapes, and never invent a module or function it does not list.",
+  "",
   "OUTPUT PROTOCOL. For every file you change or create, emit:",
   "",
   OPEN .. "<path exactly as given>",
@@ -75,7 +79,8 @@ local SYSTEM = table.concat({
   "Rules:",
   "- Emit a block ONLY for files you actually change. Leave the rest out.",
   "- Emit the WHOLE file, not a diff and not an excerpt.",
-  "- Never emit a path you were not given.",
+  "- Emit blocks only for this feature's own files, listed under WHAT IT IS",
+  "  MADE OF. Context files are read-only.",
   "- No prose, no fences, no commentary outside the blocks.",
 }, "\n")
 
@@ -88,8 +93,9 @@ local SYSTEM = table.concat({
 ---@param intent string
 ---@param kinds table the kinds in force, for member paths
 ---@param read fun(path: string): string[]|nil reads a file, nil if absent
+---@param map_ scry.Map? the whole map, for read-only context
 ---@return { system: string, user: string, files: { path: string, exists: boolean }[] }
-function M.request(root, feature, intent, kinds, read)
+function M.request(root, feature, intent, kinds, read, map_)
   local mapmod = require("scry.map")
   local files, seen = {}, {}
   for _, claim in ipairs(feature.claims) do
@@ -146,6 +152,92 @@ function M.request(root, feature, intent, kinds, read)
     out[#out + 1] = "NEVER — the result must not contain text matching:"
     for _, p in ipairs(nevers) do
       out[#out + 1] = "  " .. p
+    end
+  end
+
+  -- WHAT THE CAST MAY SEE, beyond its own files. A cast that knows only the
+  -- feature invents the rest of the product: measured on a one-member
+  -- feature, the code came back requiring a module that does not exist,
+  -- reading a data shape nothing has — internally clean, externally wrong,
+  -- and honestly `✓ defined`. So the rest of the map rides along for
+  -- orientation, and every existing file the map claims outside this
+  -- feature contributes the NAMES it defines — enough to call into,
+  -- nothing to rewrite. The feature's own reach closure counts as outside
+  -- context too: code these files import is code the rewrite must keep
+  -- calling correctly.
+  --
+  -- Names, not contents. Contents stay exclusive to the feature's own
+  -- members — the only files the cast may emit — so the request stays
+  -- bounded by the map instead of the repository. Spec files contribute
+  -- nothing: an exercises claim is excluded here exactly as it is from a
+  -- cascade's code request (|scry-independence|).
+  if map_ then
+    local mapmod = require("scry.map")
+    local relations = require("scry.kinds").RELATION
+    local mine = {}
+    for _, f in ipairs(files) do
+      mine[f.path] = true
+    end
+
+    local rest = {}
+    for _, other in ipairs(map_.features or {}) do
+      if other.name ~= feature.name then
+        rest[#rest + 1] = "  feature " .. other.name
+        for _, line in ipairs(other.desc or {}) do
+          rest[#rest + 1] = "    " .. line
+        end
+        for _, claim in ipairs(other.claims) do
+          if not relations[claim.kind] then
+            rest[#rest + 1] = ("    %s %s"):format(claim.kind, claim.target)
+          end
+        end
+      end
+    end
+    if #rest > 0 then
+      out[#out + 1] = ""
+      out[#out + 1] = "THE REST OF THE PRODUCT:"
+      vim.list_extend(out, rest)
+    end
+
+    local ctx, seen_ctx = {}, {}
+    local function context_file(path)
+      if path and not mine[path] and not seen_ctx[path] then
+        seen_ctx[path] = true
+        ctx[#ctx + 1] = path
+      end
+    end
+    for _, other in ipairs(map_.features or {}) do
+      if other.name ~= feature.name then
+        for _, claim in ipairs(other.claims) do
+          if not relations[claim.kind] then
+            context_file(mapmod.claim_path(claim, kinds))
+          end
+        end
+      end
+    end
+    for _, path in ipairs(require("scry.reach").of_feature(root, feature, kinds)) do
+      context_file(path)
+    end
+
+    local surface = {}
+    local defs = require("scry.defs")
+    for _, path in ipairs(ctx) do
+      local lines = read(path)
+      local lang = lines and defs.lang_of(path)
+      if lang then
+        local names = {}
+        for _, d in ipairs(defs.parsed(table.concat(lines, "\n"), lang) or {}) do
+          names[#names + 1] = d.name
+        end
+        if #names > 0 then
+          surface[#surface + 1] = ("  %s: %s"):format(path, table.concat(names, ", "))
+        end
+      end
+    end
+    if #surface > 0 then
+      out[#out + 1] = ""
+      out[#out + 1] = "DEFINED OUTSIDE THIS FEATURE — call into these; never emit a block for them:"
+      vim.list_extend(out, surface)
     end
   end
 
@@ -506,7 +598,8 @@ function M.cast(root, buf, feature, intent, done)
     return vim.fn.readfile(full)
   end
 
-  local built = M.request(root, feature, intent, kinds, read)
+  local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(buf, 0, -1, false), kinds)
+  local built = M.request(root, feature, intent, kinds, read, map_)
   if #built.files == 0 then
     vim.notify(
       ("[scry] %s locates no files — give it members before casting across it"):format(feature.name),

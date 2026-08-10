@@ -1248,6 +1248,16 @@ files to change.
 A cast may only edit files it was shown. A path the model invents is a path
 nobody named; it is refused and reported, not written.
 
+WHAT THE CAST SEES. The feature's own files travel whole — they are the
+only files the cast may emit. Around them, read-only context: the rest of
+the map (each feature's name, prose and members) and, for every existing
+file the map claims outside this feature plus everything this feature's
+files import (|scry-reach|), the NAMES that file defines. Names, not
+contents, so the request is bounded by the map rather than the repository —
+enough for the code to call `store.read` instead of inventing a module,
+without handing the generator anything to rewrite. Spec files contribute
+nothing to any of it (|scry-independence|).
+
 THE CAST ENDS IN THE REVIEW TAB — the diff, with the map still in the room:
 >
     +--------------------------------------------+

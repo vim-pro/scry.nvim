@@ -57,6 +57,32 @@ H.ok(req.user:find("DOES NOT EXIST YET", 1, true) ~= nil, "and is marked as one 
 local vague = mapmod.parse({ "feature f", "  never print%(" }, KINDS).features[1]
 H.eq(#compose.request("/proj", vague, "x", KINDS, read).files, 0, "a prohibition is not a place to edit")
 
+-- 1b) THE REST OF THE PRODUCT RIDES ALONG, READ-ONLY. A cast that knows
+-- only its own files invents the rest: a one-member feature came back
+-- requiring a module that does not exist. With the map passed, the request
+-- carries the other features for orientation and the NAMES their existing
+-- files define — enough to call into, nothing to rewrite.
+local WHOLE = mapmod.parse({
+  "feature Tailor a checklist to your own situation",
+  "  endpoint compile",
+  "",
+  "feature keep the store honest",
+  "  The store reads and writes every list.",
+  "  def src/lib/store.lua:put",
+  "  exercises",
+  "    tests/store_spec.lua:round trip",
+}, KINDS)
+ON_DISK["src/lib/store.lua"] = { "local M = {}", "function M.put(x) end", "function M.get(k) end", "return M" }
+local target = WHOLE.features[1]
+local ctx = compose.request("/proj", target, "add a PDF export", KINDS, read, WHOLE)
+H.ok(ctx.user:find("THE REST OF THE PRODUCT", 1, true) ~= nil, "the other features are shown")
+H.ok(ctx.user:find("feature keep the store honest", 1, true) ~= nil, "by name")
+H.ok(ctx.user:find("The store reads and writes", 1, true) ~= nil, "with their prose")
+H.ok(ctx.user:find("src/lib/store.lua: M.put, M.get", 1, true) ~= nil, "an outside file contributes its defined names")
+H.eq(ctx.user:find("tests/store_spec%.lua"), nil, "another feature's spec stays out of the request entirely")
+H.eq(ctx.user:find("function M%.get"), nil, "outside files contribute names, never contents")
+H.eq(#ctx.files, 1, "and the emittable set is still only this feature's own files")
+
 -- 2) THE PARSER. Whole files, never diffs — there is no hunk to misapply.
 local parsed = compose.parse(table.concat({
   "<<<FILE src/pages/copy.astro",
