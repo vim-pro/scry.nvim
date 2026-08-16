@@ -7,6 +7,7 @@ License: MIT (see |scry-license|)
 CONTENTS                                                       *scry-contents*
 
   1. Introduction ................................ |scry-introduction|
+     First day on a real project ................. |scry-quickstart|
   2. The glass ................................... |scry-glass|
   3. The map ..................................... |scry-map|
      Altitude .................................... |scry-altitude|
@@ -84,6 +85,58 @@ built it, and this narrows the drift rather than storing the theory. See
 Three tools, three jobs: the glass is where you work (scry.nvim), the
 conjurer types (conjurer.nvim), and the list is where changes get reviewed
 (quickfix-pro).
+
+------------------------------------------------------------------------------
+FIRST DAY ON A REAL PROJECT                                  *scry-quickstart*
+
+Bringing scry to an existing repository, in the order that works:
+
+1. Open the glass: `:Scry` in the project. On a repo with no map the header
+   reads `N of N files undescribed` — that number is the starting point,
+   not a problem to clear today.
+
+2. Write `.scry/config.json` before anything else. Three keys matter on
+   day one:
+>
+    {
+      "sources": ["src/**/*.ts", "app/**", "tests/**"],
+      "test": { "cmd": ["npx", "vitest", "run"] },
+      "kinds": {
+        "route":    { "path": "src/pages/{name}.astro" },
+        "endpoint": { "path": "src/api/{name}.ts" }
+      }
+    }
+<
+   `sources` narrows what counts as product — vendored code, generated
+   files and config noise off the worklist. `test.cmd` is how ONE spec
+   runs, its path appended, exit 0 passing — `["npx","vitest","run"]`,
+   `["python","-m","pytest"]`, `["go","test"]` all fit that shape. `kinds`
+   is whatever your product is made of; skip it until a pattern is obvious.
+
+3. Describe THIS WEEK'S corner by hand, not the whole product. Write two
+   or three `feature` sentences for the part you are actually working in,
+   press `+` on each to find its members, and let the verdicts tell you
+   what you got wrong. A map of three true features beats a map of eighty
+   drafted ones.
+
+4. Add one `never` for something you genuinely care about ("never log a
+   token") and `exercises` claims for specs that already exist. Run
+   `:ScryExercise` once so `✓ done` means something.
+
+5. Work normally: `:Scry {intent}` to aim, edit the plan, `~` to cast,
+   review, `:w`. The map grows one intent at a time.
+
+6. Widen when you want to: `+` away from a feature drafts features for
+   undescribed files, a dozen at a time. Past five batches' worth it tells
+   you the size first and waits for a second `+` — on a large repo, narrow
+   `sources` before drafting instead.
+
+What to expect by language: with a treesitter grammar installed, `def`
+claims read `✓ defined`; everywhere else they read `✓ defined (text)`,
+which is weaker and says so. `never` and `module` claims work identically
+in every language ripgrep can search. Anything scry cannot answer renders
+`– unchecked`, never a pass — and `:checkhealth scry` says up front which
+of these your machine will get.
 
 ==============================================================================
 2. THE GLASS                                                      *scry-glass*

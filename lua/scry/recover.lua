@@ -41,6 +41,13 @@
 -- the pass's progress guard watches.
 local M = {}
 
+-- TWELVE, NOT FORTY. Measured against the real CLI on a forty-file batch:
+-- 112 seconds of silence, then everything at once in four. The silence is
+-- the model thinking, the CLI sends no thinking text for it, and no amount
+-- of streaming can show what is not sent — so the way to see work arrive
+-- is to ask for less of it at a time.
+local BATCH = 12
+
 --- Everything that leaves scry for a drafting pass. Pure — no buffer writes,
 --- no requests — so a spec can read exactly what the model is told.
 ---
@@ -248,6 +255,36 @@ function M.passing()
   return pass.active
 end
 
+-- A FRESH REPO IS A BIG ASK. On a project where thousands of files are
+-- undescribed, a full pass is hundreds of model calls — hours, not a
+-- moment — and the most likely first `+` on a day-one repo is exploratory.
+-- So scale is stated before it is spent: past five batches' worth, the
+-- first press says the size and the remedy, and pressing again inside a
+-- minute means you meant it.
+local armed = nil
+local ARM_BATCHES, ARM_SECONDS = 5, 60
+
+--- Should a pass over `n` undescribed files start, or say its size first?
+---@param n integer files on the worklist
+---@param now integer? os.time(), injectable for specs
+---@return string? warning nil means proceed
+function M.gate(n, now)
+  now = now or os.time()
+  if n <= BATCH * ARM_BATCHES then
+    armed = nil
+    return nil
+  end
+  if armed and now - armed < ARM_SECONDS then
+    armed = nil
+    return nil
+  end
+  armed = now
+  return ("[scry] %d files are undescribed — a full pass is ~%d batches of drafting. Narrow `sources` in .scry/config.json to the product, or + again to start."):format(
+    n,
+    math.ceil(n / BATCH)
+  )
+end
+
 --- The drafting half, separated from the command so a spec can drive it
 --- against a fake provider.
 ---@param root string
@@ -275,14 +312,8 @@ function M.draft(root, buf, map_, unclaimed)
   -- the next batch is whatever is still undescribed. Files are taken in the
   -- order divergence found them, which groups a directory's files together,
   -- so a batch tends to be one part of the product rather than a scatter.
-  -- TWELVE, NOT FORTY. Measured against the real CLI on a forty-file
-  -- batch: 112 seconds of silence, then everything at once in four. The
-  -- silence is the model thinking, the CLI sends no thinking text for it,
-  -- and no amount of streaming can show what is not sent — so the way to
-  -- see work arrive is to ask for less of it at a time. Smaller batches
-  -- start producing sooner and land in waves you can read, and iterating
-  -- costs nothing because a kept draft claims what it described.
-  local BATCH = 12
+  -- Smaller batches start producing sooner and land in waves you can read
+  -- (see BATCH above).
   local batch, remaining = unclaimed, 0
   if #unclaimed > BATCH then
     batch = vim.list_slice(unclaimed, 1, BATCH)
@@ -620,6 +651,15 @@ function M.start()
   -- and there is no by-hand mode to fall back to.
   if not pcall(require, "conjurer.operator") then
     error("[scry] conjurer.nvim is required — install vim-pro/conjurer.nvim", 0)
+  end
+
+  local mapmod = require("scry.map")
+  local map_ = mapmod.parse(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), mapmod.kinds_for(state.root))
+  local unclaimed = require("scry.divergence").unclaimed(state.root, map_, require("scry.project").resolve(state.root))
+  local warning = M.gate(#unclaimed)
+  if warning then
+    vim.notify(warning, vim.log.levels.WARN)
+    return
   end
 
   M.next_batch(state.root, state.buf, true)

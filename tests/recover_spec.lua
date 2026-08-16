@@ -405,4 +405,22 @@ H.eq(table.concat(same, "\n"), table.concat(untouched, "\n") .. "\n", "and the b
 local led = recover.consolidate({ "-- a note", "", "feature a", "  module x.lua" }, K)
 H.eq(led[1], "-- a note", "a leading comment keeps its place")
 
+-- THE GATE. On a day-one repo, thousands of files are undescribed and a
+-- full pass is hundreds of model calls. Scale is stated before it is
+-- spent: past five batches' worth the first + says the size, and pressing
+-- again inside a minute means you meant it.
+local gate = require("scry.recover").gate
+H.eq(gate(30, 1000), nil, "a small worklist just starts")
+local warn = gate(3000, 1000)
+H.ok(warn ~= nil, "a huge worklist warns first")
+H.ok(warn:find("3000", 1, true) ~= nil, "with the size: " .. warn)
+H.ok(warn:find("250", 1, true) ~= nil, "and the number of batches it means")
+H.ok(warn:find("sources", 1, true) ~= nil, "and the remedy")
+H.eq(gate(3000, 1030), nil, "pressing again inside the minute starts the pass")
+H.ok(gate(3000, 1031) ~= nil, "the confirmation was spent, not remembered")
+H.ok(gate(3000, 1200) ~= nil, "and a stale arm re-warns rather than firing")
+H.eq(gate(3000, 1210), nil, "then confirms again")
+gate(30, 2000) -- a small worklist also disarms
+H.ok(gate(3000, 2001) ~= nil, "so scale is never confirmed by a press about something else")
+
 H.done("recover_spec PASS")

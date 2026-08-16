@@ -169,7 +169,9 @@ hand-enumerate them — needs nothing installed: it follows import specifiers
 by reading files, so it works on `.astro` routes and Lua modules that no
 name resolver handles.
 
-`:Scry` to start. `:checkhealth scry` to verify.
+`:Scry` to start. `:checkhealth scry` to verify. Bringing scry to an
+existing repository — what to configure first, what to describe by hand,
+when to draft — is `:h scry-quickstart`.
 
 In the glass, `<CR>` opens what the line under the cursor is about — the code
 a claim points at, or a feature's fold. Claims jump to evidence when the last
