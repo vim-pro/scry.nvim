@@ -126,10 +126,12 @@ Bringing scry to an existing repository, in the order that works:
 5. Work normally: `:Scry {intent}` to aim, edit the plan, `~` to cast,
    review, `:w`. The map grows one intent at a time.
 
-6. Widen when you want to: `+` away from a feature drafts features for
-   undescribed files, a dozen at a time. Past five batches' worth it tells
-   you the size first and waits for a second `+` — on a large repo, narrow
-   `sources` before drafting instead.
+6. Widen when you want to: `+` away from a feature drafts features for the
+   undescribed files. On a big repo the first pass is a SURVEY — one
+   request, a handful of sea-level features over every path, coarse
+   `module` claims — announced first and confirmed with a second `+`.
+   Read it, prune it, `:w`, then `+` again later to refine corner by
+   corner. See |scry-drafting|.
 
 What to expect by language: with a treesitter grammar installed, `def`
 claims read `✓ defined`; everywhere else they read `✓ defined (text)`,
@@ -703,6 +705,18 @@ DRAFTING THE GAP ~
 
 `+` in the glass takes the unclaimed files and asks a conjurer to write features
 for them, into the glass, where you read them.
+
+TWO GRAINS, BY SIZE. A small worklist drafts file by file, a dozen per
+batch, the model reading each file before it claims it. A big one — past
+five batches' worth — starts HIGH instead: one request over every path,
+asking for the few sea-level features (five to fifteen) that say what the
+product does, files claimed coarsely with `module` members, nothing read
+that a path could answer. The first `+` on a big repo states the size and
+waits for a second press; the survey lands as one page to read, and `+`
+again later refines corner by corner with the file-grained batches. The
+survey is deliberately def-free — a definition the model has not read
+renders absent — so upgrading a coarse claim to a `def` is part of the
+refinement, not the survey.
 
 WHAT YOU SEE while it works is two lines and the conjurer narrating between
 them. The worklist goes out in the request, not into the buffer: it used to

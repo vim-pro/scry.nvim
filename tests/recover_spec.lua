@@ -414,7 +414,7 @@ H.eq(gate(30, 1000), nil, "a small worklist just starts")
 local warn = gate(3000, 1000)
 H.ok(warn ~= nil, "a huge worklist warns first")
 H.ok(warn:find("3000", 1, true) ~= nil, "with the size: " .. warn)
-H.ok(warn:find("250", 1, true) ~= nil, "and the number of batches it means")
+H.ok(warn:find("HIGH%-LEVEL") ~= nil, "and offers the high-level first pass")
 H.ok(warn:find("sources", 1, true) ~= nil, "and the remedy")
 H.eq(gate(3000, 1030), nil, "pressing again inside the minute starts the pass")
 H.ok(gate(3000, 1031) ~= nil, "the confirmation was spent, not remembered")
@@ -422,5 +422,21 @@ H.ok(gate(3000, 1200) ~= nil, "and a stale arm re-warns rather than firing")
 H.eq(gate(3000, 1210), nil, "then confirms again")
 gate(30, 2000) -- a small worklist also disarms
 H.ok(gate(3000, 2001) ~= nil, "so scale is never confirmed by a press about something else")
+
+-- THE SURVEY. A big worklist's first pass is one request over every path:
+-- few sea-level features, coarse claims, judged from names — not twelve
+-- batches of file reading.
+local wide = {}
+for i = 1, 140 do
+  wide[i] = ("src/mod%d/file%d.lua"):format(i % 9, i)
+end
+local hi = recover.build(map.parse({}), wide, { module = true, def = true }, {}, { "lua" }, true)
+H.ok(hi.lines[1]:find("surveying 140", 1, true) ~= nil, "the placeholder says what kind of pass this is")
+H.ok(hi.intent:find("five to fifteen", 1, true) ~= nil, "few features, stated as a number")
+H.ok(hi.intent:find("Do not write `def` claims in this pass", 1, true) ~= nil, "no defs the model has not read")
+H.ok(hi.intent:find("do NOT read every file", 1, true) ~= nil, "breadth over depth, said outright")
+H.ok(hi.intent:find("src/mod4/file139.lua", 1, true) ~= nil, "the whole worklist travels, not a batch")
+local lo = recover.build(map.parse({}), { "src/a.lua" }, { module = true, def = true }, {}, { "lua" })
+H.eq(lo.intent:find("five to fifteen", 1, true), nil, "a small pass keeps the file-grained rules")
 
 H.done("recover_spec PASS")

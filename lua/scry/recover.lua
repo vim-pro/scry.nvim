@@ -62,7 +62,10 @@ local BATCH = 12
 ---@param examples table<string, string[]>? real names per kind, from disk
 ---@param def_langs string[]? languages a `def` can actually be decided in
 ---@return { lines: string[], intent: string }
-function M.build(map_, unclaimed, kindset, examples, def_langs)
+---@param survey boolean? one high-level pass over the whole worklist:
+---  few sea-level features, coarse claims, judged from paths — the right
+---  first contact with a repo too big to read file by file.
+function M.build(map_, unclaimed, kindset, examples, def_langs, survey)
   -- WHAT IS ALREADY DESCRIBED, so a batch can add to it instead of
   -- inventing alongside it. The most recent come first: a pass works
   -- through a project in divergence's order, so the features written last
@@ -92,7 +95,8 @@ function M.build(map_, unclaimed, kindset, examples, def_langs)
   -- not. It travels in the request instead, and what is left here is a
   -- place for the narration to stream into while the work happens.
   local lines = {
-    "-- scry: drafting features for " .. #unclaimed .. " undescribed file(s)…",
+    survey and ("-- scry: surveying " .. #unclaimed .. " undescribed file(s) at high level…")
+      or ("-- scry: drafting features for " .. #unclaimed .. " undescribed file(s)…"),
     "-- Reject to discard. Nothing below is a belief until you edit it.",
   }
 
@@ -183,12 +187,24 @@ function M.build(map_, unclaimed, kindset, examples, def_langs)
     "a claim already is. Name it the way someone using the thing would.",
     "",
     "RULES:",
-    "- Every file listed above must be named by at least one claim.",
-    "- Claims describe what is THERE, not what should be. Do not draft a",
-    "  claim you have not read the definition for; it would render absent and",
-    "  read as work nobody asked for.",
-    "- A feature is something a PERSON CAN DO, not a file. One feature",
-    "  usually takes several files. Do not write a feature per file.",
+    survey and table.concat({
+      "- This is a FIRST, HIGH-LEVEL pass over the whole project. Write the",
+      "  FEW features — five to fifteen — that say what this product does at",
+      "  user level. Breadth over depth.",
+      "- Judge from the paths and names. Read a file only when its path",
+      "  leaves you genuinely unsure; do NOT read every file.",
+      "- Claim files coarsely: `module <path>` (or a kind member) under the",
+      "  feature each file serves. Do not write `def` claims in this pass —",
+      "  a definition you have not read renders absent.",
+      "- Every file listed above must be named by at least one claim.",
+    }, "\n") or table.concat({
+      "- Every file listed above must be named by at least one claim.",
+      "- Claims describe what is THERE, not what should be. Do not draft a",
+      "  claim you have not read the definition for; it would render absent and",
+      "  read as work nobody asked for.",
+      "- A feature is something a PERSON CAN DO, not a file. One feature",
+      "  usually takes several files. Do not write a feature per file.",
+    }, "\n"),
     "- These features already exist" .. (more > 0 and (" (%d most recent of %d)"):format(#names, #map_.features) or "") .. ":",
     (#names > 0 and ("    " .. table.concat(names, "\n    ")) or "    (none yet)"),
     "- If a file serves one of them, ADD TO IT: write that feature's name",
@@ -279,9 +295,8 @@ function M.gate(n, now)
     return nil
   end
   armed = now
-  return ("[scry] %d files are undescribed — a full pass is ~%d batches of drafting. Narrow `sources` in .scry/config.json to the product, or + again to start."):format(
-    n,
-    math.ceil(n / BATCH)
+  return ("[scry] %d files are undescribed — + again drafts a HIGH-LEVEL first pass: one request, a handful of sea-level features over all of them. (Or narrow `sources` in .scry/config.json first.)"):format(
+    n
   )
 end
 
@@ -292,7 +307,7 @@ end
 ---@param map_ scry.Map
 ---@param unclaimed string[]
 ---@return table built
-function M.draft(root, buf, map_, unclaimed)
+function M.draft(root, buf, map_, unclaimed, survey)
   -- Real names per kind, off disk, so the draft can see the shape rather
   -- than be told about it.
   local kindset = require("scry.map").kinds_for(root)
@@ -314,15 +329,18 @@ function M.draft(root, buf, map_, unclaimed)
   -- so a batch tends to be one part of the product rather than a scatter.
   -- Smaller batches start producing sooner and land in waves you can read
   -- (see BATCH above).
+  -- A SURVEY TAKES THE WHOLE LIST. Its request carries paths, not file
+  -- contents, and its instructions say not to read them — so the size that
+  -- made a whole-list batch impossible does not apply.
   local batch, remaining = unclaimed, 0
-  if #unclaimed > BATCH then
+  if not survey and #unclaimed > BATCH then
     batch = vim.list_slice(unclaimed, 1, BATCH)
     remaining = #unclaimed - BATCH
   end
   -- The resolver in force is what decides whether a `def` is worth writing:
   -- it is the thing that would have to check one.
   local resolver = require("scry.resolver").get(require("scry.project").resolve(root).resolver)
-  local built = M.build(map_, batch, kindset, examples, resolver and resolver.def_languages)
+  local built = M.build(map_, batch, kindset, examples, resolver and resolver.def_languages, survey)
 
   -- A FAILED DRAFT LEAVES ITS BLOCK, by design: the notification says `u`
   -- clears it. Re-running instead of undoing then stacked a second block on
@@ -332,7 +350,7 @@ function M.draft(root, buf, map_, unclaimed)
   -- means anything.
   local buflines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
   for i = #buflines, 1, -1 do
-    if buflines[i]:match("^%-%- scry: drafting features for ") then
+    if buflines[i]:match("^%-%- scry: drafting features for ") or buflines[i]:match("^%-%- scry: surveying ") then
       local last = i
       while last < #buflines and buflines[last + 1]:match("^%-%- Reject to discard") do
         last = last + 1
@@ -383,7 +401,8 @@ function M.draft(root, buf, map_, unclaimed)
     -- placeholder — which read, on screen, as scry conjuring a sentence
     -- about a placeholder. What a person wants to know is which files and
     -- how far along the pass is.
-    label = ("drafting %d of %d undescribed files (batch %d)"):format(#batch, #batch + remaining, pass.batches),
+    label = survey and ("surveying %d undescribed files at high level"):format(#batch)
+      or ("drafting %d of %d undescribed files (batch %d)"):format(#batch, #batch + remaining, pass.batches),
     note = ("scry: drafting features for %d file(s) no feature claims"):format(#unclaimed),
     -- Passing on_done is what keeps conjurer's review tab shut (see the
     -- header) and is also the moment scry can count what the batch added.
@@ -455,7 +474,18 @@ function M.draft(root, buf, map_, unclaimed)
       -- The worklist is the only number that has to reach zero, so it is
       -- the one the guard watches.
       if pass.active then
-        if #drafted == 0 then
+        if survey then
+          -- A survey is one request, not a loop: what it wrote is a page of
+          -- sea-level features to READ, and rolling straight into
+          -- file-grained batches would bury it under more text.
+          pass.active = false
+          pass.claims = pass.claims + #drafted
+          vim.notify(
+            ("[scry] high-level pass landed (%d claims) — read it, edit what is right, `u` discards; + again goes finer"):format(
+              #drafted
+            )
+          )
+        elseif #drafted == 0 then
           pass.active = false
           vim.notify(("[scry] draft pass ended: a batch described nothing new (%d claims over %d batches)"):format(
             pass.claims,
@@ -605,12 +635,22 @@ function M.next_batch(root, buf, begin)
   end
   pass.unclaimed = #unclaimed
 
+  -- A BIG WORKLIST STARTS HIGH. Past five batches' worth of undescribed
+  -- files, the first pass is a survey: one request over every path, a
+  -- handful of sea-level features, coarse claims — the shape you want to
+  -- read first anyway. Refinement comes later, corner by corner, once the
+  -- worklist is small enough for the file-grained batches to make sense.
+  local survey = begin and #unclaimed > BATCH * 5
+
   if pass.batches == 0 then
-    vim.notify(("[scry] scrying %d undescribed file(s) of %d"):format(#unclaimed, total))
+    vim.notify(
+      survey and ("[scry] surveying %d undescribed file(s) at high level — one request"):format(#unclaimed)
+        or ("[scry] scrying %d undescribed file(s) of %d"):format(#unclaimed, total)
+    )
   end
   pass.batches = pass.batches + 1
   vim.api.nvim_buf_call(buf, function()
-    M.draft(root, buf, map_, unclaimed)
+    M.draft(root, buf, map_, unclaimed, survey)
   end)
 end
 
