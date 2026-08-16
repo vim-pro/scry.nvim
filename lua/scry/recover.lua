@@ -295,7 +295,7 @@ function M.gate(n, now)
     return nil
   end
   armed = now
-  return ("[scry] %d files are undescribed — + again drafts a HIGH-LEVEL first pass: one request, a handful of sea-level features over all of them. (Or narrow `sources` in .scry/config.json first.)"):format(
+  return ("[scry] %d files are undescribed. + again drafts a HIGH-LEVEL first pass — one request, a handful of sea-level features over all of them. If many of these are not really the product (vendored, generated, fixtures), :ScrySources first: it opens the list of what counts, and you delete lines."):format(
     n
   )
 end

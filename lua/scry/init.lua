@@ -70,6 +70,14 @@ end, {
   bang = true,
   desc = "Where the code nothing describes is (! for every file, however many)",
 })
+
+-- The remedy the header keeps pointing at ("narrow `sources`"), as a
+-- keystroke instead of a manual chapter: the config opens pre-seeded with
+-- what currently counts, and narrowing is deleting lines.
+vim.api.nvim_create_user_command("ScrySources", function()
+  local root = require("scry.glass")._state.root or vim.fn.getcwd()
+  require("scry.project").edit_sources(root)
+end, { desc = "Edit what counts as product (.scry/config.json, pre-seeded)" })
 -- A pass runs until the project is described, which on a large one is a
 -- great many requests. Ending it is a command rather than a prompt because
 -- the answer is almost always "keep going" and being asked every twelve

@@ -56,6 +56,55 @@ function M.load(root)
   return out, nil
 end
 
+--- A starter `sources` list, read off the repo itself: one glob per
+--- top-level directory that has files, root-level files by name. Narrowing
+--- is then DELETING LINES — the one edit nobody needs a manual for.
+---@param files string[] repo-relative, from divergence.sources
+---@return string[] globs
+function M.sources_template(files)
+  local dirs, singles, seen = {}, {}, {}
+  for _, path in ipairs(files) do
+    local top = path:match("^([^/]+)/")
+    if top then
+      if not seen[top .. "/"] then
+        seen[top .. "/"] = true
+        dirs[#dirs + 1] = top .. "/**"
+      end
+    elseif not seen[path] then
+      seen[path] = true
+      singles[#singles + 1] = path
+    end
+  end
+  table.sort(dirs)
+  table.sort(singles)
+  vim.list_extend(dirs, singles)
+  return dirs
+end
+
+--- Open `.scry/config.json` for editing — created in the buffer (not on
+--- disk) when absent, pre-seeded with a `sources` list read off the repo.
+--- The remedy for "too many files" is a keystroke away and lands as
+--- editable text: delete the lines that are not product, then `:w`.
+---@param root string
+function M.edit_sources(root)
+  local path = root .. "/.scry/config.json"
+  vim.fn.mkdir(root .. "/.scry", "p")
+  vim.cmd("edit " .. vim.fn.fnameescape(path))
+  if vim.fn.filereadable(path) == 1 then
+    return
+  end
+  local files = require("scry.divergence").sources(root, M.resolve(root))
+  local lines = { "{", '  "sources": [' }
+  local globs = M.sources_template(files)
+  for i, g in ipairs(globs) do
+    lines[#lines + 1] = ('    "%s"%s'):format(g, i < #globs and "," or "")
+  end
+  lines[#lines + 1] = "  ]"
+  lines[#lines + 1] = "}"
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+  vim.notify("[scry] every line is what counts as product — delete what is not, then :w  (:h scry-project-config)")
+end
+
 --- The config that applies to `root`: your setup() with the project's own
 --- keys layered on top. The project wins for the keys it owns, because it
 --- knows things your vimrc cannot.

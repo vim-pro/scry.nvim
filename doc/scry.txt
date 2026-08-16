@@ -95,8 +95,9 @@ Bringing scry to an existing repository, in the order that works:
    reads `N of N files undescribed` — that number is the starting point,
    not a problem to clear today.
 
-2. Write `.scry/config.json` before anything else. Three keys matter on
-   day one:
+2. Write `.scry/config.json` before anything else — |:ScrySources| starts
+   it for you, pre-seeded with what the repo contains, and narrowing is
+   deleting lines. Three keys matter on day one:
 >
     {
       "sources": ["src/**/*.ts", "app/**", "tests/**"],
@@ -1398,6 +1399,14 @@ thing here.
                         command in scry that executes your code. With a
                         feature name, runs only that feature's specs.
                         See |scry-exercised|.
+                                                                *:ScrySources*
+:ScrySources            Edit what counts as product. Opens
+                        `.scry/config.json` — pre-seeded, when the file does
+                        not exist yet, with a `sources` list read off the
+                        repo: one glob per top-level directory, root files
+                        by name. Narrowing is deleting lines, then `:w`.
+                        Nothing touches disk until you write it. See
+                        |scry-project-config|.
 
 :Conjure            Turn the absent claim under the cursor into quickfix
                         work and hand it to conjurer, with the feature's

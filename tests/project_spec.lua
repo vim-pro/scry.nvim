@@ -38,6 +38,21 @@ H.eq(resolved.test.cmd[1], "./scripts/test", "and its test command")
 H.eq(resolved.resolver, "ts_rg", "and its resolver")
 H.eq(resolved.map_path, "docs/product.scry", "and where its map lives")
 
+-- 3b) THE SOURCES TEMPLATE. "Narrow `sources`" is only a remedy if there
+-- is something to narrow: the starter list is read off the repo — one glob
+-- per top-level directory, root files by name — so narrowing is deleting
+-- lines.
+local tpl = project.sources_template({
+  "lua/a/b.lua",
+  "lua/c.lua",
+  "tests/x_spec.lua",
+  "web/app.js",
+  "README.md",
+  "render.yaml",
+})
+H.eq(table.concat(tpl, " "), "lua/** tests/** web/** README.md render.yaml", "dirs as globs, root files by name, sorted")
+H.eq(#project.sources_template({}), 0, "an empty repo suggests nothing")
+
 -- 4) unknown keys are ignored quietly. A newer scry writing a key this one
 -- does not know must not break the older one.
 config_json({ sources = { "a/**" }, some_future_key = 42 })
