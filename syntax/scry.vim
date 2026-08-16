@@ -35,9 +35,15 @@ syn match scryHeading "^\%(feature\s\)\@!\S.*$"
 " GRAMMAR EXISTS ONLY INSIDE A FEATURE. map.parse skips every line until the
 " first `feature`, so a `contains` above it opens nothing and the target
 " under it is not a claim. Both are prose and must look like it.
+" A flush-left line ends the block — the next feature, or a heading. Without
+" the second end, a heading between features sat INSIDE the previous block's
+" region, where only the contains list may match, and the same heading
+" rendered as structure or as dimmed prose depending on nothing but its
+" position.
 syn region scryFeatureBlock
       \ start="^feature\s"
       \ end="^feature\s"me=s-1
+      \ end="^\%(feature\s\)\@!\S"me=s-1
       \ keepend
       \ contains=scryFeatureLine,scryDescription,scryIntent,scrySectionBlock,scryNeverBlock,scryMemberLine,scryProse
 

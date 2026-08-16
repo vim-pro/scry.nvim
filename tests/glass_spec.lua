@@ -327,6 +327,53 @@ H.eq(glass.foldexpr(6), "0", "a heading stays outside every fold")
 H.eq(glass.foldexpr(7), "0", "so does the blank under it")
 H.eq(glass.foldexpr(9), "1", "and the next body folds as ever")
 
+-- ...and a heading is a heading WHEREVER it sits. The feature-block syntax
+-- region ran to the next `feature` line, so a heading between features was
+-- inside the previous block — where only the contains list may match — and
+-- the same line rendered as structure or as dimmed prose depending on
+-- nothing but its position.
+vim.cmd("syntax enable")
+local hroot = vim.fn.tempname()
+vim.fn.mkdir(hroot .. "/.scry", "p")
+vim.fn.writefile({
+  "Top heading",
+  "",
+  "feature one",
+  "  Prose about it.",
+  "  module a.lua",
+  "",
+  "Mid heading",
+  "",
+  "feature two",
+  "  module b.lua",
+}, hroot .. "/.scry/map.scry")
+vim.bo[glass._state.buf].modified = false
+require("scry.glass").open(hroot)
+H.ok(H.wait(function()
+  return glass._state.root == hroot and glass._state.report ~= nil
+end, 8000), "the heading map opened")
+-- The suite runs --noplugin, so the FileType-driven syntax load never
+-- fired for this buffer; source it directly.
+vim.api.nvim_buf_call(glass._state.buf, function()
+  vim.cmd("setlocal syntax=scry")
+end)
+local function syn_of(needle)
+  return vim.api.nvim_buf_call(glass._state.buf, function()
+    for l = 1, vim.api.nvim_buf_line_count(0) do
+      if vim.fn.getline(l):find(needle, 1, true) then
+        return vim.fn.synIDattr(vim.fn.synID(l, 1, true), "name")
+      end
+    end
+    return "(line not found)"
+  end)
+end
+H.eq(syn_of("Top heading"), "ScryHeading", "a heading above the first feature is a heading")
+H.eq(syn_of("Mid heading"), "ScryHeading", "and so is one between features — position changes nothing")
+-- The harness runs --noplugin, where the description's group resolves
+-- differently than in a live session; the boundary this test owns is that
+-- indented prose is never promoted to a heading.
+H.ok(syn_of("Prose about it") ~= "ScryHeading", "indented prose is never a heading")
+
 -- One feature differing: the words come back, and only where they earn it.
 staged({
   "feature Work through a checklist",
