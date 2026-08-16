@@ -27,6 +27,11 @@ let s:kinds = get(b:, "scry_kinds", 'module\|def')
 " not recognize, and it is never checked.
 syn match scryProse "^.*$"
 
+" A flush-left line of prose between features is a HEADING — the one level
+" of grouping the map has. Still prose to the parser: never checked, never
+" a claim, lossless. It only reads differently.
+syn match scryHeading "^\%(feature\s\)\@!\S.*$"
+
 " GRAMMAR EXISTS ONLY INSIDE A FEATURE. map.parse skips every line until the
 " first `feature`, so a `contains` above it opens nothing and the target
 " under it is not a claim. Both are prose and must look like it.
@@ -84,6 +89,7 @@ execute 'syn match scryMemberLine "^  \%(' . s:kinds . '\)\s\+\S.*$" contained'
 execute 'syn match scryKind "^  \zs\%(' . s:kinds . '\)\ze\s" contained'
 
 hi def link scryProse ScryProse
+hi def link scryHeading ScryHeading
 hi def link scryDescription ScryDescription
 hi def link scryIntent ScryIntent
 hi def link scryKeyword ScryKeyword

@@ -433,6 +433,7 @@ end
 local hi = recover.build(map.parse({}), wide, { module = true, def = true }, {}, { "lua" }, true)
 H.ok(hi.lines[1]:find("surveying 140", 1, true) ~= nil, "the placeholder says what kind of pass this is")
 H.ok(hi.intent:find("five to fifteen", 1, true) ~= nil, "few features, stated as a number")
+H.ok(hi.intent:find("three to six groups", 1, true) ~= nil, "grouped under flush-left headings")
 H.ok(hi.intent:find("Do not write `def` claims in this pass", 1, true) ~= nil, "no defs the model has not read")
 H.ok(hi.intent:find("do NOT read every file", 1, true) ~= nil, "breadth over depth, said outright")
 H.ok(hi.intent:find("src/mod4/file139.lua", 1, true) ~= nil, "the whole worklist travels, not a batch")

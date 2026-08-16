@@ -309,6 +309,8 @@ vim.api.nvim_buf_set_lines(fb, 0, -1, false, {
   "",
   "  module a.lua",
   "",
+  "getting on the water",
+  "",
   "feature two",
   "  module b.lua",
 })
@@ -317,7 +319,13 @@ glass._state.buf = fb
 H.eq(glass.foldexpr(1), ">1", "a feature opens a fold")
 H.eq(glass.foldexpr(3), "1", "a blank inside the body folds with it")
 H.eq(glass.foldexpr(5), "0", "the separator blank stays outside — the air between closed folds")
-H.eq(glass.foldexpr(7), "1", "and the next body folds as ever")
+-- ONE LEVEL OF GROUPING. A flush-left prose line between features is a
+-- heading: still prose to the parser, but it stays outside every fold —
+-- folded into the block above, it would vanish from the closed view it
+-- exists to organize.
+H.eq(glass.foldexpr(6), "0", "a heading stays outside every fold")
+H.eq(glass.foldexpr(7), "0", "so does the blank under it")
+H.eq(glass.foldexpr(9), "1", "and the next body folds as ever")
 
 -- One feature differing: the words come back, and only where they earn it.
 staged({

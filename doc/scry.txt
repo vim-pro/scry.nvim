@@ -236,6 +236,11 @@ The map is plain text, versioned with the code it describes (default
   belongs on that line — it is the one judgment the map asks of you.
 - `contains`, `never`, `exercises` open a claim block; claims are
   indented four spaces and are that feature's EVIDENCE, never its peers.
+- A flush-left line of prose between features is a HEADING — the map's one
+  level of grouping. Still prose to the parser (never checked, never a
+  claim), but it renders apart and stays outside every fold, so fifteen
+  closed features read as a few labeled groups instead of one list.
+  Adding a group is typing a line of text.
 - **Everything else is prose.** There are no parse errors: a line is a claim
   or it is prose, preserved verbatim, never checked, never marked. Write as
   much explanation as you like — the sentences carry the theory, the claims
@@ -1500,6 +1505,9 @@ ScryEvidence            Evidence lines under a violated prohibition.
 ScryProse               Prose — everything the parser did not recognize as
                         grammar, and therefore everything never checked.
                         Default: Comment.
+                                                             *hl-ScryHeading*
+ScryHeading             A flush-left prose line between features — the map's
+                        one level of grouping. Default: Type.
                                                               *hl-ScryAction*
 ScryAction              The header's what-to-do-next hint. Default:
                         DiagnosticInfo.

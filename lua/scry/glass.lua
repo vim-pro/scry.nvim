@@ -31,6 +31,10 @@ local HL = {
   ScryHeaderDim = "Comment",
   ScryEvidence = "Comment",
   ScryProse = "Comment",
+  -- A flush-left prose line between features: the map's one level of
+  -- grouping. Type, like the section keywords — a sparse structural hue,
+  -- deliberately quieter than the bold feature names it organizes.
+  ScryHeading = "Type",
   -- The feature's own description is the one piece of writing a reader most
   -- needs and it was dimmed like everything else. Normal, not Comment: it
   -- is not an aside, it is the sentence the feature is.
@@ -622,6 +626,12 @@ function M.foldexpr(lnum)
   if not first or lnum < first then
     return "0"
   end
+  -- A HEADING STAYS OUTSIDE EVERY FOLD. Flush-left prose between features
+  -- is the map's one level of grouping, and folded into the block above it
+  -- would vanish from exactly the view it exists to organize.
+  if line:match("^%S") then
+    return "0"
+  end
   -- A BLOCK'S TRAILING BLANKS STAY OUTSIDE THE FOLD. Folding them in
   -- stacked every closed feature flush against the next — fifteen rows
   -- reading as one blob, and an opened feature overflowing into it with no
@@ -634,7 +644,9 @@ function M.foldexpr(lnum)
     for i = lnum + 1, last do
       local ahead = vim.fn.getline(i)
       if vim.trim(ahead) ~= "" then
-        return ahead:match("^feature%s") and "0" or "1"
+        -- Air before a feature or a heading is the separator; a blank in
+        -- the middle of a body (next non-blank still indented) folds.
+        return ahead:match("^%S") and "0" or "1"
       end
     end
     return "0"
