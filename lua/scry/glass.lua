@@ -1071,8 +1071,10 @@ function M.open(root)
     -- everything else — `]d~` is "fix the next broken thing", and `.`
     -- repeats that.
     --
-    -- ]d/[d are Neovim's jump-to-#define, which is C-specific and useless
-    -- here, so the buffer-local override costs nothing.
+    -- ]d/[d are Neovim's next/previous-diagnostic keys, and the glass has
+    -- no diagnostics — verdicts ARE its diagnostics — so the buffer-local
+    -- override costs nothing and lands on the muscle memory that already
+    -- means "next thing wrong here".
     for lhs, dir in pairs({ ["]d"] = 1, ["[d"] = -1 }) do
       vim.keymap.set("n", lhs, function()
         M.wants_attention(dir)
