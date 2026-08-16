@@ -290,7 +290,34 @@ local uniform_first = fold_line(1)
 H.eq(uniform_first:find("unread"), nil, "a state every row shares is not printed on every row")
 H.eq(uniform_first:find(" of "), nil, "nor is a fraction that says nothing is missing")
 H.ok(uniform_first:find("Work through a checklist", 1, true) ~= nil, "the name survives")
-H.ok(uniform_first:find("▍", 1, true) ~= nil, "and the size is a shape rather than a word")
+-- ONE CELL OF MAGNITUDE, scaled to the map. Ten ▍ blocks per row made a
+-- fifteen-feature page's dominant ink a brick wall that read as a
+-- rendering fault. The biggest feature is █; the rest sit under it.
+H.ok(uniform_first:find("█", 1, true) ~= nil, "the biggest feature is full height")
+local uniform_second = fold_line(4)
+H.ok(uniform_second:find("▄", 1, true) ~= nil, "half the members is half the height")
+H.eq(uniform_first:find("▍", 1, true), nil, "the brick wall is gone")
+H.eq(uniform_first:find("…", 1, true), nil, "and nothing trails off")
+
+-- A BLOCK'S TRAILING BLANKS STAY OUTSIDE THE FOLD. Folded in, every closed
+-- feature sat flush against the next — a blob — and an opened one had no
+-- boundary. A blank inside a body still folds.
+local fb = vim.api.nvim_create_buf(false, true)
+vim.api.nvim_buf_set_lines(fb, 0, -1, false, {
+  "feature one",
+  "  prose about it",
+  "",
+  "  module a.lua",
+  "",
+  "feature two",
+  "  module b.lua",
+})
+vim.api.nvim_win_set_buf(0, fb)
+glass._state.buf = fb
+H.eq(glass.foldexpr(1), ">1", "a feature opens a fold")
+H.eq(glass.foldexpr(3), "1", "a blank inside the body folds with it")
+H.eq(glass.foldexpr(5), "0", "the separator blank stays outside — the air between closed folds")
+H.eq(glass.foldexpr(7), "1", "and the next body folds as ever")
 
 -- One feature differing: the words come back, and only where they earn it.
 staged({

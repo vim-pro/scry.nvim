@@ -145,15 +145,20 @@ local function survey(map, report, root)
   return { uniform = n <= 1 }
 end
 
--- The blast radius of a `~`, as a shape rather than a word. A magnitude read
--- as a length is faster than one read as "5 members", and this is the number
--- you want before aiming an operator at a capability.
-local BAR_MAX = 10
-local function bar(n)
+-- The blast radius of a `~`, one cell tall. It used to be a row of ▍
+-- blocks, up to ten per feature plus an ellipsis — and on a fifteen-feature
+-- map the closed page's dominant ink was a brick wall of bars that read as
+-- a rendering fault, burying the sentences the fold exists to show. A
+-- magnitude read as HEIGHT costs one cell: the feature with the most
+-- members is █, the rest scale under it, and a map of equal features goes
+-- quiet at one even level.
+local STEPS = { "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█" }
+local function bar(n, biggest)
   if n <= 0 then
     return ""
   end
-  return ("▍"):rep(math.min(n, BAR_MAX)) .. (n > BAR_MAX and "…" or "")
+  local idx = math.ceil(n / math.max(biggest or n, 1) * #STEPS)
+  return STEPS[math.max(1, math.min(idx, #STEPS))]
 end
 
 --- The verdict's words, or nothing, under the same rule everywhere.
@@ -617,6 +622,23 @@ function M.foldexpr(lnum)
   if not first or lnum < first then
     return "0"
   end
+  -- A BLOCK'S TRAILING BLANKS STAY OUTSIDE THE FOLD. Folding them in
+  -- stacked every closed feature flush against the next — fifteen rows
+  -- reading as one blob, and an opened feature overflowing into it with no
+  -- boundary of its own. The separator is real air in the file; the fold
+  -- must not eat it. A blank INSIDE a body (between prose and members,
+  -- inside a never block) still folds, because the next non-blank line is
+  -- not a feature.
+  if vim.trim(line) == "" then
+    local last = vim.api.nvim_buf_line_count(0)
+    for i = lnum + 1, last do
+      local ahead = vim.fn.getline(i)
+      if vim.trim(ahead) ~= "" then
+        return ahead:match("^feature%s") and "0" or "1"
+      end
+    end
+    return "0"
+  end
   return "1"
 end
 
@@ -659,9 +681,10 @@ function M.foldtext(at)
   local line = summary(at)
   local feature = owning_feature(at)
 
-  local widest = 0
+  local widest, biggest = 0, 0
   for _, f in ipairs((state.map or {}).features or {}) do
     widest = math.max(widest, vim.fn.strdisplaywidth(summary(f.lnum)))
+    biggest = math.max(biggest, #f.claims)
   end
   local column = math.min(widest + 3, 72)
   local gap = column - vim.fn.strdisplaywidth(line)
@@ -699,7 +722,7 @@ function M.foldtext(at)
   end
 
   if n > 0 then
-    out[#out + 1] = { "  " .. bar(n), "ScryIntent" }
+    out[#out + 1] = { "  " .. bar(n, biggest), "ScryIntent" }
   end
   return out
 end

@@ -163,6 +163,8 @@ function M.build(map_, unclaimed, kindset, examples, def_langs, survey)
     "    two-space-indented prose: one short paragraph, what it does and why",
     "    <kind> <name>",
     "    <kind> <name>",
+    "  (one blank line between features; prose lines stay two-space indented,",
+    "   never flush left, even when they wrap)",
     "",
     "A MEMBER NAMES A TYPED OBJECT. Reach for the kinds that describe the",
     "PRODUCT before the ones that describe the code — a route or a command is",
