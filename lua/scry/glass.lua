@@ -234,6 +234,42 @@ function M.current_tally()
   return state.tally
 end
 
+-- Air above an OPENED feature whose neighbor above is folded shut. The real
+-- blank between them lives at the END of the closed block, inside its fold,
+-- so an unfolded feature sat flush against the row above it. Fold state is
+-- per-window and changes without any buffer event, so this is its own pass,
+-- run after render and after <Tab> toggles a fold.
+local air_ns = vim.api.nvim_create_namespace("scry.air")
+
+function M.breathe()
+  if not (state.buf and vim.api.nvim_buf_is_valid(state.buf)) then
+    return
+  end
+  vim.api.nvim_buf_clear_namespace(state.buf, air_ns, 0, -1)
+  local win
+  for _, w in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_get_buf(w) == state.buf then
+      win = w
+      break
+    end
+  end
+  if not win then
+    return
+  end
+  vim.api.nvim_win_call(win, function()
+    for _, f in ipairs((state.map or {}).features or {}) do
+      for _, l in ipairs(f.lnums or { f.lnum }) do
+        if l > 1 and vim.fn.foldclosed(l) == -1 and vim.fn.foldclosed(l - 1) ~= -1 then
+          pcall(vim.api.nvim_buf_set_extmark, state.buf, air_ns, l - 1, 0, {
+            virt_lines = { { { "", "NonText" } } },
+            virt_lines_above = true,
+          })
+        end
+      end
+    end
+  end)
+end
+
 -- ---------------------------------------------------------------------------
 -- buffer + rendering
 -- ---------------------------------------------------------------------------
@@ -299,8 +335,27 @@ function M.render()
   -- This is quickfix-pro's argument about the display line, applied to the
   -- glass: alignment is not decoration, it is what makes a list scannable.
   local lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
+  -- AN OPEN BLOCK NESTS. Body lines carry a two-cell inline indent, so an
+  -- unfolded feature's prose and members sit visibly under its header
+  -- instead of crowding the same left edge. The marks are unconditional —
+  -- inside a closed fold they are simply never drawn — and every width
+  -- below accounts for them, so the verdict column stays a column.
+  local INDENT = 2
+  local function indented(text)
+    return text:match("^%s+%S") ~= nil
+  end
   local function width_of(lnum)
-    return vim.fn.strdisplaywidth(lines[lnum] or "")
+    local text = lines[lnum] or ""
+    return vim.fn.strdisplaywidth(text) + (indented(text) and INDENT or 0)
+  end
+  for lnum, text in ipairs(lines) do
+    if indented(text) then
+      pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, lnum - 1, 0, {
+        virt_text = { { (" "):rep(INDENT), "ScryHeaderDim" } },
+        virt_text_pos = "inline",
+        right_gravity = false,
+      })
+    end
   end
   local widest = 0
   for _, feature in ipairs(state.map.features) do
@@ -501,6 +556,8 @@ function M.render()
       pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, claim.lnum - 1, 0, mark)
     end
   end
+
+  M.breathe()
 
   -- A winbar expression is only re-evaluated on redraw, and a check settles
   -- asynchronously — so the counts appeared only once some keypress
@@ -1112,6 +1169,7 @@ function M.open(root)
       end
       if vim.fn.getline("."):match("^feature%s") then
         pcall(vim.cmd, "normal! za")
+        M.breathe()
       end
     end, { buffer = buf, desc = "scry: peek the diff here, or fold this feature" })
 

@@ -335,6 +335,54 @@ H.eq(glass.foldexpr(9), "1", "and the next body folds as ever")
 H.eq(glass.foldexpr(10), "1", "a blank between two features folds away in the scan")
 H.eq(glass.foldexpr(11), ">1", "and the next feature still opens its own fold")
 
+-- AN OPEN FEATURE GETS ITS AIR BACK. The blank between two features lives
+-- at the end of the closed block above, inside its fold — so an unfolded
+-- feature sat flush against the folded row over it. breathe() is the
+-- fold-state pass: a virtual blank above an open feature whose neighbor is
+-- shut, cleared again when it closes.
+local aroot = vim.fn.tempname()
+vim.fn.mkdir(aroot .. "/.scry", "p")
+vim.fn.writefile({
+  "feature alpha",
+  "  module a.lua",
+  "",
+  "feature beta",
+  "  module b.lua",
+}, aroot .. "/.scry/map.scry")
+vim.bo[glass._state.buf].modified = false
+require("scry.glass").open(aroot)
+H.ok(H.wait(function()
+  return glass._state.root == aroot and glass._state.report ~= nil
+end, 8000), "the air map opened")
+local air_ns = vim.api.nvim_get_namespaces()["scry.air"]
+local function air_marks()
+  return #vim.api.nvim_buf_get_extmarks(glass._state.buf, air_ns, 0, -1, {})
+end
+local awin = vim.fn.bufwinid(glass._state.buf)
+local function beta_line()
+  for i = 1, vim.api.nvim_buf_line_count(glass._state.buf) do
+    if vim.api.nvim_buf_get_lines(glass._state.buf, i - 1, i, false)[1]:match("^feature beta") then
+      return i
+    end
+  end
+end
+vim.api.nvim_win_call(awin, function()
+  vim.cmd("normal! zM")
+end)
+glass.breathe()
+H.eq(air_marks(), 0, "everything closed: the scan keeps its tightness")
+vim.api.nvim_win_call(awin, function()
+  vim.api.nvim_win_set_cursor(0, { beta_line(), 0 })
+  vim.cmd("normal! za")
+end)
+glass.breathe()
+H.eq(air_marks(), 1, "an open feature under a closed one gets a virtual blank above it")
+vim.api.nvim_win_call(awin, function()
+  vim.cmd("normal! zR")
+end)
+glass.breathe()
+H.eq(air_marks(), 0, "everything open: the real blanks are visible and no virtual air is added")
+
 -- ...and a heading is a heading WHEREVER it sits. The feature-block syntax
 -- region ran to the next `feature` line, so a heading between features was
 -- inside the previous block — where only the contains list may match — and
