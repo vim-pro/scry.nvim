@@ -259,10 +259,14 @@ function M.breathe()
   vim.api.nvim_win_call(win, function()
     for _, f in ipairs((state.map or {}).features or {}) do
       for _, l in ipairs(f.lnums or { f.lnum }) do
-        if l > 1 and vim.fn.foldclosed(l) == -1 and vim.fn.foldclosed(l - 1) ~= -1 then
-          pcall(vim.api.nvim_buf_set_extmark, state.buf, air_ns, l - 1, 0, {
+        -- The mark hangs BELOW the closed fold's own visible row, not above
+        -- the open feature: virt_lines_above on a line whose neighbor is
+        -- hidden inside a fold is swallowed with the fold, and the air
+        -- never drew.
+        local shut = l > 1 and vim.fn.foldclosed(l) == -1 and vim.fn.foldclosed(l - 1) or -1
+        if shut ~= -1 then
+          pcall(vim.api.nvim_buf_set_extmark, state.buf, air_ns, shut - 1, 0, {
             virt_lines = { { { "", "NonText" } } },
-            virt_lines_above = true,
           })
         end
       end
