@@ -313,12 +313,15 @@ vim.api.nvim_buf_set_lines(fb, 0, -1, false, {
   "",
   "feature two",
   "  module b.lua",
+  "",
+  "feature three",
+  "  module c.lua",
 })
 vim.api.nvim_win_set_buf(0, fb)
 glass._state.buf = fb
 H.eq(glass.foldexpr(1), ">1", "a feature opens a fold")
 H.eq(glass.foldexpr(3), "1", "a blank inside the body folds with it")
-H.eq(glass.foldexpr(5), "0", "the separator blank stays outside — the air between closed folds")
+H.eq(glass.foldexpr(5), "0", "the blank above a heading is the air between groups")
 -- ONE LEVEL OF GROUPING. A flush-left prose line between features is a
 -- heading: still prose to the parser, but it stays outside every fold —
 -- folded into the block above, it would vanish from the closed view it
@@ -326,6 +329,11 @@ H.eq(glass.foldexpr(5), "0", "the separator blank stays outside — the air betw
 H.eq(glass.foldexpr(6), "0", "a heading stays outside every fold")
 H.eq(glass.foldexpr(7), "0", "so does the blank under it")
 H.eq(glass.foldexpr(9), "1", "and the next body folds as ever")
+-- WHERE THE AIR IS: around groups, not between features. The blank between
+-- two features stays in the FILE for the open view, but the closed scan
+-- folds it away, so a group reads as a tight run of sentences.
+H.eq(glass.foldexpr(10), "1", "a blank between two features folds away in the scan")
+H.eq(glass.foldexpr(11), ">1", "and the next feature still opens its own fold")
 
 -- ...and a heading is a heading WHEREVER it sits. The feature-block syntax
 -- region ran to the next `feature` line, so a heading between features was

@@ -639,17 +639,39 @@ function M.foldexpr(lnum)
   -- must not eat it. A blank INSIDE a body (between prose and members,
   -- inside a never block) still folds, because the next non-blank line is
   -- not a feature.
+  -- WHERE THE AIR IS: around groups, not between features. The blank
+  -- lines in the file stay — they are for the open view and the editor —
+  -- but the closed scan folds a blank BETWEEN FEATURES into the block
+  -- above, so a group reads as a tight run of sentences, and keeps a
+  -- blank that touches a heading, so the groups stand apart.
   if vim.trim(line) == "" then
     local last = vim.api.nvim_buf_line_count(0)
+    local ahead
     for i = lnum + 1, last do
-      local ahead = vim.fn.getline(i)
-      if vim.trim(ahead) ~= "" then
-        -- Air before a feature or a heading is the separator; a blank in
-        -- the middle of a body (next non-blank still indented) folds.
-        return ahead:match("^%S") and "0" or "1"
+      local t = vim.fn.getline(i)
+      if vim.trim(t) ~= "" then
+        ahead = t
+        break
       end
     end
-    return "0"
+    if not ahead then
+      return "0"
+    end
+    if ahead:match("^%S") and not ahead:match("^feature%s") then
+      return "0" -- the air above a heading
+    end
+    if ahead:match("^feature%s") then
+      for i = lnum - 1, 1, -1 do
+        local t = vim.fn.getline(i)
+        if vim.trim(t) ~= "" then
+          -- Under a heading: air (a folded blank here would render as a
+          -- one-line fold of nothing). Under a feature: fold it away.
+          return (t:match("^%S") and not t:match("^feature%s")) and "0" or "1"
+        end
+      end
+      return "0"
+    end
+    return "1" -- a blank inside a body
   end
   return "1"
 end
