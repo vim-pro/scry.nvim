@@ -335,21 +335,25 @@ function M.render()
   -- This is quickfix-pro's argument about the display line, applied to the
   -- glass: alignment is not decoration, it is what makes a list scannable.
   local lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
-  -- AN OPEN BLOCK NESTS. Body lines carry a two-cell inline indent, so an
-  -- unfolded feature's prose and members sit visibly under its header
-  -- instead of crowding the same left edge. The marks are unconditional —
-  -- inside a closed fold they are simply never drawn — and every width
-  -- below accounts for them, so the verdict column stays a column.
-  local INDENT = 2
-  local function indented(text)
-    return text:match("^%s+%S") ~= nil
+  -- AN OPEN BLOCK NESTS, ON THE SAME EDGE AS THE CLOSED ONES. A closed
+  -- feature renders behind a three-cell state column; an open one used to
+  -- jump flush left, which read as an outlier rather than as the one you
+  -- unfolded. Feature lines and body lines both carry a three-cell inline
+  -- indent now — only headings and blanks keep column zero — so the open
+  -- header sits on the fold rows' edge and its prose and members sit
+  -- visibly under it. The marks are unconditional (inside a closed fold
+  -- they are simply never drawn), and every width below accounts for them,
+  -- so the verdict column stays a column.
+  local INDENT = 3
+  local function inset(text)
+    return text:match("^%s+%S") ~= nil or text:match("^feature%s") ~= nil
   end
   local function width_of(lnum)
     local text = lines[lnum] or ""
-    return vim.fn.strdisplaywidth(text) + (indented(text) and INDENT or 0)
+    return vim.fn.strdisplaywidth(text) + (inset(text) and INDENT or 0)
   end
   for lnum, text in ipairs(lines) do
-    if indented(text) then
+    if inset(text) then
       pcall(vim.api.nvim_buf_set_extmark, state.buf, ns, lnum - 1, 0, {
         virt_text = { { (" "):rep(INDENT), "ScryHeaderDim" } },
         virt_text_pos = "inline",
