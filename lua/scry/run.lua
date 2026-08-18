@@ -97,7 +97,10 @@ function M.start(opts)
     return
   end
   if not (config.test and config.test.cmd and #config.test.cmd > 0) then
-    vim.notify("[scry] no test command — set test = { cmd = {...} } in setup()", vim.log.levels.WARN)
+    vim.notify(
+      '[scry] no test command — :ScrySources opens the config; add "test": { "cmd": ["npx", "vitest", "run"] } (your runner, one spec, path appended)',
+      vim.log.levels.WARN
+    )
     return
   end
 

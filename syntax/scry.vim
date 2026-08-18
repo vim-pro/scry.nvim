@@ -108,4 +108,11 @@ hi def link scryPath ScryPath
 hi def link scrySeparator ScrySeparator
 hi def link scrySymbol ScrySymbol
 
+" FROM THE TOP, EVERY TIME. The block model is a region, and without sync
+" rules Vim re-parses from wherever it last knew anything — which, after a
+" scroll or an edit, is mid-block: the first rows of a feature kept their
+" groups and the rest decayed to prose, at a different line in every block.
+" A map is a small file; parsing all of it is cheaper than being wrong.
+syn sync fromstart
+
 let b:current_syntax = "scry"

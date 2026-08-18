@@ -13,10 +13,19 @@ for _, yes in ipairs({
   "tests/record_spec.lua",
   "web/attendance.spec.tsx",
   "server/test/roster_test.go",
+  "tests/test_roster.py",
 }) do
   H.ok(detect.looks_like_test(yes), yes .. " is a test")
 end
-for _, no in ipairs({ "shared/recurrence.ts", "server/src/routes/series.ts", "web/src/pages/Testimonials.tsx" }) do
+-- The FILENAME decides, never the directory: __tests__/helpers.ts got
+-- claimed as a spec once, and a runner pointed at a helper refuses it.
+for _, no in ipairs({
+  "shared/recurrence.ts",
+  "server/src/routes/series.ts",
+  "web/src/pages/Testimonials.tsx",
+  "server/src/__tests__/helpers.ts",
+  "tests/fixtures.lua",
+}) do
   H.ok(not detect.looks_like_test(no), no .. " is not")
 end
 

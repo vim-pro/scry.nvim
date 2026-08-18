@@ -14,24 +14,25 @@
 -- second is the one a test file is for.
 local M = {}
 
--- What counts as a test file, by name. Deliberately name-based and short:
--- every ecosystem marks its tests in the filename or the directory, and a
--- test scry cannot recognize is one more thing :ScryTests will not touch.
+-- What counts as a test file: the FILENAME says so, never the directory.
+-- Directory patterns claimed __tests__/helpers.ts as a spec — a helper the
+-- runner would refuse — and every ecosystem that puts tests in a directory
+-- also marks the files themselves. A test named in a way scry cannot
+-- recognize is one more thing :ScryTests will not touch, and that is the
+-- honest trade.
 local PATTERNS = {
-  "%.test%.[%w]+$",
-  "%.spec%.[%w]+$",
-  "_test%.[%w]+$",
-  "_spec%.[%w]+$",
-  "^tests?/",
-  "/tests?/",
-  "__tests__/",
+  "^tests?[_%-.]",
+  "[_%-.]tests?%.[%w]+$",
+  "^specs?[_%-.]",
+  "[_%-.]specs?%.[%w]+$",
 }
 
 ---@param path string repo-relative
 ---@return boolean
 function M.looks_like_test(path)
+  local base = path:match("([^/]+)$") or path
   for _, p in ipairs(PATTERNS) do
-    if path:match(p) then
+    if base:match(p) then
       return true
     end
   end
