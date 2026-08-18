@@ -113,4 +113,11 @@ vim.api.nvim_create_user_command("ScryExercise", function(a)
   require("scry.run").start({ feature = a.args ~= "" and a.args or nil })
 end, { nargs = "?", desc = "Run the specs behind this map's exercises claims, then re-check" })
 
+-- A test imports the code it exercises, so the import graph already knows
+-- which features a test file is about — this reads it the other way and
+-- writes the missing exercises claims into the glass for review.
+vim.api.nvim_create_user_command("ScryTests", function()
+  require("scry.detect").start()
+end, { desc = "Find the tests that exercise this map's features; claim them for review" })
+
 return M

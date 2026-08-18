@@ -121,8 +121,9 @@ Bringing scry to an existing repository, in the order that works:
    drafted ones.
 
 4. Add one `never` for something you genuinely care about ("never log a
-   token") and `exercises` claims for specs that already exist. Run
-   `:ScryExercise` once so `✓ done` means something.
+   token"), then `:ScryTests` to claim the specs that already exist —
+   detected from what each test file imports, written for your review.
+   Run `:ScryExercise` once so `✓ done` means something.
 
 5. Work normally: `:Scry {intent}` to aim, edit the plan, `~` to cast,
    review, `:w`. The map grows one intent at a time.
@@ -1404,6 +1405,21 @@ thing here.
                         command in scry that executes your code. With a
                         feature name, runs only that feature's specs.
                         See |scry-exercised|.
+                                                                  *:ScryTests*
+:ScryTests              Find the tests this map is missing. A test file
+                        imports the code it exercises, so the import graph
+                        already knows which feature each test is about —
+                        this reads it the other way: every test-looking
+                        file whose direct imports land in a feature's
+                        footprint becomes an `exercises` claim, written
+                        into the glass for review. A test the feature
+                        already claims as `module` is promoted — the module
+                        row goes, since "this file exists" and "this spec
+                        passes" are different claims and the second is what
+                        a test file is for. `u` discards the lot; nothing
+                        reaches the map file until you write it. No model
+                        call — a file read and an intersection.
+
                                                                 *:ScrySources*
 :ScrySources            Edit what counts as product. Opens
                         `.scry/config.json` — pre-seeded, when the file does
