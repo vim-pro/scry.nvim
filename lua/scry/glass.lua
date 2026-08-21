@@ -1255,6 +1255,35 @@ function M.open(root)
       end
     end, { buffer = buf, desc = "scry: cast an intent — across this feature, or across the whole map" })
 
+    -- A VISUAL SELECTION IS A NOUN TOO: `~` over a stretch of the map
+    -- revises exactly that stretch — two features into one, a group
+    -- reworded — with the same contract and the same `u`.
+    vim.keymap.set("x", "~", function()
+      local a, b = vim.fn.line("v"), vim.fn.line(".")
+      if a > b then
+        a, b = b, a
+      end
+      vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "nx", false)
+      require("scry.revise").range(a - 1, b, nil)
+    end, { buffer = buf, desc = "scry: revise the selected stretch of the map" })
+
+    -- AND SO IS AN EX-RANGE. `:%Conjure tighten every description` is the
+    -- whole map; `:'<,'>Conjure merge these` is the slice; bare `:Conjure`
+    -- reads the noun under the cursor exactly as `~` does. Buffer-local,
+    -- so everywhere else :Conjure stays conjurer's own.
+    vim.api.nvim_buf_create_user_command(buf, "Conjure", function(cmd)
+      local intent = cmd.args ~= "" and cmd.args or nil
+      if cmd.range == 0 then
+        if select(1, require("scry.compose").at_cursor()) then
+          require("scry.compose").start()
+        else
+          require("scry.revise").range(nil, nil, intent)
+        end
+        return
+      end
+      require("scry.revise").range(cmd.line1 - 1, cmd.line2, intent)
+    end, { nargs = "*", range = true, desc = "scry: revise the range of the map (% for all of it)" })
+
     -- `g?` EXPLAINS THIS BUFFER, which is what `g?` means in every plugin
     -- that has an opinion. It also answers the question the render-what-varies
     -- rule creates: a silent row is quiet because everything agreed, and

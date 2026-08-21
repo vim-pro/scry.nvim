@@ -32,4 +32,13 @@ local bare = revise.build("x", KINDS, {}, nil, {})
 H.ok(bare:find("(none)", 1, true) ~= nil, "an empty worklist is stated, not implied")
 H.ok(bare:find("checked textually here", 1, true) ~= nil, "no parser is said plainly too")
 
+-- A SLICE says what it is: the model must know the rest of the map exists
+-- and is not shown, or it restates features it cannot see and the splice
+-- duplicates them.
+local sliced = revise.build("merge these two", KINDS, {}, nil, {}, true)
+H.ok(sliced:find("SLICE", 1, true) ~= nil, "the snippet is named a slice")
+H.ok(sliced:find("do not restate it", 1, true) ~= nil, "and the unseen rest is off limits")
+H.eq(sliced:find("ENTIRE feature map", 1, true), nil, "the whole-map framing is absent")
+H.ok(sliced:find("replaces exactly the snippet", 1, true) ~= nil, "deletion stakes still stated, slice-sized")
+
 H.done("revise_spec PASS")

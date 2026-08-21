@@ -924,7 +924,8 @@ has. Four mappings are added:
                 on a FEATURE line, fold or unfold the feature
     ~           cast an intent — on a feature, across every file it is
                 made of (|scry-compose|); anywhere else, across the whole
-                map itself (|scry-revise|)
+                map itself; over a visual selection, across exactly that
+                stretch (|scry-revise|)
     +           fill in what is missing here: on a feature with no members,
                 the files it is made of (|scry-members|); anywhere else,
                 features for the files nothing describes (|scry-drafting|).
@@ -966,6 +967,14 @@ read are what hold it to that.
 
 This revises the MAP, not the code. Where a revision creates work, the work
 arrives as absent members, and `~` on each feature is how it gets built.
+
+A SELECTION IS A NOUN TOO. Visual `~` over a stretch of the map revises
+exactly that stretch — two features into one, a group reworded — and the
+ex-range does the same from the command line: `:%Conjure tighten every
+description` is the whole map, `:'<,'>Conjure merge these` is the slice,
+and a bare `:Conjure` in the glass reads the noun under the cursor exactly
+as `~` does. The slice request tells the model the rest of the map exists
+and is not shown, so it cannot restate what it cannot see.
 
 ------------------------------------------------------------------------------
 THE CONVERSATION                                                   *scry-talk*
