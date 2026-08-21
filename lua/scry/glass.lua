@@ -1255,6 +1255,14 @@ function M.open(root)
       require("scry.explain").toggle()
     end, { buffer = buf, desc = "scry: explain what this buffer is telling you" })
 
+    -- `K` IS VIM'S OWN "look up the thing under the cursor", aimed at a
+    -- capability: it summons the conversation you already use (the claude
+    -- terminal app, at the project root) and hands it one line naming the
+    -- feature. Ask, read, <C-w>p back — the glass stays home.
+    vim.keymap.set("n", "K", function()
+      require("scry.talk").ask()
+    end, { buffer = buf, desc = "scry: ask the conversation about the feature under the cursor" })
+
     vim.keymap.set("n", "<CR>", function()
       if vim.fn.getline("."):match("^feature%s") then
         pcall(vim.cmd, "normal! za")

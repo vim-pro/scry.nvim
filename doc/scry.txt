@@ -930,6 +930,8 @@ has. Four mappings are added:
                 Again to stop a pass in flight.
     ]d  [d      to the next and previous feature that wants something
     g?          explain what this buffer is telling you; again to stop
+    K           ask the conversation about the feature under the cursor —
+                see |scry-talk|
 
 MOTIONS, NOT GROUPING. The obvious way to surface what needs attention is to
 group by state under headings, and it is the wrong move here: the buffer IS
@@ -942,6 +944,25 @@ would have done, and it composes: `]d~` is "fix the next broken thing", and
 `.` repeats that on the one after. Neither wraps — a motion that silently
 starts over hides the fact that you have seen everything, and "no more" is
 the answer you most want at the end of a pass.
+
+------------------------------------------------------------------------------
+THE CONVERSATION                                                   *scry-talk*
+
+Some work is "explain this to me before I aim anything." The answer is not
+a chat panel rebuilt inside the glass — it is the conversation you already
+use, summoned. `K` on a feature (or |:ScryTalk| from anywhere) opens your
+own AI terminal app in a split, running at the project root, and sends one
+line naming the feature and the map file. The model has the repository; it
+reads the files itself. Scry ferries an address, not content.
+
+One conversation per session: the split hides and returns to the same
+exchange, `<C-w>p` puts you back in the glass, and the glass stays where
+your cursor lives. The command is yours to set — >lua
+
+    talk = { cmd = { "claude" } }
+<
+in setup(); `{ "claude", "--continue" }` picks the last conversation back
+up across editor restarts, and any other CLI works the same way.
 
 WHAT THE ROWS SHOW, and what they leave out. A column that says the same
 thing on every row is not information, it is texture. So a verdict's words
@@ -1420,6 +1441,11 @@ thing here.
                         reaches the map file until you write it. No model
                         call — a file read and an intersection.
 
+                                                                   *:ScryTalk*
+:ScryTalk               Show or hide the conversation — your AI terminal
+                        app, at the project root. Same exchange either way.
+                        In the glass, `K` both reveals and aims it. See
+                        |scry-talk|.
                                                                 *:ScrySources*
 :ScrySources            Edit what counts as product. Opens
                         `.scry/config.json` — pre-seeded, when the file does

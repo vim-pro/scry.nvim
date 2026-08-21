@@ -30,6 +30,11 @@ M.config = {
   -- which of your files are product. Narrow it when the noise outweighs the
   -- signal; having to narrow it is itself information about the repo.
   sources = {},
+  -- The conversation `K` and :ScryTalk summon: your own AI terminal app,
+  -- run at the project root. Swap the command for another CLI, or add
+  -- flags — { "claude", "--continue" } picks the last conversation back
+  -- up across editor restarts.
+  talk = { cmd = { "claude" } },
 }
 
 --- Merge user options; define commands. Optional — zero-config works.
@@ -119,5 +124,11 @@ end, { nargs = "?", desc = "Run the specs behind this map's exercises claims, th
 vim.api.nvim_create_user_command("ScryTests", function()
   require("scry.detect").start()
 end, { desc = "Find the tests that exercise this map's features; claim them for review" })
+
+-- The conversation, from anywhere: show it, hide it, same exchange either
+-- way. In the glass, `K` both reveals it and aims it at a feature.
+vim.api.nvim_create_user_command("ScryTalk", function()
+  require("scry.talk").toggle()
+end, { desc = "Show or hide the conversation (the claude terminal, at the project root)" })
 
 return M
