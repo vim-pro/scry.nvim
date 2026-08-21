@@ -99,9 +99,19 @@ end
 function M.ask()
   local feature, gstate = require("scry.compose").at_cursor()
   local root = (gstate and gstate.root) or require("scry.glass")._state.root or vim.fn.getcwd()
-  local about = feature
-      and ("the feature `%s` in %s"):format(feature.name, require("scry.project").resolve(root).map_path)
-    or ("the feature list in %s"):format(require("scry.project").resolve(root).map_path)
+
+  -- THE ABSOLUTE PATH, WITH ITS SEARCHABILITY STATED. A relative path
+  -- invited the model to search for the map — and a gitignored map is
+  -- invisible to search tools that respect ignore files, so the first
+  -- real conversation concluded the file did not exist. Scry knows
+  -- whether the map is ignored; the aim says so, and an exact absolute
+  -- path makes a direct read the obvious move either way.
+  local map_rel = require("scry.project").resolve(root).map_path
+  local map_abs = root .. "/" .. map_rel
+  vim.fn.system({ "git", "-C", root, "check-ignore", "-q", map_rel })
+  local note = vim.v.shell_error == 0 and " (gitignored — read the exact path; searching will not find it)" or ""
+  local about = feature and ("the feature `%s` in %s%s"):format(feature.name, map_abs, note)
+    or ("the feature list in %s%s"):format(map_abs, note)
 
   vim.ui.input({ prompt = "Ask: " }, function(question)
     local win = reveal(root)

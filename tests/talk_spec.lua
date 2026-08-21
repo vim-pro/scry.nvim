@@ -55,6 +55,22 @@ H.ok(screen():find(".scry/map.scry", 1, true) ~= nil, "with the map's path")
 H.ok(screen():find("who calls this?", 1, true) ~= nil, "and the question")
 H.eq(screen():find("One row per expense", 1, true), nil, "no content is ferried — an address is")
 
+-- A GITIGNORED MAP IS INVISIBLE TO SEARCH, and the first real conversation
+-- proved it: the model globbed, found nothing, and reported the file did
+-- not exist. When the map is ignored, the aim says so.
+vim.fn.system({ "git", "-C", root, "init", "-q" })
+vim.fn.writefile({ ".scry/" }, root .. "/.gitignore")
+vim.ui.input = function(_, cb)
+  cb("still there?")
+end
+talk.ask()
+vim.ui.input = orig_input
+vim.cmd("stopinsert")
+H.ok(H.wait(function()
+  return screen():find("gitignored", 1, true) ~= nil
+end, 8000), "an ignored map's aim warns that searching will not find it")
+H.ok(screen():find(root .. "/.scry/map.scry", 1, true) ~= nil, "and the path is absolute, so a direct read just works")
+
 -- Toggle: hide, same conversation back.
 local buf_before = talk._state.buf
 talk.toggle()
