@@ -2,8 +2,7 @@
 
 [![CI](https://github.com/vim-pro/scry.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/vim-pro/scry.nvim/actions/workflows/ci.yml)
 
-**Scry your software.** A map of what your project does — plain sentences,
-checked against the code — that you can aim AI edits at.
+**Scry your software.** Your project's feature list.
 
 **[scry.vim.pro](https://scry.vim.pro)** · `:h scry`
 
