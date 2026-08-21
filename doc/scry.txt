@@ -922,8 +922,9 @@ has. Four mappings are added:
                 than a key that sometimes does nothing
     <CR>        on a CLAIM, open the code it points at
                 on a FEATURE line, fold or unfold the feature
-    ~           cast an intent across the whole feature under the cursor,
-                every file it is made of — see |scry-compose|
+    ~           cast an intent — on a feature, across every file it is
+                made of (|scry-compose|); anywhere else, across the whole
+                map itself (|scry-revise|)
     +           fill in what is missing here: on a feature with no members,
                 the files it is made of (|scry-members|); anywhere else,
                 features for the files nothing describes (|scry-drafting|).
@@ -944,6 +945,27 @@ would have done, and it composes: `]d~` is "fix the next broken thing", and
 `.` repeats that on the one after. Neither wraps — a motion that silently
 starts over hides the fact that you have seen everything, and "no more" is
 the answer you most want at the end of a pass.
+
+------------------------------------------------------------------------------
+REVISING THE WHOLE MAP                                           *scry-revise*
+
+Some intents are not about one capability — split a group, rename a concept
+everywhere, describe the part of the product nothing covers. The noun under
+the cursor decides the size of the cast: `~` on a feature casts across its
+files; `~` anywhere else — a heading, the blank at the top — sends the
+ENTIRE map out with your sentence and splices the revised map back as one
+undoable edit.
+
+The glass is the review, exactly as for drafting: every claim the revision
+makes is checked the moment it lands, new members that do not exist yet
+read `✗ absent` — the revised map handing you its own worklist — `u` takes
+the whole thing back, and nothing reaches the map file until |:write|. The
+request tells the model that anything it leaves out is deleted and that
+`never` and `exercises` claims are not its to drop; the verdicts and your
+read are what hold it to that.
+
+This revises the MAP, not the code. Where a revision creates work, the work
+arrives as absent members, and `~` on each feature is how it gets built.
 
 ------------------------------------------------------------------------------
 THE CONVERSATION                                                   *scry-talk*

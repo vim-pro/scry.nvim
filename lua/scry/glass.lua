@@ -1243,9 +1243,17 @@ function M.open(root)
     -- There it rewrites a region; here the noun is a whole capability and
     -- the change lands across every file it is made of. Same verb, coarser
     -- grain — which is the only reason this buffer exists.
+    -- THE NOUN UNDER THE CURSOR DECIDES THE SIZE OF THE CAST. On a
+    -- feature, `~` casts across that feature's files. Anywhere else — a
+    -- heading, the blank at the top — the noun is the map itself, and the
+    -- intent revises the whole pane (|scry-revise|).
     vim.keymap.set("n", "~", function()
-      require("scry.compose").start()
-    end, { buffer = buf, desc = "scry: cast an intent across this whole feature" })
+      if select(1, require("scry.compose").at_cursor()) then
+        require("scry.compose").start()
+      else
+        require("scry.revise").start()
+      end
+    end, { buffer = buf, desc = "scry: cast an intent — across this feature, or across the whole map" })
 
     -- `g?` EXPLAINS THIS BUFFER, which is what `g?` means in every plugin
     -- that has an opinion. It also answers the question the render-what-varies
